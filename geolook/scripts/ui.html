@@ -1119,9 +1119,27 @@ async function pollJob(){
 }
 
 /* ===================== 总览 ===================== */
+// 没有采样数据时，标题要说「已经测到了什么」，而不是「什么都没有」。
+// 抓取与体检不需要任何 API key（README 的零 key 路径），所以这时通常已有
+// 四层依赖链和工单——把最上游的失败层讲出来，比一句「去跑一期」有用得多。
+function localHeadline(){
+  const au=D.audit||{};
+  const blocked=(au.layers||[]).find(l=>l.status==='fail');
+  const p0=(D.tasks||[]).filter(t=>t.priority==='P0'&&t.status!=='done').length;
+  if(!au.page_count)
+    return ['Nothing crawled yet',
+            'Run Crawl site, then Audit pages — neither needs an API key.'];
+  if(blocked)
+    return [`${blocked.name} layer is failing`,
+            `${(blocked.issues||[])[0]||''} Everything downstream is invisible to engines until this is fixed`
+            + (p0?` — ${p0} P0 tickets are waiting.`:'.')];
+  return [`Site scores ${au.avg_score} across ${au.page_count} pages`,
+          p0?`${p0} P0 tickets open. AI visibility is still unmeasured — sampling needs an engine API key.`
+            :'AI visibility is still unmeasured — sampling needs an engine API key.'];
+}
 function headline(){
   const a=D.analytics,h=a.health,tr=a.trend||[];
-  if(h.score==null)return['还没有采样数据','到「设置 → 运行任务」跑一期，才能开始诊断。'];
+  if(h.score==null)return localHeadline();
   const prev=tr.length>1?tr[tr.length-2]:null;
   const dm=prev&&prev.mention!=null&&tr[tr.length-1].mention!=null?((tr[tr.length-1].mention-prev.mention)*100).toFixed(1):null;
   const cite=h.subs.cite,m=h.subs.mention;
