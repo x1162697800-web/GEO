@@ -1205,8 +1205,10 @@ function vOverview(){
   })();
   return `<div style="padding:32px 44px 72px;max-width:1280px">
     <div class="kicker">现状 · 总览</div>
-    <h3>${esc(ht)}</h3>
-    <p class="soft" style="font-size:14px;max-width:660px">${esc(hs)}</p>
+    <!-- headline 里含 <span> 包裹的后端串（供翻译覆盖层逐节点匹配），故不整体转义；
+         内部的动态内容已在 localHeadline 里逐段 esc() 过 -->
+    <h3>${ht}</h3>
+    <p class="soft" style="font-size:14px;max-width:660px">${hs}</p>
 
     <div class="kpis">
       ${kpis.map(([l,v,n])=>`<div class="card elev" style="gap:4px;padding:15px">
