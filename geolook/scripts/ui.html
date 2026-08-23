@@ -1126,13 +1126,18 @@ function localHeadline(){
   const au=D.audit||{};
   const blocked=(au.layers||[]).find(l=>l.status==='fail');
   const p0=(D.tasks||[]).filter(t=>t.priority==='P0'&&t.status!=='done').length;
+  // 后端目前仍产出中文（层名、issue 文案）。翻译覆盖层按**完整文本节点**匹配字典，
+  // 所以这些串必须各自独占一个元素，拼进长句就翻不了。
+  // 后端源串英文化之后，这里的包裹会自然失效但不会出错。
+  const T=s=>`<span>${esc(s)}</span>`;
   if(!au.page_count)
     return ['Nothing crawled yet',
             'Run Crawl site, then Audit pages — neither needs an API key.'];
   if(blocked)
-    return [`${blocked.name} layer is failing`,
-            `${(blocked.issues||[])[0]||''} Everything downstream is invisible to engines until this is fixed`
-            + (p0?` — ${p0} P0 tickets are waiting.`:'.')];
+    return [[T(blocked.name),' layer is failing'].join(''),
+            [T((blocked.issues||[])[0]||''),
+             ' Everything downstream is invisible to engines until this is fixed',
+             p0?` — ${p0} P0 tickets are waiting.`:'.'].join('')];
   return [`Site scores ${au.avg_score} across ${au.page_count} pages`,
           p0?`${p0} P0 tickets open. AI visibility is still unmeasured — sampling needs an engine API key.`
             :'AI visibility is still unmeasured — sampling needs an engine API key.'];
