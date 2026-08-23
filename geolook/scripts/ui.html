@@ -1153,12 +1153,30 @@ function vOverview(){
   const a=D.analytics,h=a.health,tr=a.trend||[];
   const [ht,hs]=headline();
   const S=h.subs;
-  const kpis=[
-    ['GEO 健康分',h.score==null?'—':h.score,`${h.measured.length}/5 项可测${S.fact==null?' · 事实一致性未测':''}`],
-    ['提及率',pct(S.mention),'无提示样本中被主动提到'],
-    ['引用份额',pct(S.cite),'来源域名里属于你的比例'],
-    ['阵地覆盖',S.channel==null?'—':pct(S.channel),'已被 AI 引用的阵地占比'],
-    ['内容承接',S.content==null?'—':pct(S.content),'目标问题已有成稿内容'],
+  // KPI 行跟着「实际测到了什么」走。采样要 API key，而抓取/体检/工单不要——
+  // 零 key 路径跑完之后本来就有真数据，不该让用户面对五个破折号。
+  const sampled=h.score!=null;
+  const au=D.audit||{},gd=au.grade_distribution||{};
+  const openT=(D.tasks||[]).filter(t=>t.status!=='done');
+  const blocked=(au.layers||[]).find(l=>l.status==='fail');
+  const gap=(au.block_gap||[])[0];
+  const needWork=(gd.C||0)+(gd.D||0);
+  const kpis=sampled?[
+    ['GEO health score',h.score,`${h.measured.length}/5 measured${S.fact==null?' · facts untested':''}`],
+    ['Mention',pct(S.mention),'Mentioned unprompted'],
+    ['Cite share',pct(S.cite),'Your share of cited domains'],
+    ['Coverage',S.channel==null?'—':pct(S.channel),'Channels already cited by AI'],
+    ['Content readiness',S.content==null?'—':pct(S.content),'Target questions with final content'],
+  ]:[
+    ['Site audit',au.avg_score==null?'—':au.avg_score,
+     au.page_count?`${au.page_count} pages · ${needWork} need work`:'Not crawled yet'],
+    ['Blocking layer',blocked?blocked.name:(au.page_count?'None':'—'),
+     blocked?'Fix this before anything downstream':'All four layers pass'],
+    ['Open P0',String(openT.filter(t=>t.priority==='P0').length),
+     `${openT.length} tickets open in total`],
+    ['Biggest content gap',gap?gap.block:'—',
+     gap?`missing on ${gap.missing_pages}/${gap.total} pages`:'No extraction-block gaps'],
+    ['AI visibility','—','Needs sampling · engine API key required'],
   ];
   const open=(D.tasks||[]).filter(t=>t.status!=='done').sort((x,y)=>x.priority.localeCompare(y.priority)).slice(0,3);
   const engs=a.engines||[];
