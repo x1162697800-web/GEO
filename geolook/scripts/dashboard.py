@@ -269,8 +269,8 @@ _LOGIN_HTML = """<!doctype html><meta charset="utf-8"><title>Grounded</title>
 align-items:center;justify-content:center;height:100vh;margin:0">
 <form style="text-align:center" onsubmit="location='/?token='+encodeURIComponent(
 document.getElementById('t').value);return false">
-<div style="font-size:20px;margin-bottom:14px">Geo<span style="color:#9184d9">Look</span></div>
-<input id="t" type="password" placeholder="访问令牌 / Access token" autofocus
+<div style="font-size:20px;margin-bottom:14px">Ground<span style="color:#9184d9">ed</span></div>
+<input id="t" type="password" placeholder="Access token" autofocus
 style="background:#1b1e2e;border:1px solid #3a3f55;border-radius:8px;color:#e8eaf2;
 padding:10px 14px;font-size:14px;width:240px">
 <button style="background:#9184d9;border:0;border-radius:8px;color:#101223;
