@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+geolook/work/
+geolook/.jobs/
+*.egg-info/
+.DS_Store
+Thumbs.db
+*.log
+nohup.out
+.sync-github.lock
+.cursor/hooks/.sync.lock

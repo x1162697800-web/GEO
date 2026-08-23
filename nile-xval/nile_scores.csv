@@ -1,0 +1,51 @@
+brand,url,total,area_1_total,area_2_total,area_3_total,c1_ai_crawler,c2_pdp_ssr,c3_sitemap,c4_product_schema,c5_review_schema,c6_faq_schema,c7_org_schema,c8_pdp_titles,c9_pdp_descriptions,c10_uniqueness,shopify_confirmed,fetch_error,timestamp
+Summer Fridays,https://www.summerfridays.com,5,2,2,1,1,0,1,0,1,0,1,1,0,N/A,True,,2026-04-18T09:06:17.047426+00:00
+Glow Recipe,https://www.glowrecipe.com,5,2,1,2,1,1,0,1,0,0,0,1,1,N/A,True,,2026-04-18T09:06:32.545200+00:00
+Tata Harper,https://www.tataharper.com,0,0,0,0,0,0,0,0,0,0,0,0,0,N/A,False,homepage fetch failed,2026-04-18T09:06:52.515620+00:00
+Herbivore Botanicals,https://www.herbivorebotanicals.com,3,1,2,0,1,0,0,1,1,0,0,0,0,N/A,True,,2026-04-18T09:06:54.578525+00:00
+Youth To The People,https://www.youthtothepeople.com,0,0,0,0,0,0,0,0,0,0,0,0,0,N/A,False,homepage fetch failed,2026-04-18T09:07:15.654836+00:00
+Kosas,https://www.kosas.com,3,2,1,0,1,1,0,0,0,0,1,0,0,N/A,True,,2026-04-18T09:07:17.864241+00:00
+Ilia Beauty,https://iliabeauty.com,2,2,0,0,1,0,1,0,0,0,0,0,0,N/A,True,,2026-04-18T09:07:40.686301+00:00
+Merit Beauty,https://www.meritbeauty.com,3,2,1,0,1,0,1,0,0,0,1,0,0,N/A,True,,2026-04-18T09:08:01.217020+00:00
+Saie,https://www.saiehello.com,3,2,0,1,1,1,0,0,0,0,0,1,0,N/A,True,,2026-04-18T09:08:10.459766+00:00
+Tower 28 Beauty,https://www.tower28beauty.com,5,2,3,0,1,1,0,1,1,0,1,0,0,N/A,True,,2026-04-18T09:08:29.911412+00:00
+Topicals,https://topicals.com,1,1,0,0,1,0,0,0,0,0,0,0,0,N/A,False,,2026-04-18T09:08:47.645309+00:00
+Westman Atelier,https://westman-atelier.com,3,3,0,0,1,1,1,0,0,0,0,0,0,N/A,True,,2026-04-18T09:08:50.788582+00:00
+Rose Inc.,https://www.roseinc.com,5,2,3,0,1,1,0,1,1,0,1,0,0,N/A,True,,2026-04-18T09:09:14.312564+00:00
+Drunk Elephant,https://www.drunkelephant.com,2,1,1,0,1,0,0,0,0,0,1,0,0,N/A,False,,2026-04-18T09:09:35.388915+00:00
+Beauty of Joseon,https://beautyofjoseon.com,4,2,2,0,1,0,1,1,0,0,1,0,0,N/A,True,,2026-04-18T09:09:40.741545+00:00
+Krave Beauty,https://kravebeauty.com,6,3,3,0,1,1,1,1,1,0,1,0,0,N/A,True,,2026-04-18T09:09:54.787306+00:00
+Then I Met You,https://thenimetyou.com,3,2,0,1,1,1,0,0,0,0,0,0,1,N/A,True,,2026-04-18T09:10:08.790078+00:00
+Peach & Lily,https://www.peachandlily.com,5,3,1,1,1,1,1,0,0,0,1,1,0,N/A,True,,2026-04-18T09:10:20.966270+00:00
+Biossance,https://www.biossance.com,2,1,1,0,1,0,0,0,0,0,1,0,0,N/A,False,,2026-04-18T09:10:37.394967+00:00
+Farmacy Beauty,https://www.farmacybeauty.com,4,2,1,1,1,0,1,0,0,1,0,1,0,N/A,True,,2026-04-18T09:10:43.294445+00:00
+Rare Beauty,https://www.rarebeauty.com,6,2,3,1,1,1,0,1,1,0,1,1,0,N/A,True,,2026-04-18T09:10:59.817683+00:00
+Item Beauty,https://itembeauty.com,1,1,0,0,1,0,0,0,0,0,0,0,0,N/A,False,,2026-04-18T09:11:18.811826+00:00
+Kulfi Beauty,https://kulfibeauty.com,2,2,0,0,1,1,0,0,0,0,0,0,0,N/A,True,,2026-04-18T09:11:33.006697+00:00
+Half Magic Beauty,https://halfmagicbeauty.com,5,3,1,1,1,1,1,0,0,0,1,0,1,N/A,True,,2026-04-18T09:11:48.846961+00:00
+Milk Makeup,https://www.milkmakeup.com,6,3,2,1,1,1,1,0,1,0,1,1,0,N/A,True,,2026-04-18T09:12:09.280588+00:00
+About-Face Beauty,https://www.aboutface.com,3,2,1,0,1,1,0,0,0,0,1,0,0,N/A,True,,2026-04-18T09:12:42.310804+00:00
+Violette_FR,https://www.violetteschmidt.com,0,0,0,0,0,0,0,0,0,0,0,0,0,N/A,False,homepage fetch failed,2026-04-18T09:12:57.601992+00:00
+Briogeo,https://briogeohair.com,3,0,1,2,0,0,0,0,0,1,0,1,1,N/A,True,,2026-04-18T09:13:00.005852+00:00
+Vegamour,https://vegamour.com,4,3,0,1,1,1,1,0,0,0,0,1,0,N/A,True,,2026-04-18T09:13:14.212569+00:00
+Hairstory,https://www.hairstory.com,5,2,2,1,1,0,1,1,0,1,0,1,0,N/A,True,,2026-04-18T09:13:30.394705+00:00
+Innersense,https://innersensebeauty.com,3,2,1,0,1,0,1,0,0,0,1,0,0,N/A,True,,2026-04-18T09:13:54.473772+00:00
+Function of Beauty,https://www.functionofbeauty.com,3,2,0,1,1,1,0,0,0,0,0,0,1,N/A,True,,2026-04-18T09:14:17.909076+00:00
+Ceremonia,https://ceremonia.com,6,3,2,1,1,1,1,0,1,0,1,1,0,N/A,True,,2026-04-18T09:14:48.371770+00:00
+Adwoa Beauty,https://adwoabeauty.com,0,0,0,0,0,0,0,0,0,0,0,0,0,N/A,False,exception: can't compare offset-naive and offset-aware datetimes,2026-04-18T09:15:07.721607+00:00
+Phlur,https://www.phlur.com,6,2,3,1,1,1,0,1,1,0,1,1,0,N/A,True,,2026-04-18T09:15:09.727466+00:00
+D.S. & Durga,https://dsanddurga.com,2,2,0,0,1,1,0,0,0,0,0,0,0,N/A,True,,2026-04-18T09:15:31.064123+00:00
+Boy Smells,https://www.boysmells.com,5,2,2,1,1,1,0,1,0,0,1,1,0,N/A,True,,2026-04-18T09:15:43.413891+00:00
+Dedcool,https://dedcool.com,3,1,2,0,1,0,0,0,0,1,1,0,0,N/A,True,,2026-04-18T09:16:04.817122+00:00
+Nécessaire,https://necessaire.com,3,1,2,0,0,1,0,1,0,1,0,0,0,N/A,True,,2026-04-18T09:16:18.810470+00:00
+OSEA Malibu,https://oseamalibu.com,6,3,2,1,1,1,1,0,1,0,1,1,0,N/A,True,,2026-04-18T09:16:30.576099+00:00
+Humanrace,https://humanrace.com,4,2,1,1,1,1,0,1,0,0,0,1,0,N/A,True,,2026-04-18T09:16:42.516836+00:00
+Three Ships Beauty,https://threeshipsbeauty.com,3,2,1,0,1,0,1,0,0,0,1,0,0,N/A,True,,2026-04-18T09:17:00.875026+00:00
+Freck Beauty,https://freckbeauty.com,4,1,2,1,0,1,0,1,0,0,1,1,0,N/A,True,,2026-04-18T09:17:15.729625+00:00
+Hero Cosmetics,https://www.herocosmetics.us,6,3,3,0,1,1,1,1,1,0,1,0,0,N/A,True,,2026-04-18T09:17:34.363178+00:00
+Bubble Skincare,https://www.bubbleskincare.com,5,3,2,0,1,1,1,1,0,0,1,0,0,N/A,True,,2026-04-18T09:17:45.094639+00:00
+LYS Beauty,https://lysbeauty.com,4,2,2,0,1,1,0,0,1,0,1,0,0,N/A,True,,2026-04-18T09:18:00.534213+00:00
+Ami Colé,https://amicole.com,0,0,0,0,0,0,0,0,0,0,0,0,0,N/A,False,homepage fetch failed,2026-04-18T09:18:10.867317+00:00
+Pinch of Color,https://pinchofcolor.com,0,0,0,0,0,0,0,0,0,0,0,0,0,N/A,False,homepage fetch failed,2026-04-18T09:18:13.125633+00:00
+Moon Juice,https://moonjuice.com,3,3,0,0,1,1,1,0,0,0,0,0,0,N/A,True,,2026-04-18T09:18:15.255193+00:00
+The Nue Co,https://thenueco.com,2,2,0,0,1,1,0,0,0,0,0,0,0,N/A,True,,2026-04-18T09:18:32.145159+00:00
