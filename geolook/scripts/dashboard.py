@@ -237,9 +237,9 @@ def create_project(url: str, name: str, slug: str, market: str, max_pages: int) 
 
 
 # ---------------------------------------------------------------- 访问令牌
-# 看板默认只绑 127.0.0.1；要暴露到公网（GEOLOOK_HOST=0.0.0.0）必须设 GEOLOOK_TOKEN。
+# 看板默认只绑 127.0.0.1；要暴露到公网（GROUNDED_HOST=0.0.0.0）必须设 GROUNDED_TOKEN。
 # 浏览器首次带 ?token= 访问后种 HttpOnly cookie（存摘要不存原文），之后正常访问；
-# API 调用也可带 X-Geolook-Token 头。
+# API 调用也可带 X-Grounded-Token 头。
 
 AUTH_COOKIE = "glk_auth"
 
@@ -264,7 +264,7 @@ def auth_ok(token: str | None, cookie_header: str | None,
     return False
 
 
-_LOGIN_HTML = """<!doctype html><meta charset="utf-8"><title>GeoLook</title>
+_LOGIN_HTML = """<!doctype html><meta charset="utf-8"><title>Grounded</title>
 <body style="background:#131622;color:#e8eaf2;font-family:system-ui;display:flex;
 align-items:center;justify-content:center;height:100vh;margin:0">
 <form style="text-align:center" onsubmit="location='/?token='+encodeURIComponent(
@@ -301,12 +301,12 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return False
         if auth_ok(Handler.TOKEN, self.headers.get("Cookie"),
-                   header_token=self.headers.get("X-Geolook-Token")):
+                   header_token=self.headers.get("X-Grounded-Token")):
             return True
         if self.command == "GET":
             self._send(401, _LOGIN_HTML.encode("utf-8"), "text/html; charset=utf-8")
         else:
-            self._json({"error": "未授权：需要 X-Geolook-Token 头或先在浏览器登录"}, 401)
+            self._json({"error": "未授权：需要 X-Grounded-Token 头或先在浏览器登录"}, 401)
         return False
 
     def _send(self, code, body: bytes, ctype="application/json; charset=utf-8"):
@@ -786,11 +786,11 @@ def _port_taken(host: str, port: int) -> bool:
 
 def run(port: int = 8765, open_browser: bool = True,
         host: str | None = None, token: str | None = None):
-    host = host or os.environ.get("GEOLOOK_HOST") or "127.0.0.1"
-    token = token or os.environ.get("GEOLOOK_TOKEN") or None
+    host = host or os.environ.get("GROUNDED_HOST") or "127.0.0.1"
+    token = token or os.environ.get("GROUNDED_TOKEN") or None
     if host not in ("127.0.0.1", "localhost") and not token:
         G.die(f"绑定到 {host} 会把看板暴露给网络上的所有人。"
-              "先设置访问令牌再启动：export GEOLOOK_TOKEN=$(openssl rand -hex 16)")
+              "先设置访问令牌再启动：export GROUNDED_TOKEN=$(openssl rand -hex 16)")
     # 先探一次：端口被占时宁可拒绝启动，也不要「启动成功」却把请求让给别人的服务
     if _port_taken(host, port):
         G.die(f"端口 {port} 已被占用（可能是另一个看板或别的应用）。"
@@ -801,7 +801,7 @@ def run(port: int = 8765, open_browser: bool = True,
     srv = _Server((host, port), Handler)
     url = f"http://{'127.0.0.1' if host == '0.0.0.0' else host}:{port}/"
     G.info(f"看板已启动：{url}（Ctrl+C 退出）"
-           + ("，访问需令牌（GEOLOOK_TOKEN）" if token else ""))
+           + ("，访问需令牌（GROUNDED_TOKEN）" if token else ""))
     if open_browser:
         threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try:

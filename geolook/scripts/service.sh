@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# GeoLook 看板常驻服务（macOS LaunchAgent）
+# Grounded 看板常驻服务（macOS LaunchAgent）
 #
 #   ./service.sh install     注册并启动：登录自启、崩溃自动拉起、不随终端/Claude 退出
 #   ./service.sh uninstall   停止并移除
@@ -12,10 +12,10 @@
 
 set -euo pipefail
 
-LABEL="cc.geolook.dashboard"
+LABEL="cc.grounded.dashboard"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
-LOG="$HOME/Library/Logs/geolook-dashboard.log"
+LOG="$HOME/Library/Logs/grounded-dashboard.log"
 PY="$(command -v python3)"
 UID_N="$(id -u)"
 

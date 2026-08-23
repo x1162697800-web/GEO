@@ -1,10 +1,10 @@
-// GeoLook 采样助手 · 页面侧
+// Grounded 采样助手 · 页面侧
 // 只做两件事：① 提取已渲染的答案与引用（读，不写）② 把问题填进输入框（不代发）。
 // 没有任何自动提交、自动翻页、定时任务。
 
 (() => {
-  if (window.__geolookCollector) return;
-  window.__geolookCollector = true;
+  if (window.__groundedCollector) return;
+  window.__groundedCollector = true;
 
   const HOST = location.hostname.replace(/^www\./, "");
 
@@ -198,11 +198,11 @@
 
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (!msg) return false;
-    if (msg.type === "geolook-extract") sendResponse({ host: HOST, url: location.href, ...extract() });
-    else if (msg.type === "geolook-fill") sendResponse(fill(String(msg.text || "")));
-    else if (msg.type === "geolook-submit") { watch = null; sendResponse(submit(String(msg.text || ""))); }
-    else if (msg.type === "geolook-status") sendResponse(status(msg.stableMs));
-    else if (msg.type === "geolook-newchat") sendResponse({ ok: true, url: NEWCHAT[HOST] || "" });
+    if (msg.type === "grounded-extract") sendResponse({ host: HOST, url: location.href, ...extract() });
+    else if (msg.type === "grounded-fill") sendResponse(fill(String(msg.text || "")));
+    else if (msg.type === "grounded-submit") { watch = null; sendResponse(submit(String(msg.text || ""))); }
+    else if (msg.type === "grounded-status") sendResponse(status(msg.stableMs));
+    else if (msg.type === "grounded-newchat") sendResponse({ ok: true, url: NEWCHAT[HOST] || "" });
     return false;
   });
 })();

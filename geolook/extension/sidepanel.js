@@ -1,4 +1,4 @@
-// GeoLook 采样助手 · 侧边栏
+// Grounded 采样助手 · 侧边栏
 // 流程：载入队列 → 选题 → 填入问题(人按回车) → 答案生成完 → 提取 → 保存 → 上传/导出。
 
 const $ = (s) => document.querySelector(s);
@@ -175,14 +175,14 @@ $("#copy").onclick = async () => {
 
 $("#fill").onclick = async () => {
   if (!SEL) return;
-  const r = await sendToTab({ type: "geolook-fill", text: SEL.text });
+  const r = await sendToTab({ type: "grounded-fill", text: SEL.text });
   if (!r.ok) { await navigator.clipboard.writeText(SEL.text); }
   $("#exmeta").textContent = r.ok ? "已填入输入框——检查后自己按回车" : (r.error || "填入失败，已复制到剪贴板");
 };
 
 $("#extract").onclick = async () => {
   if (!SEL) { $("#exmeta").textContent = "先选一道题"; return; }
-  const r = await sendToTab({ type: "geolook-extract" });
+  const r = await sendToTab({ type: "grounded-extract" });
   if (!r.ok) { $("#exmeta").textContent = r.error || "提取失败"; $("#save").disabled = true; return; }
   LAST = r;
   $("#preview").hidden = false;
@@ -228,7 +228,7 @@ async function waitAnswer(tabId, timeoutMs) {
     if (!RUN) return { state: "aborted" };
     await sleep(1500);
     let s;
-    try { s = await chrome.tabs.sendMessage(tabId, { type: "geolook-status", stableMs: 2500 }); }
+    try { s = await chrome.tabs.sendMessage(tabId, { type: "grounded-status", stableMs: 2500 }); }
     catch (e) { continue; }              // 导航中，重试
     if (!s) continue;
     if (s.state === "blocked") return s;
@@ -260,13 +260,13 @@ async function autoRun() {
     RUN.i++;
     // 每题新开会话：连续追问会让上文污染后面的答案
     try {
-      const nc = await chrome.tabs.sendMessage(RUN.tabId, { type: "geolook-newchat" });
+      const nc = await chrome.tabs.sendMessage(RUN.tabId, { type: "grounded-newchat" });
       if (nc && nc.url) { await chrome.tabs.update(RUN.tabId, { url: nc.url }); await sleep(3500); }
     } catch (e) { /* 站点不在映射表，就地继续 */ }
     if (!RUN) break;
 
     let sent;
-    try { sent = await chrome.tabs.sendMessage(RUN.tabId, { type: "geolook-submit", text: q.text }); }
+    try { sent = await chrome.tabs.sendMessage(RUN.tabId, { type: "grounded-submit", text: q.text }); }
     catch (e) { sent = { ok: false, error: "页面无采样脚本" }; }
     if (!sent || !sent.ok) {
       RUN.fails++; alog(`[${RUN.i}/${RUN.total}] ${q.id} 提交失败：${(sent && sent.error) || "未知"}`);
@@ -281,7 +281,7 @@ async function autoRun() {
     if (st.state !== "done") { RUN.fails++; alog(`[${RUN.i}] 超时未拿到答案`); if (RUN.fails >= 2) break; continue; }
 
     let ex;
-    try { ex = await chrome.tabs.sendMessage(RUN.tabId, { type: "geolook-extract" }); }
+    try { ex = await chrome.tabs.sendMessage(RUN.tabId, { type: "grounded-extract" }); }
     catch (e) { ex = { ok: false, error: "提取失败" }; }
     if (!ex || !ex.ok) { RUN.fails++; alog(`[${RUN.i}] ${ex && ex.error}`); if (RUN.fails >= 2) break; continue; }
 
@@ -300,7 +300,7 @@ async function autoRun() {
   const finished = RUN ? RUN.i : 0;
   RUN = null;
   $("#auto").hidden = false; $("#abort").hidden = true;
-  alog(`结束：本轮 ${finished} 题，已采集 ${SAMPLES.length} 条。检查无误后点「上传到 GeoLook」。`, "okline");
+  alog(`结束：本轮 ${finished} 题，已采集 ${SAMPLES.length} 条。检查无误后点「上传到 Grounded」。`, "okline");
 }
 
 $("#auto").onclick = autoRun;
@@ -336,7 +336,7 @@ $("#export").onclick = () => {
   }
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown" }));
-  a.download = `geolook-samples-${Date.now()}.md`;
+  a.download = `grounded-samples-${Date.now()}.md`;
   a.click();
 };
 

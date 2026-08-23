@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GeoLook · 生成式引擎优化平台</title>
+<title>Grounded · 生成式引擎优化平台</title>
 <style>
 /* Nocturne 设计系统令牌（取自设计稿 styles.css，暗色单主题） */
 :root{
@@ -197,14 +197,12 @@ function head(kicker,title,sub){return `<div class="kicker">${esc(kicker)}</div>
 /* ===================== 界面多语言(zh/en/ja) =====================
    中文是源文案。en/ja 用「整句精确匹配 + 短节点词级替换」在渲染后翻译 DOM,
    字典未覆盖的保持中文(优雅降级);项目数据(问题库/工单/阵地文案)跟随数据语言,不翻。*/
-const ULANG=(()=>{
-  const q=new URLSearchParams(location.search).get('lang');
-  if(['zh','en','ja'].indexOf(q)>=0){try{localStorage.setItem('ulang',q)}catch(e){}return q}
-  const s=localStorage.getItem('ulang');if(['zh','en','ja'].indexOf(s)>=0)return s;
-  const l=(navigator.language||'').toLowerCase();
-  return l.indexOf('zh')===0?'zh':l.indexOf('ja')===0?'ja':'en'})();
-document.documentElement.lang={zh:'zh-CN',en:'en',ja:'ja'}[ULANG]||'zh-CN';
-function setLang(l){localStorage.setItem('ulang',l);location.reload()}
+// 英文是唯一语言。翻译覆盖层暂时保留——后端仍然产出中文
+// （audit.py 的体检问题、tasks.py 的工单文案、analytics 的指标标签都要经过它），
+// 现在就删掉会让这些串退回原始中文，比现状更差。
+// 后端源串英文化之后，UI_D / UI_SUB / UI_RX 与 uiTranslate 一并删除。
+const ULANG='en';
+document.documentElement.lang='en';
 const UI_D={en:{
 '生成式引擎优化平台':'Generative Engine Optimization','当前品牌':'CURRENT BRAND','切换 ▾':'Switch ▾',
 '现状 · 我在 AI 里什么样':'STATUS · HOW AI SEES ME','总览':'Overview','引擎表现':'Engines','竞品对比':'Competitors','问题库':'Questions',
@@ -512,7 +510,7 @@ Object.assign(UI_D.en,{
 '装进 agent · 不上传网站':'Install into an agent · not on the site',
 '放进 Claude / Codex / Cursor 的 skills 目录。它只写已确认的事实，权威来源指回 llms.txt——改完品牌事实要重新生成':'Drop it into the skills directory of Claude / Codex / Cursor. It carries only confirmed facts and points back at llms.txt as the live source — regenerate after editing brand facts',
 '重新生成 llms.txt、结构化数据与 SKILL.md':'Regenerate llms.txt, structured data & SKILL.md',
-'在 AI 助手里驱动 GeoLook（MCP）':'Drive GeoLook from an AI assistant (MCP)','8 个工具':'8 tools',
+'在 AI 助手里驱动 Grounded（MCP）':'Drive Grounded from an AI assistant (MCP)','8 个工具':'8 tools',
 '把下面这段加进 Claude Desktop / Cursor / Codex 的 MCP 配置，就能直接对助手说「看看这个项目的体检结果」「列出 P0 工单」。手写 stdio JSON-RPC，没有新依赖。':'Add the block below to the MCP config of Claude Desktop / Cursor / Codex, then just ask the assistant to show this project\'s audit or list the P0 tickets. Hand-written stdio JSON-RPC — no new dependencies.',
 '发布类操作不暴露':'Publishing is never exposed',
 '——发布永远是你手动点击；抓取也不暴露，避免 agent 驱动的第三方网络请求。两个写工具（重跑体检、生成资产）只碰本项目数据，都不联网。':' — publishing stays your manual click. Crawling is not exposed either, to avoid agent-driven requests to third-party sites. The two write tools (re-run audit, generate assets) only touch this project\'s data and never reach the network.',
@@ -570,7 +568,7 @@ Object.assign(UI_D.ja,{
 '装进 agent · 不上传网站':'agent へ導入 · サイトには置かない',
 '放进 Claude / Codex / Cursor 的 skills 目录。它只写已确认的事实，权威来源指回 llms.txt——改完品牌事实要重新生成':'Claude / Codex / Cursor の skills ディレクトリへ配置。確認済みファクトのみを記載し、正典は llms.txt を参照——ブランドファクトを編集したら再生成すること',
 '重新生成 llms.txt、结构化数据与 SKILL.md':'llms.txt・構造化データ・SKILL.md を再生成',
-'在 AI 助手里驱动 GeoLook（MCP）':'AI アシスタントから GeoLook を操作（MCP）','8 个工具':'8 ツール',
+'在 AI 助手里驱动 Grounded（MCP）':'AI アシスタントから Grounded を操作（MCP）','8 个工具':'8 ツール',
 '把下面这段加进 Claude Desktop / Cursor / Codex 的 MCP 配置，就能直接对助手说「看看这个项目的体检结果」「列出 P0 工单」。手写 stdio JSON-RPC，没有新依赖。':'以下を Claude Desktop / Cursor / Codex の MCP 設定に追加すれば、「このプロジェクトの監査結果を見せて」「P0 チケットを一覧して」と話しかけるだけで動く。stdio JSON-RPC を自前実装、依存追加なし。',
 '发布类操作不暴露':'公開系の操作は非公開',
 '——发布永远是你手动点击；抓取也不暴露，避免 agent 驱动的第三方网络请求。两个写工具（重跑体检、生成资产）只碰本项目数据，都不联网。':'——公開は常に手動クリック。クロールも非公開で、agent 由来の第三者サイトへのリクエストを避ける。書き込み系 2 つ（監査再実行・資産生成）は本プロジェクトのデータのみを触り、ネットワークには出ない。',
@@ -1042,8 +1040,8 @@ function uiTranslate(root){
 new MutationObserver(ms=>{if(ULANG==='zh')return;
   for(const m of ms)m.addedNodes.forEach(n=>uiTranslate(n))
 }).observe(document.body,{childList:true,subtree:true});
-if(ULANG==='en')document.title='GeoLook · Generative Engine Optimization Platform';
-if(ULANG==='ja')document.title='GeoLook · 生成エンジン最適化プラットフォーム';
+if(ULANG==='en')document.title='Grounded · Generative Engine Optimization Platform';
+if(ULANG==='ja')document.title='Grounded · 生成エンジン最適化プラットフォーム';
 
 /* ===================== 导航 ===================== */
 const NAV=[
@@ -2483,11 +2481,11 @@ async function vSettings(){
       <button class="btn btn-ghost" style="font-size:12.5px;color:var(--a300)" onclick="go('publishing')">打开发布渠道</button></div>
     <div class="card elev" style="margin-top:16px;padding:14px 16px;gap:8px">
       <div class="row" style="align-items:baseline">
-        <b style="font-size:13.5px;flex:1">在 AI 助手里驱动 GeoLook（MCP）</b>
+        <b style="font-size:13.5px;flex:1">在 AI 助手里驱动 Grounded（MCP）</b>
         <span class="tag tag-dim" style="flex:none">8 个工具</span></div>
       <!-- 长文案必须写成单行：uiTranslate 只 trim 首尾，节点内部有换行就匹配不上字典键 -->
       <div class="muted" style="font-size:12px;line-height:1.6">把下面这段加进 Claude Desktop / Cursor / Codex 的 MCP 配置，就能直接对助手说「看看这个项目的体检结果」「列出 P0 工单」。手写 stdio JSON-RPC，没有新依赖。</div>
-      <pre class="log" style="max-height:none;font-size:11.5px;margin:2px 0 0">${esc(JSON.stringify({mcpServers:{geolook:{command:"python3",args:[(D.mcp_server_path||"scripts/mcp_server.py")]}}},null,2))}</pre>
+      <pre class="log" style="max-height:none;font-size:11.5px;margin:2px 0 0">${esc(JSON.stringify({mcpServers:{grounded:{command:"python3",args:[(D.mcp_server_path||"scripts/mcp_server.py")]}}},null,2))}</pre>
       <div class="muted" style="font-size:11.5px;line-height:1.6"><b>发布类操作不暴露</b>——发布永远是你手动点击；抓取也不暴露，避免 agent 驱动的第三方网络请求。两个写工具（重跑体检、生成资产）只碰本项目数据，都不联网。</div>
     </div>
     <p class="muted" style="font-size:12px;margin-top:16px">团队与权限：单机自托管版，无账号体系；服务只绑定 127.0.0.1。多人使用需自行加反向代理与认证。</p>

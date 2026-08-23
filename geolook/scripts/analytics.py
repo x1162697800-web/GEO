@@ -157,7 +157,7 @@ def engines(slug: str, rows_latest, metrics: dict | None) -> list[dict]:
         if ex:
             ans = ex.get("answer", "")
             # 提及判定是大小写不敏感 + 含别名的，摘录定位也得是，否则
-            # 答案里写 "geolook" 时摘录会错切到开头、brand_pos 变 -1
+            # 答案里写 "grounded" 时摘录会错切到开头、brand_pos 变 -1
             names = [cfg["brand"]["name"]] + list(cfg["brand"].get("aliases", []) or [])
             hits = [ans.lower().find(n.lower()) for n in names if n]
             i = min((h for h in hits if h >= 0), default=-1)

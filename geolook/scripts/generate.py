@@ -463,7 +463,7 @@ def _confirmed(text: str) -> bool:
 def gen_skill_md(slug: str, lang: str = "zh") -> str:
     """把品牌事实编译成一个 Agent Skill，可装进 Claude / Codex / Cursor 等。
 
-    与仓库自带的 SKILL.md 不是一回事：那个描述 geolook 这个工具，这个描述
+    与仓库自带的 SKILL.md 不是一回事：那个描述 grounded 这个工具，这个描述
     **被审计的品牌**，是和 llms.txt / JSON-LD 并列的部署资产。
 
     两条纪律：
@@ -493,7 +493,7 @@ def gen_skill_md(slug: str, lang: str = "zh") -> str:
             f"how it compares, or when describing it in the brand's own terms.")
 
     # 单行双引号标量，不用 >- 折叠：折叠标量拼行时会插入空格，
-    # 中文和「GeoLook · Open」这类含空格的名字会被从中间撑开。
+    # 中文和「Grounded · Open」这类含空格的名字会被从中间撑开。
     # JSON 字符串是合法的 YAML 双引号标量，转义直接交给 json.dumps。
     L = ["---", f"name: {slug}",
          f"description: {json.dumps(desc, ensure_ascii=False)}",

@@ -1,6 +1,6 @@
 <div align="center">
 
-# Geo**Look**
+# Grounded**
 
 **Open-source, self-hosted platform for end-to-end GEO implementation**
 
@@ -10,7 +10,7 @@ English · [简体中文](README.zh-CN.md) · [日本語](README.ja.md)
 
 ![License](https://img.shields.io/badge/license-MIT-9184d9) ![Python](https://img.shields.io/badge/python-3.9%2B-9184d9) ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-9184d9) ![Deps](https://img.shields.io/badge/deps-requests%20·%20bs4%20·%20lxml-9184d9)
 
-<a href="https://www.producthunt.com/products/geolook?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-geolook" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1211264&theme=dark&t=1786200566986" alt="GeoLook - Open-source, self-hosted platform for end-to-end GEO | Product Hunt" width="250" height="54" /></a>
+<a href="https://www.producthunt.com/products/geolook?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-geolook" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1211264&theme=dark&t=1786200566986" alt="Grounded - Open-source, self-hosted platform for end-to-end GEO | Product Hunt" width="250" height="54" /></a>
 
 ![Product demo](docs/demo.en.gif)
 
@@ -26,7 +26,7 @@ English · [简体中文](README.zh-CN.md) · [日本語](README.ja.md)
 
 More and more users ask AI directly — "best tools for X", "X vs Y, which one". If your brand:
 
-| Problem | What GeoLook gives you |
+| Problem | What Grounded gives you |
 |---|---|
 | **AI never mentions you** — you're not in the candidate set for category questions | Samples real answers engine by engine; quantifies mention rate / rank / citation share; diagnoses "absent" vs "competitor-dominated" |
 | **You don't know why** — AI is a black box | 6-dimension site audit + gap diagnosis: uncrawlable pages? missing extraction blocks? absent from the channels AI actually cites? inconsistent messaging? |
@@ -64,11 +64,11 @@ Four stages plus operations, all in one self-hosted dashboard:
 
 ## 3. How it differs
 
-Two very different kinds of product get compared to GeoLook, and the answer is different for each.
+Two very different kinds of product get compared to Grounded, and the answer is different for each.
 
 ### One brand-facts library, compiled to every rail AI reads
 
-Everything you maintain is a single brand-facts file. GeoLook compiles it into **six deploy targets**, so the same approved wording lands everywhere without being retyped:
+Everything you maintain is a single brand-facts file. Grounded compiles it into **six deploy targets**, so the same approved wording lands everywhere without being retyped:
 
 | Target | Where it goes |
 |---|---|
@@ -79,13 +79,13 @@ Everything you maintain is a single brand-facts file. GeoLook compiles it into *
 | Attribution pack | GA4 channel group, log script, source-snapshot guidance |
 | **`SKILL.md`** | **into an agent** — Claude / Codex / Cursor, so assistants describe you in your own approved wording |
 
-The last one is the part nobody else ships. GeoLook also **runs as an MCP server** (8 tools, hand-written stdio JSON-RPC, no new dependencies), so any MCP client can drive it conversationally. Edit the facts once and every target regenerates together.
+The last one is the part nobody else ships. Grounded also **runs as an MCP server** (8 tools, hand-written stdio JSON-RPC, no new dependencies), so any MCP client can drive it conversationally. Edit the facts once and every target regenerates together.
 
 ### vs. GEO monitoring SaaS
 
-Most GEO products show mention rates and rankings, charge monthly, and keep your data in their cloud. GeoLook is an **implementation platform**:
+Most GEO products show mention rates and rankings, charge monthly, and keep your data in their cloud. Grounded is an **implementation platform**:
 
-| | Typical GEO monitoring SaaS | GeoLook |
+| | Typical GEO monitoring SaaS | Grounded |
 |---|---|---|
 | **Loop depth** | Monitor + advise | Monitor → diagnose → **tickets → assets → auto-verify → deliver** |
 | **Output** | A dashboard to read | Six compile targets from one facts library, plus an MCP server |
@@ -100,13 +100,13 @@ Most GEO products show mention rates and rankings, charge monthly, and keep your
 
 ### vs. agentic commerce backends
 
-A newer category puts your **product catalog** on an agent-readable shelf and takes a commission when an AI shopping agent sells something. Where you have SKUs, that is a real sales channel — and it is not what GeoLook does.
+A newer category puts your **product catalog** on an agent-readable shelf and takes a commission when an AI shopping agent sells something. Where you have SKUs, that is a real sales channel — and it is not what Grounded does.
 
 The two answer different questions, and only one of them applies to most sites:
 
 - **They need SKUs.** B2B, SaaS, professional services, local services and media have no catalog to put on a shelf. That is where most GEO demand actually is, and a commission-on-sales model has nothing to price there.
-- **They start after you are shortlisted.** Getting recommended in the first place is an upstream problem — whether your pages are reachable, parseable, and worth quoting. That is the problem GeoLook measures and fixes.
-- **Where you do have SKUs, they compose.** Let a commerce backend own the transaction rail; use GeoLook to find out whether assistants mention you at all, and to fix the reasons they do not.
+- **They start after you are shortlisted.** Getting recommended in the first place is an upstream problem — whether your pages are reachable, parseable, and worth quoting. That is the problem Grounded measures and fixes.
+- **Where you do have SKUs, they compose.** Let a commerce backend own the transaction rail; use Grounded to find out whether assistants mention you at all, and to fix the reasons they do not.
 
 Honest limits: single-machine tool, no accounts or team collaboration; sampling frequency and volume depend on your own API budget; "suspected negative" flags are leads for human review, not verdicts. These are deliberate design choices.
 
@@ -133,7 +133,7 @@ Two things differ on Windows:
 ```bash
 # 1. Clone and install
 git clone https://github.com/aigclink/geolook.git
-cd geolook
+cd grounded
 pip3 install requests beautifulsoup4 lxml
 
 # 2. Start the dashboard (opens your browser)
@@ -157,11 +157,11 @@ The server binds to `127.0.0.1` by default. Two ways to access it remotely:
 ssh -N -L 8765:127.0.0.1:8765 user@your-server   # then open http://127.0.0.1:8765 locally
 
 # Option B: public bind + access token (both required — refuses to start without a token)
-export GEOLOOK_TOKEN=$(openssl rand -hex 16)
-export GEOLOOK_HOST=0.0.0.0
+export GROUNDED_TOKEN=$(openssl rand -hex 16)
+export GROUNDED_HOST=0.0.0.0
 python3 scripts/geo.py ui
 # Enter the token on first visit (or open http://server:8765/?token=TOKEN);
-# afterwards access is via HttpOnly cookie. API calls: X-Geolook-Token header.
+# afterwards access is via HttpOnly cookie. API calls: X-Grounded-Token header.
 ```
 
 For public deployments put an HTTPS reverse proxy (nginx/caddy) in front — a token over plain HTTP can be intercepted. `.env` and `work/` contain secrets and project data — mind file permissions.
@@ -234,7 +234,7 @@ Every command has `--help`.
 
 **Q: AI answers differ every time — how can sampling results be stable?**
 
-A single AI answer is inherently stochastic, so GeoLook **never reads a single answer** as a metric. Stability comes from four layers:
+A single AI answer is inherently stochastic, so Grounded **never reads a single answer** as a metric. Stability comes from four layers:
 
 1. **Aggregation** — mention rate and friends are ratios over dozens of questions × multiple engines; per-question jitter averages out.
 2. **Fixed variables** — each engine's sampling model is pinned (visible and changeable in Settings), the question bank is fixed, and the same set is reused across rounds; the only thing that changes is time.
@@ -264,14 +264,14 @@ All six audit dimensions are anchored in public empirical data; `scripts/audit.p
 
 **As a Claude Code skill** — this repo doubles as one ([SKILL.md](SKILL.md)): drop it into your skills directory and tell Claude "do GEO for example.com".
 
-**As an MCP server** — any MCP client (Claude Desktop, Cursor, Codex) can drive GeoLook directly:
+**As an MCP server** — any MCP client (Claude Desktop, Cursor, Codex) can drive Grounded directly:
 
 ```json
 {
   "mcpServers": {
-    "geolook": {
+    "grounded": {
       "command": "python3",
-      "args": ["/absolute/path/to/geolook/scripts/mcp_server.py"]
+      "args": ["/absolute/path/to/grounded/scripts/mcp_server.py"]
     }
   }
 }

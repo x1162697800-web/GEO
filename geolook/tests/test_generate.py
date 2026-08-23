@@ -14,7 +14,7 @@ FACTS_FULL = """# 品牌事实卡
 
 ## 一句话定义
 
-> GeoLook 是一个自托管的生成式引擎优化实施平台。
+> Grounded 是一个自托管的生成式引擎优化实施平台。
 
 ## 关键数字
 
@@ -44,8 +44,8 @@ FACTS_EMPTY = """# 品牌事实卡
 def _project(root, slug="x", market="both", facts=FACTS_FULL, site="https://x.com"):
     pdir = Path(root) / slug
     (pdir / "content").mkdir(parents=True)
-    cfg = {"brand": {"name": "GeoLook · Open", "site": site,
-                     "aliases": ["GeoLook", "geolook"], "industry": "GEO 工具",
+    cfg = {"brand": {"name": "Grounded · Open", "site": site,
+                     "aliases": ["Grounded", "grounded"], "industry": "GEO 工具",
                      "target_users": "待确认",
                      "disambiguation": ["GEO 指生成式引擎优化，不是地理信息"]},
            "market": market, "questions": []}
@@ -58,12 +58,12 @@ def _project(root, slug="x", market="both", facts=FACTS_FULL, site="https://x.co
 
 class TestBrandSkill(unittest.TestCase):
     """品牌 SKILL.md：和 llms.txt / JSON-LD 并列的部署资产，描述的是被审计的品牌，
-    不是 geolook 这个工具。两条纪律：只写已确认的事实、指向线上上下文。"""
+    不是 grounded 这个工具。两条纪律：只写已确认的事实、指向线上上下文。"""
 
     def test_frontmatter_is_single_line_and_parseable(self):
         """description 必须是单行双引号标量。
 
-        用 >- 折叠标量时 YAML 拼行会插入空格，含空格的品牌名（GeoLook · Open）
+        用 >- 折叠标量时 YAML 拼行会插入空格，含空格的品牌名（Grounded · Open）
         和中文都会被从中间撑开。
         """
         with tempfile.TemporaryDirectory() as td:
@@ -76,7 +76,7 @@ class TestBrandSkill(unittest.TestCase):
         self.assertTrue(lines[2].startswith("description: \""))
         self.assertEqual(lines[3], "---", "frontmatter 必须正好 4 行，description 不许折行")
         desc = json.loads(lines[2][len("description: "):])
-        self.assertIn("GeoLook · Open", desc, "品牌名不能被折行撑开")
+        self.assertIn("Grounded · Open", desc, "品牌名不能被折行撑开")
 
     def test_unconfirmed_facts_are_dropped(self):
         """标「待确认」的事实一律不进——agent 会把这个文件当权威口径直接引用。"""
@@ -105,7 +105,7 @@ class TestBrandSkill(unittest.TestCase):
             with mock.patch.object(G, "WORK", Path(td)):
                 _project(td)
                 desc = json.loads(GEN.gen_skill_md("x", "zh").split("\n")[2][len("description: "):])
-        for name in ("GeoLook · Open", "GeoLook", "geolook"):
+        for name in ("Grounded · Open", "Grounded", "grounded"):
             self.assertIn(name, desc)
 
     def test_empty_facts_yields_placeholder_not_fabrication(self):

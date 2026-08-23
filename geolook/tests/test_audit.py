@@ -66,7 +66,7 @@ class TestHowto(unittest.TestCase):
 
 class TestJapaneseBlocks(unittest.TestCase):
     def test_ja_definition_detected(self):
-        text = "GeoLookとは、生成エンジン最適化のための診断ツールです。" * 5
+        text = "Groundedとは、生成エンジン最適化のための診断ツールです。" * 5
         r = A.score_page(make_page(text=text), [])
         self.assertTrue(r["blocks"]["定义"])
 

@@ -1,7 +1,7 @@
-"""把 geolook 暴露成 MCP 工具，让任意 MCP 客户端（Claude Desktop / Cursor /
+"""把 grounded 暴露成 MCP 工具，让任意 MCP 客户端（Claude Desktop / Cursor /
 Codex）能直接调用，而不必先学 CLI。
 
-协议层在 mcp_proto.py，本模块只管工具定义与 geolook 接线——规范变动时换协议层
+协议层在 mcp_proto.py，本模块只管工具定义与 grounded 接线——规范变动时换协议层
 不用动这里。
 
 安全边界（都是有意的，别顺手放宽）：
@@ -254,7 +254,7 @@ TOOLS = [
 
 
 def main():
-    serve("geolook", VERSION, TOOLS)
+    serve("grounded", VERSION, TOOLS)
 
 
 if __name__ == "__main__":

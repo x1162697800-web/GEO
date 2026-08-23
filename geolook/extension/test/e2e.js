@@ -14,14 +14,14 @@ const ok = (c, m) => console.log((c ? "  ✓ " : "  ✗ ") + m);
 
 (async () => {
   // 1. 复制扩展并把 fixture 域名加进 matches（只影响测试副本，不改仓库代码）
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "geolook-ext-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "grounded-ext-"));
   for (const f of ["manifest.json", "background.js", "content.js", "sidepanel.html", "sidepanel.js"])
     fs.copyFileSync(path.join(SRC, f), path.join(dir, f));
   const mf = JSON.parse(fs.readFileSync(path.join(dir, "manifest.json"), "utf8"));
   mf.content_scripts[0].matches.push("http://localhost:8614/*");
   fs.writeFileSync(path.join(dir, "manifest.json"), JSON.stringify(mf, null, 2));
 
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), "geolook-sandbox-"));
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), "grounded-sandbox-"));
   const ctx = await chromium.launchPersistentContext(profile, {
     executablePath: CFT, headless: false,
     args: [`--load-extension=${dir}`, `--disable-extensions-except=${dir}`,
@@ -44,7 +44,7 @@ const ok = (c, m) => console.log((c ? "  ✓ " : "  ✗ ") + m);
   const pong = await sw.evaluate(async () => {
     const tabs = await chrome.tabs.query({ url: "http://localhost:8614/*" });
     if (!tabs.length) return { err: "没找到目标标签页" };
-    try { return await chrome.tabs.sendMessage(tabs[0].id, { type: "geolook-status", stableMs: 100 }); }
+    try { return await chrome.tabs.sendMessage(tabs[0].id, { type: "grounded-status", stableMs: 100 }); }
     catch (e) { return { err: String(e) }; }
   });
   ok(pong && pong.state, `打开引擎页面后 content script 自动注入并响应消息（state=${pong && (pong.state || pong.err)}）`);

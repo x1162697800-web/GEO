@@ -17,7 +17,7 @@ def _drive(lines: list[dict]) -> list[dict]:
     stdin = io.StringIO("\n".join(json.dumps(m) for m in lines) + "\n")
     out = io.StringIO()
     with mock.patch.object(sys, "stdout", out):
-        P.serve("geolook", "test", S.TOOLS, stream=stdin)
+        P.serve("grounded", "test", S.TOOLS, stream=stdin)
     return [json.loads(l) for l in out.getvalue().splitlines() if l.strip()]
 
 
@@ -55,7 +55,7 @@ class TestProtocol(unittest.TestCase):
         self.assertEqual(r["id"], 1)
         self.assertEqual(r["result"]["protocolVersion"], "2024-11-05")
         self.assertIn("tools", r["result"]["capabilities"])
-        self.assertEqual(r["result"]["serverInfo"]["name"], "geolook")
+        self.assertEqual(r["result"]["serverInfo"]["name"], "grounded")
 
     def test_unknown_protocol_version_falls_back_to_ours(self):
         r = _drive([_req(1, "initialize", {"protocolVersion": "1999-01-01"})])[0]
@@ -79,7 +79,7 @@ class TestProtocol(unittest.TestCase):
         stdin = io.StringIO("not json\n" + json.dumps(_req(3, "tools/list")) + "\n")
         out = io.StringIO()
         with mock.patch.object(sys, "stdout", out):
-            P.serve("geolook", "test", S.TOOLS, stream=stdin)
+            P.serve("grounded", "test", S.TOOLS, stream=stdin)
         got = [json.loads(l) for l in out.getvalue().splitlines() if l.strip()]
         self.assertEqual(got[0]["error"]["code"], P.PARSE_ERROR)
         self.assertEqual(got[1]["id"], 3)  # 后一条仍被正常处理
@@ -108,7 +108,7 @@ class TestProtocol(unittest.TestCase):
                                             {"name": "boom", "arguments": {}})) + "\n")
         out = io.StringIO()
         with mock.patch.object(sys, "stdout", out):
-            P.serve("geolook", "test", [boom], stream=stdin)
+            P.serve("grounded", "test", [boom], stream=stdin)
         r = json.loads(out.getvalue().strip())
         self.assertTrue(r["result"]["isError"])
         self.assertIn("模拟 die", r["result"]["content"][0]["text"])

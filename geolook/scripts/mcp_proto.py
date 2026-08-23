@@ -1,4 +1,4 @@
-"""MCP 协议层：stdio 上的 JSON-RPC 2.0。不含任何 geolook 业务知识。
+"""MCP 协议层：stdio 上的 JSON-RPC 2.0。不含任何 grounded 业务知识。
 
 手写而不是用官方 SDK：SDK 会带进 pydantic / anyio / httpx 一串传递依赖，
 破坏 README 里「恰好三个第三方包」这个定位。协议面很窄——initialize 握手、

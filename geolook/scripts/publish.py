@@ -277,7 +277,7 @@ def _pub_reddit(cfg, text, title, fname):
     sub = (cfg.get("subreddit") or "").strip().removeprefix("r/")
     if not sub:
         return {"ok": False, "error": "先在设置里配置 subreddit"}
-    ua = "geolook-publisher/0.1 by " + os.environ["REDDIT_USERNAME"]
+    ua = "grounded-publisher/0.1 by " + os.environ["REDDIT_USERNAME"]
     tok = requests.post(
         "https://www.reddit.com/api/v1/access_token",
         auth=(os.environ["REDDIT_CLIENT_ID"], os.environ["REDDIT_CLIENT_SECRET"]),
