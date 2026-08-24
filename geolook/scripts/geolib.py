@@ -33,11 +33,16 @@ WORK = ROOT / "work"
 
 
 def load_env(path: Path | None = None):
-    """读项目根目录的 .env（已 gitignore）。已存在的环境变量优先，不覆盖。"""
+    """读项目根目录的 .env（已 gitignore）。已存在的环境变量优先，不覆盖。
+
+    用 utf-8-sig 而不是 utf-8：Windows 上 PowerShell 的 `Set-Content -Encoding UTF8`
+    会写 BOM，用 utf-8 读会把首个键名解析成 "\\ufeffKEY"，于是 key 静默失效——
+    环境变量看着配了却读不到，极难排查。
+    """
     p = path or (ROOT / ".env")
     if not p.exists():
         return
-    for line in p.read_text("utf-8").splitlines():
+    for line in p.read_text("utf-8-sig").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
