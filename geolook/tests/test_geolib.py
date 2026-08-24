@@ -1,7 +1,47 @@
-import json, tempfile, unittest
+import json, os, tempfile, unittest
 from pathlib import Path
+from unittest import mock
 import sys; sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 import geolib as G
+
+
+class TestLoadEnv(unittest.TestCase):
+    """回归：带 BOM 的 .env 必须能读。
+
+    Windows 上 PowerShell 的 `Set-Content -Encoding UTF8` 默认写 UTF-8 BOM。
+    用 utf-8 读会把首个键名解析成 "\ufeffKEY"，环境变量看着配了却读不到——
+    静默失效，而且引擎接入是交付时预配置的，踩上就是整套采样不工作。
+    """
+
+    def _load(self, raw: bytes, key: str = "DEEPSEEK_API_KEY"):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / ".env"
+            p.write_bytes(raw)
+            with mock.patch.dict(os.environ, {}, clear=False):
+                os.environ.pop(key, None)
+                G.load_env(p)
+                return os.environ.get(key)
+
+    def test_bom_prefixed_env_still_loads(self):
+        raw = "\ufeffDEEPSEEK_API_KEY=sk-abc\n".encode("utf-8")
+        self.assertTrue(raw.startswith(b"\xef\xbb\xbf"), "夹具本身要带 BOM")
+        self.assertEqual(self._load(raw), "sk-abc")
+
+    def test_plain_utf8_env_loads(self):
+        self.assertEqual(self._load(b"DEEPSEEK_API_KEY=sk-abc\n"), "sk-abc")
+
+    def test_quotes_and_comments_handled(self):
+        raw = b'# comment\n\nDEEPSEEK_API_KEY="sk-quoted"  \n'
+        self.assertEqual(self._load(raw), "sk-quoted")
+
+    def test_existing_env_wins(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / ".env"
+            p.write_bytes(b"DEEPSEEK_API_KEY=from-file\n")
+            with mock.patch.dict(os.environ, {"DEEPSEEK_API_KEY": "from-shell"}):
+                G.load_env(p)
+                self.assertEqual(os.environ["DEEPSEEK_API_KEY"], "from-shell")
+
 
 class TestJsonIO(unittest.TestCase):
     def test_write_json_atomic(self):
