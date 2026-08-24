@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Grounded · Generative Engine Optimization Platform</title>
+<title>Grounded · 生成式引擎优化平台</title>
 <style>
 /* Nocturne 设计系统令牌（取自设计稿 styles.css，暗色单主题） */
 :root{
@@ -1044,7 +1044,8 @@ function uiTranslate(root){
 new MutationObserver(ms=>{if(ULANG==='zh')return;
   for(const m of ms)m.addedNodes.forEach(n=>uiTranslate(n))
 }).observe(document.body,{childList:true,subtree:true});
-// 标题已在静态 HTML 里写成英文，不再需要运行时覆盖
+if(ULANG==='en')document.title='Grounded · Generative Engine Optimization Platform';
+if(ULANG==='ja')document.title='Grounded · 生成エンジン最適化プラットフォーム';
 
 /* ===================== 导航 ===================== */
 const NAV=[
