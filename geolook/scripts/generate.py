@@ -200,8 +200,11 @@ def gen_jsonld(slug: str) -> dict[str, dict]:
         {"@type": "ListItem", "position": 1, "name": "首页", "item": site},
         {"@type": "ListItem", "position": 2, "name": "<栏目>", "item": f"{site}/<path>"},
     ]}
-    return {"organization": org, "software-application": app, "faq-page": faq,
-            "article": article, "breadcrumb": breadcrumb}
+    out = {"organization": org, "software-application": app,
+           "article": article, "breadcrumb": breadcrumb}
+    if faq:
+        out["faq-page"] = faq
+    return out
 
 
 # ---------------------------------------------------------------- HTML 片段

@@ -126,6 +126,74 @@ class TestBrandSkill(unittest.TestCase):
         self.assertNotIn("核心事实", out)
 
 
+class TestUnconfirmedFactsNeverShipped(unittest.TestCase):
+    """凡是 AI 会直接读到的产物都不许带「待确认」。
+
+    回归自实跑：llms.txt 曾经把「商务电话: 待确认」发出去。它传到网站根目录
+    由爬虫读取，占位符会被当成权威事实——比在 SKILL.md 里更严重。
+    """
+
+    def test_llms_txt_drops_unconfirmed_numbers(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td)
+                out = GEN.gen_llms_txt("x", "zh")
+        self.assertNotIn("待确认", out)
+        self.assertNotIn("客服电话", out)
+        self.assertIn("支持引擎数: 17 个", out)      # 已确认的保留
+
+    def test_llms_txt_drops_unconfirmed_brand_fields(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td)                        # target_users 是「待确认」
+                out = GEN.gen_llms_txt("x", "zh")
+        self.assertNotIn("目标用户", out)
+        self.assertIn("行业", out)                   # 已确认的保留
+
+    def test_llms_txt_english_variant_also_filters(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td)
+                out = GEN.gen_llms_txt("x", "en")
+        self.assertNotIn("待确认", out)
+        self.assertNotIn("For:", out)               # target_users 未确认
+
+
+class TestNoEmptyFaqSchema(unittest.TestCase):
+    """空的 FAQPage 是负信号，不是无害的空壳。
+
+    按 audit.py 的 SCHEMA_CONTENT_MISMATCH：声明了 FAQPage 却没有可见问答，
+    检索系统拿可见文本对账时会扣分。geolook 不该产出自己会判罚的资产。
+    """
+
+    def test_faq_page_omitted_when_no_questions(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td)                        # questions 为空
+                out = GEN.gen_jsonld("x")
+        self.assertNotIn("faq-page", out, "问题库为空时不应产出 FAQPage")
+        self.assertIn("organization", out)          # 其他 schema 照常
+
+    def test_faq_page_present_when_questions_exist(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                p = _project(td)
+                cfg = json.loads((p / "geo.json").read_text("utf-8"))
+                cfg["questions"] = [{"id": "Q1", "text": "什么是 X", "market": "cn"}]
+                (p / "geo.json").write_text(json.dumps(cfg, ensure_ascii=False), "utf-8")
+                out = GEN.gen_jsonld("x")
+        self.assertIn("faq-page", out)
+        self.assertTrue(out["faq-page"]["mainEntity"], "mainEntity 不能是空的")
+
+    def test_generated_faq_file_absent_on_disk(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td)
+                GEN.run("x", which=["jsonld"])
+                names = {f.name for f in (Path(td) / "x" / "assets" / "jsonld").iterdir()}
+        self.assertNotIn("faq-page.json", names)
+
+
 class TestSkillAssetWiring(unittest.TestCase):
     def test_market_controls_which_languages(self):
         for market, expect in (("cn", {"SKILL.md"}),
