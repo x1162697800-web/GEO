@@ -424,9 +424,9 @@ def cmd_serve(a):
 
     G.info("═══ 1/8 抓取 ═══")
     C.run(a.slug, max_pages=a.max_pages)
-    G.info("═══ 2/7 体检 ═══")
+    G.info("═══ 2/8 体检 ═══")
     A.run(a.slug)
-    G.info("═══ 3/7 AI 答案采样 ═══")
+    G.info("═══ 3/8 AI 答案采样 ═══")
     if not G.load_config(a.slug).get("questions"):
         G.info("跳过：问题库为空（见 SKILL.md 步骤 2）")
     elif a.no_sample:
@@ -441,16 +441,20 @@ def cmd_serve(a):
         expand.run(a.slug)
     except Exception as e:  # noqa: BLE001
         G.info(f"拓词跳过：{type(e).__name__}: {e}")
-    G.info("═══ 4/7 生成工单与建设蓝图 ═══")
+    G.info("═══ 4/8 生成工单与建设蓝图 ═══")
     tasks.build(a.slug)
     import blueprint
     blueprint.build(a.slug)
-    G.info("═══ 5/7 生成资产 ═══")
+    G.info("═══ 5/8 生成资产 ═══")
     generate.run(a.slug, with_draft=a.draft, draft_limit=a.draft_limit)
-    G.info("═══ 6/7 报告 ═══")
+    G.info("═══ 6/8 报告 ═══")
     Rp.run(a.slug)
-    G.info("═══ 7/7 验收上期工单 ═══")
+    G.info("═══ 7/8 验收上期工单 ═══")
     V.run(a.slug, recrawl=False)
+    # 三份正式交付物必须在打包之前跑：deliver 的「02-执行方案」直接取 plan.md，
+    # 而 plan.md 由 deliverables 产出。漏了这一步，交付包会缺 02 号且不报错。
+    G.info("═══ 8/8 三份正式交付物 ═══")
+    DV.run(a.slug)
     G.info("═══ 打包交付 ═══")
     deliver.run(a.slug)
 

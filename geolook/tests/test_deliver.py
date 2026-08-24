@@ -11,6 +11,36 @@ import deliver as DL
 import report as R
 
 
+class TestServePipelineOrder(unittest.TestCase):
+    """serve 必须在打包之前跑 deliverables。
+
+    回归自实跑：serve 从「验收」直接跳到「打包交付」，而 deliver 的
+    02-执行方案 取的是 deliverables 产出的 plan.md——漏了这一步，
+    交付包会静默缺 02 号，客户拿到的包不完整且没有任何报错。
+    """
+
+    def setUp(self):
+        self.src = (Path(__file__).parent.parent / "scripts" / "geo.py").read_text("utf-8")
+        start = self.src.index("def cmd_serve(")
+        self.body = self.src[start:self.src.index("\ndef ", start + 10)]
+
+    def test_deliverables_runs_in_serve(self):
+        self.assertIn("DV.run(", self.body, "serve 未调用 deliverables")
+
+    def test_deliverables_runs_before_deliver(self):
+        self.assertLess(self.body.index("DV.run("), self.body.index("deliver.run("),
+                        "deliverables 必须在 deliver 之前——后者依赖前者产出的 plan.md")
+
+    def test_step_labels_match_actual_step_count(self):
+        labels = re.findall(r"═══ (\d+)/(\d+) ", self.body)
+        self.assertTrue(labels, "未找到步骤标签")
+        totals = {t for _, t in labels}
+        self.assertEqual(len(totals), 1, f"步骤总数不一致：{totals}")
+        nums = sorted(int(n) for n, _ in labels)
+        self.assertEqual(nums, list(range(1, int(totals.pop()) + 1)),
+                         "步骤编号应连续且与总数吻合")
+
+
 def _task(tid="T-001"):
     return {"id": tid, "priority": "P0", "package": "技术底座", "market": "cn",
             "title": "修标题", "why": "w", "action": "a", "owner": "开发",
