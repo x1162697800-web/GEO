@@ -109,11 +109,13 @@ def gen_llms_txt(slug: str, lang: str = "zh") -> str:
         title = (p.get("title") or p["url"]).split("|")[0].split("｜")[0].strip()[:60]
         L.append(f"- [{title}]({p['url']})")
 
-    if f.get("suitable") or f.get("unsuitable"):
+    suit = [s for s in f.get("suitable", []) if _confirmed(s)][:5]
+    unsuit = [s for s in f.get("unsuitable", []) if _confirmed(s)][:5]
+    if suit or unsuit:
         L += ["", "## 适用边界" if zh else "## Scope", ""]
-        for s in f.get("suitable", [])[:5]:
+        for s in suit:
             L.append(f"- {'适合' if zh else 'Good fit'}: {s}")
-        for s in f.get("unsuitable", [])[:5]:
+        for s in unsuit:
             L.append(f"- {'不适合' if zh else 'Not a fit'}: {s}")
 
     # 口径说明是实体消歧的关键块：AI 把品牌归错行业时，这里是最直接的纠偏入口
