@@ -2725,13 +2725,14 @@ async function obCreate(){
   if(!url){toast('请填写官网地址','err');return}
   ST.obUrl=url;ST.obName=$('#ob-name').value.trim();
   ST.obMkt=document.querySelector('input[name=obm]:checked').value;
-  // 没配任何引擎 Key：明确告知会缺什么,让用户选择继续或先去配置
+  // 引擎接入是部署环节配好的，所以「没有引擎」不该拦住用户、也不该把他赶去设置页
+  // 配 key。只如实说明这一期会少什么，让他自己决定要不要继续。
   const okKeys=(KEYS||[]).filter(k=>k.ok===true);
-  if(!okKeys.length&&!confirm('还没有配置任何引擎 API Key。\n\n继续创建将跳过「答案采样」与「AI 推导问题库/品牌事实」——只做抓站和站点体检，问题库与品牌事实需要手动填写。\n\n建议先到「设置」配置至少一个 Key（如 DeepSeek / 智谱GLM）。\n\n仍要继续吗？'))
-    {go('settings');return}
+  if(!okKeys.length&&!confirm('No engine access is configured on this install.\n\nCreating the project still works — crawling and the site audit run without engines. Answer sampling and AI-derived question banks will be skipped; manual sampling sheets feed the same metrics.\n\nContinue?'))
+    return;
   const mkNeed=ST.obMkt==='both'?['cn','global']:[ST.obMkt];
   const miss=mkNeed.filter(m=>!okKeys.some(k=>k.market===m));
-  if(okKeys.length&&miss.length&&!confirm(`所选市场里 ${miss.map(m=>m==='cn'?'国内':'海外').join('、')} 尚无已配置的引擎 Key，该市场的自动采样会被跳过（可稍后补 Key 或用人工采样表）。\n\n仍要继续吗？`))
+  if(okKeys.length&&miss.length&&!confirm(`No engine is available for the ${miss.map(m=>m==='cn'?'CN':'global').join(' and ')} market, so automatic sampling will be skipped there. Manual sheets still work.\n\nContinue?`))
     {go('settings');return}
   ST.obNoSample=$('#ob-nosample').checked;
   const r=await post('/api/init',{url,name:ST.obName,
