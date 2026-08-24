@@ -177,10 +177,15 @@ def gen_jsonld(slug: str) -> dict[str, dict]:
     if b.get("audience"):
         app["audience"] = {"@type": "Audience", "audienceType": b["audience"]}
 
-    faq = {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
-        {"@type": "Question", "name": q["text"],
-         "acceptedAnswer": {"@type": "Answer", "text": "<填：第一句就是结论，再展开>"}}
-        for q in cfg.get("questions", []) if q.get("market") in ("cn", "both")][:8]}
+    # 空的 FAQPage 不是「无用」而是「有害」：按 audit.py 的 SCHEMA_CONTENT_MISMATCH，
+    # 声明了 FAQPage 却没有可见问答会被判成负信号——检索系统拿可见文本对账，对不上
+    # 时结构化数据反而扣分。所以问题库为空就不产这个文件。
+    faq_items = [{"@type": "Question", "name": q["text"],
+                  "acceptedAnswer": {"@type": "Answer",
+                                     "text": "<填：第一句就是结论，再展开>"}}
+                 for q in cfg.get("questions", []) if q.get("market") in ("cn", "both")][:8]
+    faq = ({"@context": "https://schema.org", "@type": "FAQPage",
+            "mainEntity": faq_items} if faq_items else None)
 
     article = {
         "@context": "https://schema.org", "@type": "Article",
