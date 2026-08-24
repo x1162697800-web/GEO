@@ -1161,6 +1161,7 @@ function vOverview(){
   // KPI 行跟着「实际测到了什么」走。采样要 API key，而抓取/体检/工单不要——
   // 零 key 路径跑完之后本来就有真数据，不该让用户面对五个破折号。
   const sampled=h.score!=null;
+  const eng=D.engines||{ready:0,labels:[]};
   const au=D.audit||{},gd=au.grade_distribution||{};
   const openT=(D.tasks||[]).filter(t=>t.status!=='done');
   const blocked=(au.layers||[]).find(l=>l.status==='fail');
@@ -2677,14 +2678,13 @@ async function vOnboard(){
   let body='';
   if(s===1){
     body=`<div style="display:flex;flex-direction:column;gap:14px">
+      <!-- 引擎接入由交付方预配置，不是用户的待办。就绪时只报状态，
+           没就绪时说清这是部署环节的事，别把它写成用户要去买 key -->
       ${noKey?`<div class="card" style="box-shadow:0 0 0 1px var(--a700);padding:14px 16px;gap:6px">
-        <div style="font-size:13.5px;font-weight:500">⚠ 还没有配置任何引擎 API Key</div>
-        <div style="font-size:12.5px;color:var(--t400);line-height:1.6">自动引导中的「答案采样」和「AI 推导问题库 / 品牌事实」需要至少一个引擎 Key（推荐先配 DeepSeek 或智谱GLM）。不配置也能创建——但只会做抓站与站点体检，问题库和品牌事实需要手动填写。</div>
-        <div class="row" style="margin-top:4px">
-          <button class="btn btn-secondary" style="font-size:12.5px" onclick="go('settings')">去配置 Key →</button>
-          <span class="muted" style="font-size:11.5px">配好后回到这里继续</span></div>
+        <div style="font-size:13.5px;font-weight:500">No engine access on this install</div>
+        <div style="font-size:12.5px;color:var(--t400);line-height:1.6">Answer sampling and AI-derived question banks need engine access, which is configured at deployment. You can still create the project now — crawling and the site audit run without it, and manual sampling sheets feed the same metrics.</div>
       </div>`
-      :`<div class="muted" style="font-size:12px">已配置引擎：国内 ${okCn} 个 · 海外 ${okGl} 个（可在「设置」增改）${(ST.obMkt||'both')!=='global'&&!okCn?'——注意国内市场尚无可用 Key':''}${(ST.obMkt||'both')!=='cn'&&!okGl?'——注意海外市场尚无可用 Key':''}</div>`}
+      :`<div class="muted" style="font-size:12px">Engines ready: ${okCn} CN · ${okGl} global${(ST.obMkt||'both')!=='global'&&!okCn?' — note: none available for the CN market':''}${(ST.obMkt||'both')!=='cn'&&!okGl?' — note: none available for the global market':''}</div>`}
       <div class="field"><label>官网域名 *</label><input id="ob-url" class="input" placeholder="https://example.com" value="${esc(ST.obUrl||'')}"></div>
       <div class="field"><label>品牌名称（留空自动从网页识别）</label><input id="ob-name" class="input" value="${esc(ST.obName||'')}"></div>
       <div class="field"><label>目标市场</label><div class="seg">
