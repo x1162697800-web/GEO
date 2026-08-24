@@ -197,12 +197,16 @@ function head(kicker,title,sub){return `<div class="kicker">${esc(kicker)}</div>
 /* ===================== 界面多语言(zh/en/ja) =====================
    中文是源文案。en/ja 用「整句精确匹配 + 短节点词级替换」在渲染后翻译 DOM,
    字典未覆盖的保持中文(优雅降级);项目数据(问题库/工单/阵地文案)跟随数据语言,不翻。*/
-// 英文是唯一语言。翻译覆盖层暂时保留——后端仍然产出中文
-// （audit.py 的体检问题、tasks.py 的工单文案、analytics 的指标标签都要经过它），
-// 现在就删掉会让这些串退回原始中文，比现状更差。
-// 后端源串英文化之后，UI_D / UI_SUB / UI_RX 与 uiTranslate 一并删除。
-const ULANG='en';
-document.documentElement.lang='en';
+// 中文是 ui.html 的源语言，英/日靠 uiTranslate 覆盖层翻译。
+// 语言优先级：URL 的 ?lang= > localStorage > 浏览器语言。
+const ULANG=(()=>{
+  const q=new URLSearchParams(location.search).get('lang');
+  if(['zh','en','ja'].indexOf(q)>=0){try{localStorage.setItem('ulang',q)}catch(e){}return q}
+  const s=localStorage.getItem('ulang');if(['zh','en','ja'].indexOf(s)>=0)return s;
+  const l=(navigator.language||'').toLowerCase();
+  return l.indexOf('zh')===0?'zh':l.indexOf('ja')===0?'ja':'en'})();
+document.documentElement.lang={zh:'zh-CN',en:'en',ja:'ja'}[ULANG]||'zh-CN';
+function setLang(l){localStorage.setItem('ulang',l);location.reload()}
 const UI_D={en:{
 '生成式引擎优化平台':'Generative Engine Optimization','当前品牌':'CURRENT BRAND','切换 ▾':'Switch ▾',
 '现状 · 我在 AI 里什么样':'STATUS · HOW AI SEES ME','总览':'Overview','引擎表现':'Engines','竞品对比':'Competitors','问题库':'Questions',
