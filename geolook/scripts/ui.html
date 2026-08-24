@@ -2488,11 +2488,12 @@ async function vSettings(){
             <span style="font-size:11.5px;color:var(--t600)">${k.ok===true?'已配置'+(k.key_tail?' ····'+esc(k.key_tail):''):esc(k.env)}</span>
             <button class="btn ${k.ok===true?'btn-ghost':'btn-secondary'}" style="font-size:12px;padding:2px 8px" onclick="editKey(${k.i})">${k.ok===true?'修改':'配置'}</button></div>`;
           return `
-          <div><div style="font-size:15px;font-weight:500">引擎与密钥</div>
-            <div style="font-size:11.5px;color:var(--t600)">Key 写入项目根目录 .env，立即生效。<b>配好任意 1 个引擎就能开始采样</b>，配得越多覆盖越全。</div></div>
-          <div style="font-size:12px;margin-top:2px;color:${done?'var(--t400)':'var(--a300)'}">建议配置 ${done}/${need.length} 已就绪${done?'':' —— 从「优先 · 联网」的引擎开始'}</div>
+          <!-- 引擎接入在部署时配好，这里是状态与运维入口，不是给用户的待办清单 -->
+          <div><div style="font-size:15px;font-weight:500">Engine access</div>
+            <div style="font-size:11.5px;color:var(--t600)">Configured at deployment; keys live in this install's <code>.env</code> and take effect immediately. More engines means broader coverage — one is enough to sample.</div></div>
+          <div style="font-size:12px;margin-top:2px;color:${done?'var(--t400)':'var(--a300)'}">${done}/${need.length} ready for this project${done?'':' — none configured on this install'}</div>
 
-          <div style="font-size:11px;letter-spacing:.08em;color:var(--t600);margin-top:8px">建议配置 · 当前项目（${mktLabel(M)}）采样用</div>
+          <div style="font-size:11px;letter-spacing:.08em;color:var(--t600);margin-top:8px">Used by this project (${mktLabel(M)})</div>
           ${need.map(row).join('')}
 
           ${skip.length?`<div style="font-size:11px;letter-spacing:.08em;color:var(--t600);margin-top:12px" title="当前项目市场是 ${mktLabel(M)}，这些引擎属于另一个市场">可不配 · 当前项目用不到</div>
