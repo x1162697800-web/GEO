@@ -32,6 +32,16 @@ class TestServePipelineOrder(unittest.TestCase):
         self.assertLess(self.body.index("DV.run("), self.body.index("deliver.run("),
                         "deliverables 必须在 deliver 之前——后者依赖前者产出的 plan.md")
 
+    def test_deliver_reads_execution_plan_from_deliverables(self):
+        """02-执行方案 的源必须是真实存在的文件。
+
+        回归自实跑：deliver 原先找 pdir/"plan.md"，而没有任何代码产出它——
+        条件永远为假，02 号从来没进过交付包，可 README 和模块说明都写着「包里有 02」。
+        """
+        src = (Path(__file__).parent.parent / "scripts" / "deliver.py").read_text("utf-8")
+        self.assertNotIn('pdir / "plan.md"', src, "不该再依赖不存在的 plan.md")
+        self.assertIn("3-GEO执行方案", src, "应取自 deliverables 的第三份文档")
+
     def test_step_labels_match_actual_step_count(self):
         labels = re.findall(r"═══ (\d+)/(\d+) ", self.body)
         self.assertTrue(labels, "未找到步骤标签")

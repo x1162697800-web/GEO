@@ -451,8 +451,8 @@ def cmd_serve(a):
     Rp.run(a.slug)
     G.info("═══ 7/8 验收上期工单 ═══")
     V.run(a.slug, recrawl=False)
-    # 三份正式交付物必须在打包之前跑：deliver 的「02-执行方案」直接取 plan.md，
-    # 而 plan.md 由 deliverables 产出。漏了这一步，交付包会缺 02 号且不报错。
+    # 三份正式交付物必须在打包之前跑：deliver 的「02-执行方案」取自
+    # deliverables/3-GEO执行方案.md。漏了这一步，交付包会缺 02 号。
     G.info("═══ 8/8 三份正式交付物 ═══")
     DV.run(a.slug)
     G.info("═══ 打包交付 ═══")
