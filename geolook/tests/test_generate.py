@@ -159,6 +159,34 @@ class TestUnconfirmedFactsNeverShipped(unittest.TestCase):
         self.assertNotIn("For:", out)               # target_users 未确认
 
 
+    def test_jsonld_description_drops_unconfirmed_definition(self):
+        """JSON-LD 贴进 <head> 给爬虫读，未确认的定义句不能进 description。"""
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, facts=FACTS_EMPTY)     # 定义句是「待确认」
+                out = GEN.gen_jsonld("x")
+        for name, obj in out.items():
+            self.assertNotIn("待确认", json.dumps(obj, ensure_ascii=False), name)
+        self.assertEqual(out["organization"]["description"], "")
+
+    def test_definition_snippet_filters_numbers_but_keeps_placeholder(self):
+        """片段贴进真实页面：数字要过滤；定义句缺失时的占位符是给人看的提示，保留。"""
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, facts=FACTS_EMPTY)
+                out = GEN.gen_definition_block("x", "zh")
+        self.assertIn("（待补定义句）", out, "显式占位符应保留")
+        self.assertNotIn("待确认", out, "未确认的数字不能进页面片段")
+
+    def test_definition_snippet_keeps_confirmed_numbers(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td)
+                out = GEN.gen_definition_block("x", "zh")
+        self.assertIn("17 个", out)
+        self.assertNotIn("待确认", out)
+
+
 class TestNoEmptyFaqSchema(unittest.TestCase):
     """空的 FAQPage 是负信号，不是无害的空壳。
 
