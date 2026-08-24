@@ -139,7 +139,9 @@ def gen_jsonld(slug: str) -> dict[str, dict]:
     cfg = G.load_config(slug)
     f = parse_facts(slug)
     b = cfg["brand"]
-    desc = f.get("definition") or ""
+    # JSON-LD 直接贴进 <head> 给爬虫读，未确认的定义句不能进 description
+    defn = f.get("definition") or ""
+    desc = defn if _confirmed(defn) else ""
     site = b["site"].rstrip("/")
 
     org = {
