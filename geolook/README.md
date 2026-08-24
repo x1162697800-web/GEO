@@ -141,12 +141,14 @@ python3 scripts/geo.py ui        # → http://127.0.0.1:8765
 #    macOS: ./scripts/service.sh install registers it as a standing service
 #    (starts at login, restarts on crash, survives closing every terminal)
 
-# 3. (Optional) Configure engine API keys
-#    A: in the dashboard — Settings → Engines & Keys → "Configure" (writes local .env)
-#    B: cp .env.example .env and edit
+# 3. Provision engine access — a deployment step, not a user task
+#    cp .env.example .env, fill in the keys, then verify:
+python3 scripts/geo.py doctor
 ```
 
-**Zero keys works too**: automated sampling is skipped; use the manual sampling sheet loop instead. Crawling, auditing, tickets and assets need no keys. One CN-capable key (e.g. DeepSeek/GLM) unlocks auto-derivation of the question bank / brand facts and AI first drafts.
+**Engine access is provisioned at deployment.** Whoever deploys Grounded fills in `.env` once; the person using it never configures a key. Run `geo.py doctor` before handing an install over — it verifies engine reachability, dependencies and file permissions, and tells you exactly what is missing.
+
+**An install with no engines still works**: crawling, the site audit, tickets and deploy assets need no engine at all, and manual sampling sheets feed the same metrics as automated sampling. Automated sampling and AI-derived question banks are what require engine access.
 
 ### Remote / server deployment
 
