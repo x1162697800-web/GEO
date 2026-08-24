@@ -360,7 +360,7 @@ Object.assign(UI_D.en,{
 '看差距诊断 →':'See Gap Diagnosis →','尚未采样':'Not sampled yet','暂无任务，先到「设置」跑一期。':'No tasks yet — run a cycle in Settings.',
 '还没有采样数据':'No sampling data yet','到「设置 → 运行任务」跑一期，才能开始诊断。':'Run a cycle in Settings → Run jobs to start the diagnosis.',
 '还没有抓取任何页面':'Nothing crawled yet','先跑「抓取站点」再跑「页面体检」，这两步都不需要引擎接入。':'Run Crawl site, then Audit pages — neither needs engine access.',
-' 层没通过':' layer is failing',' 这一层不修，下游的一切优化在引擎侧都不可见':' Everything downstream stays invisible to engines until this layer is fixed',
+'层没通过':'layer is failing','这一层不修，下游的一切优化在引擎侧都不可见':'Everything downstream stays invisible to engines until this layer is fixed',
 '站点体检分':'Site audit','阻塞层':'Blocking layer','待办 P0':'Open P0','最大内容缺口':'Biggest content gap','AI 可见性':'AI visibility',
 '还没抓取':'Not crawled yet','先修这一层，下游优化才可见':'Fix this before anything downstream','四层全部通过':'All four layers pass',
 '抽取块无缺口':'No extraction-block gaps','需采样 · 引擎接入由部署方配置':'Needs sampling · engine access is configured at deployment',
@@ -386,7 +386,7 @@ Object.assign(UI_D.ja,{
 '看差距诊断 →':'ギャップ診断へ →','尚未采样':'未サンプリング','暂无任务，先到「设置」跑一期。':'タスクなし。設定で 1 サイクル実行を。',
 '还没有采样数据':'サンプリングデータなし','到「设置 → 运行任务」跑一期，才能开始诊断。':'設定 → ジョブ実行で 1 サイクル回すと診断が始まる。',
 '还没有抓取任何页面':'まだ何もクロールしていない','先跑「抓取站点」再跑「页面体检」，这两步都不需要引擎接入。':'まず「サイトをクロール」→「ページ監査」。どちらもエンジン接続は不要。',
-' 层没通过':' レイヤーが未達',' 这一层不修，下游的一切优化在引擎侧都不可见':' このレイヤーを直すまで、下流の施策はエンジンから見えない',
+'层没通过':'レイヤーが未達','这一层不修，下游的一切优化在引擎侧都不可见':'このレイヤーを直すまで、下流の施策はエンジンから見えない',
 '站点体检分':'サイト監査スコア','阻塞层':'ブロック中のレイヤー','待办 P0':'未着手 P0','最大内容缺口':'最大のコンテンツ欠落','AI 可见性':'AI 可視性',
 '还没抓取':'未クロール','先修这一层，下游优化才可见':'まずここを修正','四层全部通过':'四層すべて通過',
 '抽取块无缺口':'抽出ブロックの欠落なし','需采样 · 引擎接入由部署方配置':'サンプリング要 · エンジン接続はデプロイ時に設定',
@@ -1294,7 +1294,7 @@ function vOverview(){
            ['阵地覆盖','19 个阵地里已经有哪些被引用过'],
            ['事实准确率','它说你的那些话对不对']]
           .map(([n,d])=>`<div style="display:flex;gap:9px;font-size:12.5px;color:var(--t400);line-height:1.5">
-            <span style="color:var(--t600);flex:none">—</span><span><b style="color:var(--t300);font-weight:500">${n}</b> · ${d}</span></div>`).join('')}
+            <span style="color:var(--t600);flex:none">—</span><span><b style="color:var(--t300);font-weight:500">${n}</b> · <span>${d}</span></span></div>`).join('')}
         ${eng.ready?`<div class="row" style="gap:8px;margin-top:2px">
           <button class="btn btn-primary" onclick="runAction('sample',{})">立即跑采样</button>
           <button class="btn btn-secondary" onclick="runAction('sample-sheet',{})">导出人工采样表</button>
