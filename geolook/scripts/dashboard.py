@@ -64,6 +64,17 @@ def list_projects() -> list[dict]:
     return out
 
 
+def _engines_ready() -> dict:
+    """哪些引擎当前可用。引擎接入由交付方预配置，用户不该被要求自己去配。"""
+    import sample as S
+
+    ready = [c for c in S.PROVIDERS if S.available(c)]
+    search = [c for c in ready if S.PROVIDERS[c].get("search")]
+    return {"ready": len(ready), "total": len(S.PROVIDERS),
+            "with_search": len(search),
+            "labels": [S.PROVIDERS[c]["name"] for c in ready][:6]}
+
+
 def project(slug: str) -> dict:
     pdir = G.project_dir(slug)
     cfg = G.load_config(slug)
