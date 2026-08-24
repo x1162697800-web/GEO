@@ -221,6 +221,39 @@ class TestNoEmptyFaqSchema(unittest.TestCase):
                 names = {f.name for f in (Path(td) / "x" / "assets" / "jsonld").iterdir()}
         self.assertNotIn("faq-page.json", names)
 
+    def test_stale_jsonld_is_removed_on_regeneration(self):
+        """生成器要对「不再产出」也幂等。
+
+        回归自实跑：问题库清空后 FAQPage 不再生成，但旧的 faq-page.json 留在
+        assets/ 里，被原样打进交付包发给客户。
+        """
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                p = _project(td)
+                cfg = json.loads((p / "geo.json").read_text("utf-8"))
+                cfg["questions"] = [{"id": "Q1", "text": "什么是 X", "market": "cn"}]
+                (p / "geo.json").write_text(json.dumps(cfg, ensure_ascii=False), "utf-8")
+                GEN.run("x", which=["jsonld"])
+                jd = p / "assets" / "jsonld"
+                self.assertTrue((jd / "faq-page.json").exists(), "有问题时应产出")
+
+                cfg["questions"] = []               # 清空问题库后重跑
+                (p / "geo.json").write_text(json.dumps(cfg, ensure_ascii=False), "utf-8")
+                GEN.run("x", which=["jsonld"])
+                self.assertFalse((jd / "faq-page.json").exists(), "旧文件应被清掉")
+                self.assertTrue((jd / "organization.json").exists(), "其他文件不受影响")
+
+    def test_user_added_asset_files_are_not_deleted(self):
+        """资产页允许用户手动加文件，清理范围必须限定在生成器认领的名字内。"""
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                p = _project(td)
+                GEN.run("x", which=["jsonld"])
+                mine = p / "assets" / "jsonld" / "my-custom-schema.json"
+                mine.write_text('{"@type":"Thing"}', "utf-8")
+                GEN.run("x", which=["jsonld"])
+                self.assertTrue(mine.exists(), "用户自己加的文件不能被删")
+
 
 class TestSkillAssetWiring(unittest.TestCase):
     def test_market_controls_which_languages(self):
