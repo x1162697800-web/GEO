@@ -82,12 +82,17 @@ def gen_llms_txt(slug: str, lang: str = "zh") -> str:
     L.append(f"- {'官网' if zh else 'Website'}: {b['site']}")
     if b.get("aliases"):
         L.append(f"- {'别名' if zh else 'Also known as'}: {'、'.join(b['aliases'])}")
-    if b.get("industry"):
+    # llms.txt 传到网站根目录、由 AI 爬虫直接读，所以标「待确认」的绝不能进——
+    # 占位符会被当成权威事实，后果比在 SKILL.md 里更重（同一条纪律，见 _confirmed）
+    if _confirmed(b.get("industry", "")):
         L.append(f"- {'行业' if zh else 'Industry'}: {b['industry']}")
-    if b.get("target_users"):
+    if _confirmed(b.get("target_users", "")):
         L.append(f"- {'目标用户' if zh else 'For'}: {b['target_users']}")
     for n in f.get("numbers", [])[:8]:
-        L.append(f"- {n['fact']}: {n['value']}" + (f"（{n['source']}）" if zh and n.get("source") else ""))
+        if not _confirmed(n.get("value", "")):
+            continue
+        src = f"（{n['source']}）" if zh and _confirmed(n.get("source", "")) else ""
+        L.append(f"- {n['fact']}: {n['value']}{src}")
 
     L += ["", "## 重要页面" if zh else "## Important pages", ""]
     for p in pages:
