@@ -611,9 +611,18 @@ def run(slug: str, which: list[str] | None = None, with_draft: bool = False,
     if "jsonld" in which:
         d = adir / "jsonld"
         d.mkdir(parents=True, exist_ok=True)
-        for name, obj in gen_jsonld(slug).items():
+        produced = gen_jsonld(slug)
+        for name, obj in produced.items():
             (d / f"{name}.json").write_text(json.dumps(obj, ensure_ascii=False, indent=2), "utf-8")
             made.append(f"assets/jsonld/{name}.json")
+        # 生成器必须对「不再产出」也幂等：判据变了（比如问题库清空后不再产 FAQPage）
+        # 而旧文件留在原地，就会被打进交付包发给客户。只清自己认领的那几个名字，
+        # 不碰用户在资产页手动加的文件。
+        for name in JSONLD_NAMES - produced.keys():
+            stale = d / f"{name}.json"
+            if stale.exists():
+                stale.unlink()
+                G.info(f"移除已不适用的 assets/jsonld/{name}.json")
 
     if "snippets" in which:
         d = adir / "snippets"
