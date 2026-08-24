@@ -359,6 +359,19 @@ Object.assign(UI_D.en,{
 '曝光层 · 提及率':'Exposure · mention','引用层 · 引用份额':'Citation · cite share','承接层 · 内容承接':'Content · readiness','不可测':'n/a',
 '看差距诊断 →':'See Gap Diagnosis →','尚未采样':'Not sampled yet','暂无任务，先到「设置」跑一期。':'No tasks yet — run a cycle in Settings.',
 '还没有采样数据':'No sampling data yet','到「设置 → 运行任务」跑一期，才能开始诊断。':'Run a cycle in Settings → Run jobs to start the diagnosis.',
+'还没有抓取任何页面':'Nothing crawled yet','先跑「抓取站点」再跑「页面体检」，这两步都不需要引擎接入。':'Run Crawl site, then Audit pages — neither needs engine access.',
+' 层没通过':' layer is failing',' 这一层不修，下游的一切优化在引擎侧都不可见':' Everything downstream stays invisible to engines until this layer is fixed',
+'站点体检分':'Site audit','阻塞层':'Blocking layer','待办 P0':'Open P0','最大内容缺口':'Biggest content gap','AI 可见性':'AI visibility',
+'还没抓取':'Not crawled yet','先修这一层，下游优化才可见':'Fix this before anything downstream','四层全部通过':'All four layers pass',
+'抽取块无缺口':'No extraction-block gaps','需采样 · 引擎接入由部署方配置':'Needs sampling · engine access is configured at deployment',
+'开始测 AI 可见性':'Start measuring AI visibility','上面那几项都来自抓自己的站；下面这四项必须去问引擎才知道。':'Everything above comes from crawling your own site. These four have to ask the engines.',
+'事实准确率':'Fact accuracy','AI 会不会主动把你说出来':'whether assistants bring you up unprompted','它引用的来源里有多少是你的':'how much of what they cite is yours',
+'19 个阵地里已经有哪些被引用过':'which of the 19 channels already cite you','它说你的那些话对不对':'whether what they say about you is right',
+'立即跑采样':'Run sampling now','导出人工采样表':'Export a manual sheet',
+'这套部署还没配引擎接入——那是部署方的事，不需要你自己去买。在此期间人工采样表照样能用，产出同一套指标。':'No engine access is configured on this install — that is a deployment step, not something you need to buy. Manual sheets work meanwhile and feed the same metrics.',
+'引擎接入':'Engine access','由部署方配置，Key 写在本机 .env 里、立即生效。接得越多覆盖越全，一个就够开始采样。':'Configured at deployment; keys live in this install\'s .env and take effect immediately. More engines means broader coverage — one is enough to sample.',
+'这套部署还没配引擎接入':'No engine access on this install',
+'答案采样与「AI 推导问题库 / 品牌事实」需要引擎接入，而它是部署环节配好的。现在照样可以创建项目——抓取和站点体检不依赖引擎，人工采样表也能产出同一套指标。':'Answer sampling and AI-derived question banks need engine access, which is configured at deployment. You can still create the project now — crawling and the site audit run without it, and manual sheets feed the same metrics.',
 'AI 还没有主动提到过你':'AI never mentions you unprompted','AI 开始提到你了，但几乎不引用你':'AI mentions you, but rarely cites you',
 '提及与引用同步在涨':'Mentions and citations both rising'});
 Object.assign(UI_D.ja,{
@@ -2690,10 +2703,10 @@ async function vOnboard(){
       <!-- 引擎接入由交付方预配置，不是用户的待办。就绪时只报状态，
            没就绪时说清这是部署环节的事，别把它写成用户要去买 key -->
       ${noKey?`<div class="card" style="box-shadow:0 0 0 1px var(--a700);padding:14px 16px;gap:6px">
-        <div style="font-size:13.5px;font-weight:500">No engine access on this install</div>
-        <div style="font-size:12.5px;color:var(--t400);line-height:1.6">Answer sampling and AI-derived question banks need engine access, which is configured at deployment. You can still create the project now — crawling and the site audit run without it, and manual sampling sheets feed the same metrics.</div>
+        <div style="font-size:13.5px;font-weight:500">这套部署还没配引擎接入</div>
+        <div style="font-size:12.5px;color:var(--t400);line-height:1.6">答案采样与「AI 推导问题库 / 品牌事实」需要引擎接入，而它是部署环节配好的。现在照样可以创建项目——抓取和站点体检不依赖引擎，人工采样表也能产出同一套指标。</div>
       </div>`
-      :`<div class="muted" style="font-size:12px">Engines ready: ${okCn} CN · ${okGl} global${(ST.obMkt||'both')!=='global'&&!okCn?' — note: none available for the CN market':''}${(ST.obMkt||'both')!=='cn'&&!okGl?' — note: none available for the global market':''}</div>`}
+      :`<div class="muted" style="font-size:12px">引擎就绪：国内 ${okCn} 个 · 海外 ${okGl} 个${(ST.obMkt||'both')!=='global'&&!okCn?' —— 注意国内市场当前没有可用引擎':''}${(ST.obMkt||'both')!=='cn'&&!okGl?' —— 注意海外市场当前没有可用引擎':''}</div>`}
       <div class="field"><label>官网域名 *</label><input id="ob-url" class="input" placeholder="https://example.com" value="${esc(ST.obUrl||'')}"></div>
       <div class="field"><label>品牌名称（留空自动从网页识别）</label><input id="ob-name" class="input" value="${esc(ST.obName||'')}"></div>
       <div class="field"><label>目标市场</label><div class="seg">
@@ -2737,11 +2750,11 @@ async function obCreate(){
   // 引擎接入是部署环节配好的，所以「没有引擎」不该拦住用户、也不该把他赶去设置页
   // 配 key。只如实说明这一期会少什么，让他自己决定要不要继续。
   const okKeys=(KEYS||[]).filter(k=>k.ok===true);
-  if(!okKeys.length&&!confirm('No engine access is configured on this install.\n\nCreating the project still works — crawling and the site audit run without engines. Answer sampling and AI-derived question banks will be skipped; manual sampling sheets feed the same metrics.\n\nContinue?'))
+  if(!okKeys.length&&!confirm('这套部署还没配引擎接入。\n\n创建项目照样可以进行——抓取和站点体检不依赖引擎。答案采样与「AI 推导问题库 / 品牌事实」会被跳过；人工采样表能产出同一套指标。\n\n继续吗？'))
     return;
   const mkNeed=ST.obMkt==='both'?['cn','global']:[ST.obMkt];
   const miss=mkNeed.filter(m=>!okKeys.some(k=>k.market===m));
-  if(okKeys.length&&miss.length&&!confirm(`No engine is available for the ${miss.map(m=>m==='cn'?'CN':'global').join(' and ')} market, so automatic sampling will be skipped there. Manual sheets still work.\n\nContinue?`))
+  if(okKeys.length&&miss.length&&!confirm(`${miss.map(m=>m==='cn'?'国内':'海外').join('、')}市场当前没有可用引擎，该市场的自动采样会被跳过。人工采样表仍然可用。\n\n继续吗？`))
     {go('settings');return}
   ST.obNoSample=$('#ob-nosample').checked;
   const r=await post('/api/init',{url,name:ST.obName,
