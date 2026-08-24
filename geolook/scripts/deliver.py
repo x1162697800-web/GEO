@@ -212,10 +212,16 @@ def run(slug: str) -> Path:
             if src.exists():
                 shutil.copy2(src, out / dst)
 
-    # 02 执行方案
-    plan = pdir / "plan.md"
-    if plan.exists():
-        shutil.copy2(plan, out / "02-执行方案.md")
+    # 02 执行方案：取自 deliverables 产出的第三份文档。
+    # 这里原先找的是 pdir/"plan.md"——那个文件没有任何代码会产出，条件永远为假，
+    # 于是 02 号从来没进过交付包，而 README 与本模块的说明都写着「包里有 02」。
+    for cand in ("3-GEO执行方案.md", "3-GEO执行方案.html"):
+        src = pdir / "deliverables" / cand
+        if src.exists():
+            shutil.copy2(src, out / f"02-执行方案{src.suffix}")
+            break
+    else:
+        G.info("交付包缺 02-执行方案：先跑 `geo.py deliverables --slug <项目>`")
 
     # 03 工单表
     mk = cfg.get("market", "cn")
