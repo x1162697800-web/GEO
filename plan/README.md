@@ -15,6 +15,7 @@
 |---|---|
 | `README.md`（本文） | 全局规划、阶段划分、依赖关系、节奏 |
 | [`RULES.md`](RULES.md) | **贯穿纪律**。所有阶段都不许破的红线 |
+| [`EXEC.md`](EXEC.md) | **执行规则**。怎么选下一步、开工清单、阶段门禁、计划外缺陷怎么收 |
 | [`DECISIONS.md`](DECISIONS.md) | 决策记录（4 项已于 2026-08-23 定案），持续追加 |
 | [`P0-windows.md`](P0-windows.md) | Windows 支持（阻塞项） |
 | [`P1-extension.md`](P1-extension.md) | 插件独立化 + 上架 |
@@ -23,7 +24,7 @@
 | [`P4-open-research.md`](P4-open-research.md) | 开源研究做增长 |
 | [`reference/nile-teardown.md`](reference/nile-teardown.md) | Nile 拆解的全部实测证据 |
 
-执行任何子文档前先读 `RULES.md`。
+执行任何子文档前先读 `RULES.md`，动手按 [`EXEC.md`](EXEC.md)。
 
 ---
 
