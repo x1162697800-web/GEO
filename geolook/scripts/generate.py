@@ -211,6 +211,12 @@ def gen_jsonld(slug: str) -> dict[str, dict]:
     return out
 
 
+# 本生成器认领的 JSON-LD 文件名。run() 用它清理「本轮不再产出」的旧文件，
+# 范围限定在这几个名字内——资产页允许用户手动加文件，不能盲删。
+JSONLD_NAMES = {"organization", "software-application", "faq-page",
+                "article", "breadcrumb"}
+
+
 # ---------------------------------------------------------------- HTML 片段
 
 def gen_definition_block(slug: str, lang: str = "zh") -> str:
