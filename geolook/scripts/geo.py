@@ -473,6 +473,12 @@ def cmd_list(a):
             print(f"{d.name:20s} {cfg.get('brand', {}).get('name', ''):22s} 问题 {len(cfg.get('questions', [])):3d}  最近报告 {last}")
 
 
+def cmd_doctor(a):
+    import doctor
+
+    raise SystemExit(doctor.run())
+
+
 def main():
     p = argparse.ArgumentParser(prog="geo", description="GEO 自动化管线")
     sub = p.add_subparsers(dest="cmd", required=True)
