@@ -95,7 +95,7 @@ Most GEO products show mention rates and rankings, charge monthly, and keep your
 | **Chinese market** | Mostly Western engines | First-class CN engine matrix (GLM / Doubao / DeepSeek / Kimi / MiniMax / Nano / Baidu AI) + CN channels calibrated on citation-corpus data (Baike, ranking sites, WeChat, Toutiao…); CN and Global measured separately |
 | **Scoring basis** | Heuristics | Anchored in public empirical data: 602 prompts / 21,143 citations / 187,818 deduplicated CN citations ([references/](references/)) |
 | **Data ownership** | Vendor cloud | **Everything on your machine** under `work/` (JSON/Markdown); `git init` is your backup |
-| **Cost** | Subscription | Free and open source; you only pay your own engine API sampling costs (can be zero — manual sampling works) |
+| **Cost** | Subscription | Free and open source. Engine access is provisioned at deployment, so there is nothing for you to buy or configure; manual sampling works even where no engine is wired up |
 | **Deliverables** | Dashboard screenshots | Client-ready diagnosis report / strategy / execution plan / ticket CSV — built for agencies and consultants |
 
 ### vs. agentic commerce backends
