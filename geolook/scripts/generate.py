@@ -66,6 +66,16 @@ def parse_facts(slug: str) -> dict:
     return out
 
 
+# ---------------------------------------------------------------- 事实可信度
+# 这些标记表示「还没核实」。凡是会被 AI 直接读到的产物（llms.txt / SKILL.md /
+# JSON-LD）都不许带它们——占位符一旦发出去就会被当成权威事实。
+UNCONFIRMED = ("待确认", "待补", "TODO", "TBD")
+
+
+def _confirmed(text: str) -> bool:
+    return bool(text) and not any(k in text for k in UNCONFIRMED)
+
+
 # ---------------------------------------------------------------- llms.txt
 
 def gen_llms_txt(slug: str, lang: str = "zh") -> str:
@@ -455,15 +465,6 @@ def gen_attribution(slug: str) -> dict[str, str]:
 
 
 # ---------------------------------------------------------------- 品牌 SKILL.md
-
-# 事实卡里这些标记表示「还没核实」，绝不能进 SKILL.md——这个文件会被 agent
-# 当权威口径直接引用，编造的代价比 llms.txt 更高
-UNCONFIRMED = ("待确认", "待补", "TODO", "TBD")
-
-
-def _confirmed(text: str) -> bool:
-    return bool(text) and not any(k in text for k in UNCONFIRMED)
-
 
 def gen_skill_md(slug: str, lang: str = "zh") -> str:
     """把品牌事实编译成一个 Agent Skill，可装进 Claude / Codex / Cursor 等。
