@@ -1072,8 +1072,12 @@ function renderSide(){
   <div style="padding:0 8px">
     <div style="display:flex;align-items:center;justify-content:space-between">
       <div style="font-weight:500;font-size:17px;letter-spacing:-.01em">Ground<span style="color:var(--accent)">ed</span></div>
+      <span style="display:flex;gap:2px">
+        ${[['zh','中'],['en','EN'],['ja','日']].map(([l,t])=>`<button onclick="setLang('${l}')"
+          style="background:${ULANG===l?'var(--a900)':'none'};border:0;color:${ULANG===l?'var(--a300)':'var(--t600)'};font-size:10.5px;padding:2px 6px;border-radius:5px;cursor:pointer">${t}</button>`).join('')}
+      </span>
     </div>
-    <div style="font-size:11px;color:var(--t500);margin-top:2px">Generative Engine Optimization</div>
+    <div style="font-size:11px;color:var(--t500);margin-top:2px">生成式引擎优化平台</div>
   </div>
   <button class="btn btn-secondary" style="justify-content:space-between;padding:8px 10px;text-align:left" onclick="switchModal()">
     <span style="display:flex;flex-direction:column;gap:1px;align-items:flex-start">
