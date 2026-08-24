@@ -1140,16 +1140,15 @@ function localHeadline(){
   // 后端源串英文化之后，这里的包裹会自然失效但不会出错。
   const T=s=>`<span>${esc(s)}</span>`;
   if(!au.page_count)
-    return ['Nothing crawled yet',
-            'Run Crawl site, then Audit pages — neither needs an API key.'];
+    return ['还没有抓取任何页面','先跑「抓取站点」再跑「页面体检」，这两步都不需要引擎接入。'];
   if(blocked)
-    return [[T(blocked.name),' layer is failing'].join(''),
+    return [[T(blocked.name),' 层没通过'].join(''),
             [T((blocked.issues||[])[0]||''),
-             ' Everything downstream is invisible to engines until this is fixed',
-             p0?` — ${p0} P0 tickets are waiting.`:'.'].join('')];
-  return [`Site scores ${au.avg_score} across ${au.page_count} pages`,
-          p0?`${p0} P0 tickets open. AI visibility is still unmeasured — sampling needs an engine API key.`
-            :'AI visibility is still unmeasured — sampling needs an engine API key.'];
+             ' 这一层不修，下游的一切优化在引擎侧都不可见',
+             p0?`——已有 ${p0} 条 P0 工单在等。`:'。'].join('')];
+  return [`站点均分 ${au.avg_score}，共 ${au.page_count} 页`,
+          p0?`${p0} 条 P0 工单待办。AI 可见性仍未测量——采样需要引擎接入。`
+            :'AI 可见性仍未测量——采样需要引擎接入。'];
 }
 function headline(){
   const a=D.analytics,h=a.health,tr=a.trend||[];
@@ -1230,29 +1229,29 @@ function vOverview(){
     <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-top:14px">
       ${sampled?`<div class="card elev" style="padding:18px">
         <div style="display:flex;justify-content:space-between;align-items:baseline">
-          <div><div style="font-size:15px;font-weight:500">GEO health trend</div>
-            <div style="font-size:11.5px;color:var(--t600)">Weights: mention 30, citation 25, channels 20, content 15, facts 10; unmeasured re-normalized.</div></div>
+          <div><div style="font-size:15px;font-weight:500">GEO 健康分趋势</div>
+            <div style="font-size:11.5px;color:var(--t600)">加权：提及率30 引用25 阵地20 内容15 事实10；未测项权重重新归一。</div></div>
           <span class="tag tag-accent">${h.score}</span>
         </div>
         <div style="margin-top:10px">${svg}</div>
       </div>`:`<div class="card elev" style="padding:18px;gap:12px">
-        <div><div style="font-size:15px;font-weight:500">Start measuring AI visibility</div>
-          <div style="font-size:11.5px;color:var(--t600)">Everything above comes from crawling your own site. These four need to ask the engines.</div></div>
-        ${[['Mention rate','whether assistants bring you up unprompted'],
-           ['Cite share','how much of what they cite is yours'],
-           ['Channel coverage','which of the 19 channels already cite you'],
-           ['Fact accuracy','whether what they say about you is right']]
+        <div><div style="font-size:15px;font-weight:500">开始测 AI 可见性</div>
+          <div style="font-size:11.5px;color:var(--t600)">上面那几项都来自抓自己的站；下面这四项必须去问引擎才知道。</div></div>
+        ${[['提及率','AI 会不会主动把你说出来'],
+           ['引用份额','它引用的来源里有多少是你的'],
+           ['阵地覆盖','19 个阵地里已经有哪些被引用过'],
+           ['事实准确率','它说你的那些话对不对']]
           .map(([n,d])=>`<div style="display:flex;gap:9px;font-size:12.5px;color:var(--t400);line-height:1.5">
             <span style="color:var(--t600);flex:none">—</span><span><b style="color:var(--t300);font-weight:500">${n}</b> · ${d}</span></div>`).join('')}
         ${eng.ready?`<div class="row" style="gap:8px;margin-top:2px">
-          <button class="btn btn-primary" onclick="runAction('sample',{})">Run sampling now</button>
-          <button class="btn btn-secondary" onclick="runAction('sample-sheet',{})">Export a manual sheet</button>
+          <button class="btn btn-primary" onclick="runAction('sample',{})">立即跑采样</button>
+          <button class="btn btn-secondary" onclick="runAction('sample-sheet',{})">导出人工采样表</button>
         </div>
-        <div style="font-size:11px;color:var(--t600);line-height:1.5">${eng.ready} engine${eng.ready>1?'s':''} ready${eng.labels.length?' · '+eng.labels.join(', '):''}. Sampling asks every question in the bank on each engine and stores the full answers.</div>`
+        <div style="font-size:11px;color:var(--t600);line-height:1.5">${eng.ready} 个引擎就绪${eng.labels.length?' · '+eng.labels.join('、'):''}。采样会把问题库里每道题在每个引擎上各问一遍，并存下完整回答。</div>`
         :`<div class="row" style="gap:8px;margin-top:2px">
-          <button class="btn btn-secondary" onclick="runAction('sample-sheet',{})">Export a manual sheet</button>
+          <button class="btn btn-secondary" onclick="runAction('sample-sheet',{})">导出人工采样表</button>
         </div>
-        <div style="font-size:11px;color:var(--a300);line-height:1.5">No engine access is configured on this install — that is a setup step for whoever deployed it, not something you need to buy. Manual sheets work in the meantime and feed the same metrics.</div>`}
+        <div style="font-size:11px;color:var(--a300);line-height:1.5">这套部署还没配引擎接入——那是部署方的事，不需要你自己去买。在此期间人工采样表照样能用，产出同一套指标。</div>`}
       </div>`}
       <div class="card elev" style="padding:18px;gap:10px">
         <div><div style="font-size:15px;font-weight:500">下一步做这 ${open.length} 件事</div>
@@ -2498,11 +2497,11 @@ async function vSettings(){
             <button class="btn ${k.ok===true?'btn-ghost':'btn-secondary'}" style="font-size:12px;padding:2px 8px" onclick="editKey(${k.i})">${k.ok===true?'修改':'配置'}</button></div>`;
           return `
           <!-- 引擎接入在部署时配好，这里是状态与运维入口，不是给用户的待办清单 -->
-          <div><div style="font-size:15px;font-weight:500">Engine access</div>
-            <div style="font-size:11.5px;color:var(--t600)">Configured at deployment; keys live in this install's <code>.env</code> and take effect immediately. More engines means broader coverage — one is enough to sample.</div></div>
-          <div style="font-size:12px;margin-top:2px;color:${done?'var(--t400)':'var(--a300)'}">${done}/${need.length} ready for this project${done?'':' — none configured on this install'}</div>
+          <div><div style="font-size:15px;font-weight:500">引擎接入</div>
+            <div style="font-size:11.5px;color:var(--t600)">由部署方配置，Key 写在本机 <code>.env</code> 里、立即生效。接得越多覆盖越全，一个就够开始采样。</div></div>
+          <div style="font-size:12px;margin-top:2px;color:${done?'var(--t400)':'var(--a300)'}">本项目可用 ${done}/${need.length}${done?'':' —— 这套部署还没配引擎'}</div>
 
-          <div style="font-size:11px;letter-spacing:.08em;color:var(--t600);margin-top:8px">Used by this project (${mktLabel(M)})</div>
+          <div style="font-size:11px;letter-spacing:.08em;color:var(--t600);margin-top:8px">本项目（${mktLabel(M)}）采样用</div>
           ${need.map(row).join('')}
 
           ${skip.length?`<div style="font-size:11px;letter-spacing:.08em;color:var(--t600);margin-top:12px" title="当前项目市场是 ${mktLabel(M)}，这些引擎属于另一个市场">可不配 · 当前项目用不到</div>
