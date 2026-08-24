@@ -1177,21 +1177,21 @@ function vOverview(){
   const gap=(au.block_gap||[])[0];
   const needWork=(gd.C||0)+(gd.D||0);
   const kpis=sampled?[
-    ['GEO health score',h.score,`${h.measured.length}/5 measured${S.fact==null?' · facts untested':''}`],
-    ['Mention',pct(S.mention),'Mentioned unprompted'],
-    ['Cite share',pct(S.cite),'Your share of cited domains'],
-    ['Coverage',S.channel==null?'—':pct(S.channel),'Channels already cited by AI'],
-    ['Content readiness',S.content==null?'—':pct(S.content),'Target questions with final content'],
+    ['GEO 健康分',h.score,`${h.measured.length}/5 项可测${S.fact==null?' · 事实一致性未测':''}`],
+    ['提及率',pct(S.mention),'无提示样本中被主动提到'],
+    ['引用份额',pct(S.cite),'来源域名里属于你的比例'],
+    ['阵地覆盖',S.channel==null?'—':pct(S.channel),'已被 AI 引用的阵地占比'],
+    ['内容承接',S.content==null?'—':pct(S.content),'目标问题已有成稿内容'],
   ]:[
-    ['Site audit',au.avg_score==null?'—':au.avg_score,
-     au.page_count?`${au.page_count} pages · ${needWork} need work`:'Not crawled yet'],
-    ['Blocking layer',blocked?blocked.name:(au.page_count?'None':'—'),
-     blocked?'Fix this before anything downstream':'All four layers pass'],
-    ['Open P0',String(openT.filter(t=>t.priority==='P0').length),
-     `${openT.length} tickets open in total`],
-    ['Biggest content gap',gap?gap.block:'—',
-     gap?`missing on ${gap.missing_pages}/${gap.total} pages`:'No extraction-block gaps'],
-    ['AI visibility','—','Needs sampling · engine API key required'],
+    ['站点体检分',au.avg_score==null?'—':au.avg_score,
+     au.page_count?`${au.page_count} 页 · ${needWork} 页需改造`:'还没抓取'],
+    ['阻塞层',blocked?blocked.name:(au.page_count?'无':'—'),
+     blocked?'先修这一层，下游优化才可见':'四层全部通过'],
+    ['待办 P0',String(openT.filter(t=>t.priority==='P0').length),
+     `工单共 ${openT.length} 条未完成`],
+    ['最大内容缺口',gap?gap.block:'—',
+     gap?`${gap.missing_pages}/${gap.total} 页缺这一块`:'抽取块无缺口'],
+    ['AI 可见性','—','需采样 · 引擎接入由部署方配置'],
   ];
   const open=(D.tasks||[]).filter(t=>t.status!=='done').sort((x,y)=>x.priority.localeCompare(y.priority)).slice(0,3);
   const engs=a.engines||[];
