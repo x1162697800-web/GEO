@@ -415,13 +415,14 @@ def cmd_serve(a):
     import audit as A
     import crawl as C
     import deliver
+    import deliverables as DV
     import generate
     import report as Rp
     import sample as S
     import tasks
     import verify as V
 
-    G.info("═══ 1/7 抓取 ═══")
+    G.info("═══ 1/8 抓取 ═══")
     C.run(a.slug, max_pages=a.max_pages)
     G.info("═══ 2/7 体检 ═══")
     A.run(a.slug)
