@@ -1,6 +1,6 @@
 <div align="center">
 
-# Geo**Look**
+# Grounded**
 
 **オープンソース・セルフホスト型の GEO 実装プラットフォーム（エンドツーエンド）**
 
@@ -10,7 +10,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-9184d9) ![Python](https://img.shields.io/badge/python-3.9%2B-9184d9) ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-9184d9) ![Deps](https://img.shields.io/badge/deps-requests%20·%20bs4%20·%20lxml-9184d9)
 
-<a href="https://www.producthunt.com/products/geolook?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-geolook" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1211264&theme=dark&t=1786200566986" alt="GeoLook - オープンソースのセルフホスト型 GEO 実装プラットフォーム | Product Hunt" width="250" height="54" /></a>
+<a href="https://www.producthunt.com/products/geolook?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-geolook" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1211264&theme=dark&t=1786200566986" alt="Grounded - オープンソースのセルフホスト型 GEO 実装プラットフォーム | Product Hunt" width="250" height="54" /></a>
 
 ![Product demo](docs/demo.ja.gif)
 
@@ -24,7 +24,7 @@
 
 「X におすすめのツールは？」「X と Y はどちらが良い？」——ユーザーはますます AI に直接質問するようになっています。あなたのブランドが：
 
-| 課題 | GeoLook が提供するもの |
+| 課題 | Grounded が提供するもの |
 |---|---|
 | **AI に一切言及されない**——カテゴリ質問の候補に入っていない | エンジンごとに実回答をサンプリングし、言及率・順位・引用シェアを定量化。「完全不在」か「競合支配」かを診断 |
 | **理由がわからない**——AI はブラックボックス | 6 次元サイト監査 + ギャップ診断：クロール不能ページ？抽出ブロック欠如？AI が実際に引用するチャネルへの不在？メッセージの不一致？ |
@@ -62,11 +62,11 @@
 
 ## 3. 他製品との違い
 
-GeoLook と比較されるのは全く異なる 2 種類の製品であり、答えもそれぞれ違います。
+Grounded と比較されるのは全く異なる 2 種類の製品であり、答えもそれぞれ違います。
 
 ### 一つのブランドファクトを、AI が読む全レールへコンパイル
 
-維持するのはブランドファクト 1 ファイルだけ。GeoLook はそれを**六つのデプロイ対象**へコンパイルし、承認済みの同じ文言を打ち直しなしで各所へ届けます：
+維持するのはブランドファクト 1 ファイルだけ。Grounded はそれを**六つのデプロイ対象**へコンパイルし、承認済みの同じ文言を打ち直しなしで各所へ届けます：
 
 | 対象 | 配置先 |
 |---|---|
@@ -77,13 +77,13 @@ GeoLook と比較されるのは全く異なる 2 種類の製品であり、答
 | 帰属パック | GA4 チャネルグループ、ログ集計スクリプト、ソーススナップショット指針 |
 | **`SKILL.md`** | **agent へ導入**——Claude / Codex / Cursor。アシスタントが自社の承認文言で説明するようになる |
 
-最後の一つは他社が提供できていない部分です。GeoLook 自身も **MCP サーバーとして動作**し（8 ツール、stdio JSON-RPC を自前実装、依存追加なし）、任意の MCP クライアントから対話的に操作できます。ファクトを一度直せば六つの対象がまとめて再生成されます。
+最後の一つは他社が提供できていない部分です。Grounded 自身も **MCP サーバーとして動作**し（8 ツール、stdio JSON-RPC を自前実装、依存追加なし）、任意の MCP クライアントから対話的に操作できます。ファクトを一度直せば六つの対象がまとめて再生成されます。
 
 ### モニタリング型 GEO SaaS との比較
 
-GEO 製品の大半は言及率とランキングを表示し、月額課金し、データはベンダーのクラウドに置かれます。GeoLook は**実装プラットフォーム**です：
+GEO 製品の大半は言及率とランキングを表示し、月額課金し、データはベンダーのクラウドに置かれます。Grounded は**実装プラットフォーム**です：
 
-| | 一般的な GEO モニタリング SaaS | GeoLook |
+| | 一般的な GEO モニタリング SaaS | Grounded |
 |---|---|---|
 | **ループの深さ** | 監視 + 提案 | 監視 → 診断 → **チケット → 資産 → 自動検証 → 納品** |
 | **アウトプット** | 読むためのダッシュボード | 1 つのファクトから生成される六つのコンパイル対象 + MCP サーバー |
@@ -98,13 +98,13 @@ GEO 製品の大半は言及率とランキングを表示し、月額課金し�
 
 ### エージェンティックコマース基盤との比較
 
-ここ一年で現れた新しいカテゴリは、**商品カタログ**を agent が読める棚に載せ、AI ショッピングエージェント経由の成約で手数料を取ります。SKU がある事業にとっては実在の販売チャネルであり、GeoLook がやっていることとは別物です。
+ここ一年で現れた新しいカテゴリは、**商品カタログ**を agent が読める棚に載せ、AI ショッピングエージェント経由の成約で手数料を取ります。SKU がある事業にとっては実在の販売チャネルであり、Grounded がやっていることとは別物です。
 
 両者は異なる問いに答えており、大半のサイトに当てはまるのは一方だけです：
 
 - **SKU が前提。** B2B、SaaS、専門サービス、ローカルサービス、メディアには棚に載せるカタログがありません。GEO 需要の主体はまさにそこで、成約課金モデルは値付けの対象を持ちません。
-- **「候補に入った後」から始まる。** そもそも推薦されるかは上流の問題——ページが到達可能か、機械が解釈できるか、引用に値する段落があるか。GeoLook が計測し修復するのはこちらです。
-- **SKU がある場合は併用が成立。** 取引レールはコマース基盤に任せ、GeoLook で「そもそもアシスタントが言及するか」と「しない理由」を潰します。
+- **「候補に入った後」から始まる。** そもそも推薦されるかは上流の問題——ページが到達可能か、機械が解釈できるか、引用に値する段落があるか。Grounded が計測し修復するのはこちらです。
+- **SKU がある場合は併用が成立。** 取引レールはコマース基盤に任せ、Grounded で「そもそもアシスタントが言及するか」と「しない理由」を潰します。
 
 正直な制約：単一マシンのツールでアカウントやチーム協業はありません。サンプリング頻度と量は自分の API 予算次第。「ネガティブ疑い」フラグは人間のレビューのための手がかりであり判定ではありません。これらは意図的な設計上の選択です。
 
@@ -131,7 +131,7 @@ Windows では 2 点が異なります：
 ```bash
 # 1. クローンしてインストール
 git clone https://github.com/aigclink/geolook.git
-cd geolook
+cd grounded
 pip3 install requests beautifulsoup4 lxml
 
 # 2. ダッシュボードを起動（ブラウザが開きます）
@@ -153,11 +153,11 @@ python3 scripts/geo.py ui        # → http://127.0.0.1:8765
 ssh -N -L 8765:127.0.0.1:8765 user@your-server   # その後ローカルで http://127.0.0.1:8765 を開く
 
 # 方法 B：公開バインド + アクセストークン（両方必須。トークン未設定では起動を拒否）
-export GEOLOOK_TOKEN=$(openssl rand -hex 16)
-export GEOLOOK_HOST=0.0.0.0
+export GROUNDED_TOKEN=$(openssl rand -hex 16)
+export GROUNDED_HOST=0.0.0.0
 python3 scripts/geo.py ui
 # 初回アクセス時にトークンを入力（または http://server:8765/?token=トークン を開く）。
-# 以降は HttpOnly cookie で認証。API 呼び出しは X-Geolook-Token ヘッダー。
+# 以降は HttpOnly cookie で認証。API 呼び出しは X-Grounded-Token ヘッダー。
 ```
 
 公開デプロイでは HTTPS リバースプロキシ（nginx/caddy）を前段に——平文 HTTP のトークンは傍受されえます。`.env` と `work/` には秘密情報とプロジェクトデータが含まれます——ファイル権限に注意。
@@ -227,7 +227,7 @@ python3 scripts/geo.py sample-import --slug <project> --file <sheet>
 
 **Q：AI の回答は毎回違うのに、サンプリング結果の安定性はどう担保するのか？**
 
-単一の AI 回答は本質的に確率的です。そのため GeoLook は**単一の回答を指標として読むことはありません**。安定性は 4 層の仕組みで担保します：
+単一の AI 回答は本質的に確率的です。そのため Grounded は**単一の回答を指標として読むことはありません**。安定性は 4 層の仕組みで担保します：
 
 1. **集計ベース**——言及率などの指標は「数十問 × 複数エンジン」の比率であり、質問単位のブレは平均化されます。
 2. **変数の固定**——各エンジンのサンプリングモデルは固定（設定で確認・変更可能）、質問バンクも固定で、同じセットを期をまたいで再利用。変わるのは時間だけです。

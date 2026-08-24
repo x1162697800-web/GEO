@@ -1,6 +1,6 @@
 <div align="center">
 
-# Geo**Look**
+# Grounded**
 
 **开源的全流程 GEO 实施平台 · 自托管**
 
@@ -10,7 +10,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-9184d9) ![Python](https://img.shields.io/badge/python-3.9%2B-9184d9) ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-9184d9) ![Deps](https://img.shields.io/badge/deps-requests%20·%20bs4%20·%20lxml-9184d9)
 
-<a href="https://www.producthunt.com/products/geolook?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-geolook" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1211264&theme=dark&t=1786200566986" alt="GeoLook - 开源自托管的全流程 GEO 实施平台 | Product Hunt" width="250" height="54" /></a>
+<a href="https://www.producthunt.com/products/geolook?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-geolook" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1211264&theme=dark&t=1786200566986" alt="Grounded - 开源自托管的全流程 GEO 实施平台 | Product Hunt" width="250" height="54" /></a>
 
 ![产品演示](docs/demo.gif)
 
@@ -26,7 +26,7 @@
 
 越来越多的用户直接问 AI「有哪些好用的 XX 工具」「XX 和 YY 哪个好」。如果你的品牌：
 
-| 问题 | GeoLook 给的答案 |
+| 问题 | Grounded 给的答案 |
 |---|---|
 | **AI 根本不提你**——搜品类问题时你不在候选集里 | 逐引擎采样真实回答，量化提及率/位次/引用份额，诊断出「完全缺席」还是「竞品主导」 |
 | **不知道为什么不提你**——AI 是黑盒 | 六维站点体检 + 差距诊断：抓不到正文？缺抽取块？没铺 AI 实际引用的阵地？口径不一致？逐项定位 |
@@ -65,7 +65,7 @@
 - **行动计划**：结构化工单（依据/负责角色/工作量/时间窗口/验收标准）带独立**风险分级**（低风险快速优化 / 需观察·发布后 7/14/28 天复核 / 高风险技术改造·备份小批量留回滚——优先级说多重要，风险说动手时多小心）；标「自动」的由重抓站点 + 下期采样判定；量化工单显示「首测 → 当前 → 目标」进度条，回归自动打回；工单直达它最该写的那道题
 - **内容工作台**：选题池按「未提及 + 无内容」排序；写稿时左侧给必含抽取块与品牌事实，右侧实时**可被引用度预检**；AI 初稿必须过编造风险 lint；**分发清单**按问题类别匹配目标阵地，铺完打勾
 - **部署资产**：一份品牌事实卡编译出**六个目标**——llms.txt、JSON-LD（Organization/FAQ/Article…）、定义块与 FAQ 的 HTML 片段、内容大纲、**AI 流量归因包**（GA4「AI 引擎」渠道组正则 + 服务器日志统计脚本 + 来源快照说明，把闭环从「被引用」延伸到「带来转化」）、以及**品牌 `SKILL.md`**（装进 Claude / Codex / Cursor，让助手按你的官方口径描述你；只写已确认的事实，权威来源指回 llms.txt）。每个文件标注去处，改一次事实卡六个目标一起重生成；DEPLOY.md 给开发的部署清单含验收标准
-- **MCP 接入**：GeoLook 自身可作为 MCP server 运行（8 个工具，手写 stdio JSON-RPC，不新增依赖），Claude Desktop / Cursor / Codex 都能对话式驱动。发布类操作与抓取**不暴露**给 agent——发布永远是你手动点击
+- **MCP 接入**：Grounded 自身可作为 MCP server 运行（8 个工具，手写 stdio JSON-RPC，不新增依赖），Claude Desktop / Cursor / Codex 都能对话式驱动。发布类操作与抓取**不暴露**给 agent——发布永远是你手动点击
 - **发布渠道**：按**通用 / 国内 / 海外**分组——GitHub、WordPress 草稿、公众号草稿箱、Webhook，加真实接入的 **X**（标题+摘要+自动回链的引流推文）与 **Reddit**（markdown 全文自帖）；每个渠道配置弹窗内置分步教程与申请页直达；每篇成稿可勾选多渠道一次发布，发布状态同步回行动计划、待发布清单与问题库。没有个人可用官方 API 的平台（微博/小红书/头条/B站/LinkedIn/Facebook/Instagram）**刻意不接**——宁可不接不做假接入，页面写明原因并给 Webhook 桥接。凭证在本地 `.env`，每次发布逐篇人工确认，无任何自动外发路径
 
 ![行动计划](docs/screenshots/plan.png)
@@ -89,11 +89,11 @@
 
 ## 三、和别的产品比
 
-会被拿来和 GeoLook 比的其实是两类完全不同的东西，答案也不一样。
+会被拿来和 Grounded 比的其实是两类完全不同的东西，答案也不一样。
 
 ### 一份品牌事实，编译到每条 AI 读取轨道
 
-你要维护的只有一份品牌事实卡。GeoLook 把它编译成**六个部署目标**，同一套已批准的口径落到各处，不用重打一遍：
+你要维护的只有一份品牌事实卡。Grounded 把它编译成**六个部署目标**，同一套已批准的口径落到各处，不用重打一遍：
 
 | 目标 | 去处 |
 |---|---|
@@ -104,13 +104,13 @@
 | 归因配置包 | GA4 渠道组、日志统计脚本、来源快照指引 |
 | **`SKILL.md`** | **装进 agent**——Claude / Codex / Cursor，让助手按你的官方口径描述你 |
 
-最后一个是别家都没交付的部分。GeoLook 自身还能**作为 MCP server 运行**（8 个工具，手写 stdio JSON-RPC，不新增依赖），任意 MCP 客户端都能对话式驱动它。改一次事实卡，六个目标一起重生成。
+最后一个是别家都没交付的部分。Grounded 自身还能**作为 MCP server 运行**（8 个工具，手写 stdio JSON-RPC，不新增依赖），任意 MCP 客户端都能对话式驱动它。改一次事实卡，六个目标一起重生成。
 
 ### 对比监测型 GEO SaaS
 
-市面上的 GEO 产品绝大多数告诉你提及率和排名，按月收订阅费，数据在别人云上。GeoLook 的定位是**实施平台**：
+市面上的 GEO 产品绝大多数告诉你提及率和排名，按月收订阅费，数据在别人云上。Grounded 的定位是**实施平台**：
 
-| | 典型 GEO 监测 SaaS | GeoLook |
+| | 典型 GEO 监测 SaaS | Grounded |
 |---|---|---|
 | **闭环深度** | 监测 + 建议 | 监测 → 诊断 → **工单 → 资产 → 自动验收 → 交付**，落地全流程 |
 | **产出物** | 一个看板给你读 | 一份事实卡编译出的六个目标，外加一个 MCP server |
@@ -125,15 +125,15 @@
 
 ### 对比 agentic commerce 后端
 
-近一年出现的一类新产品，把你的**商品目录**放上 agent 可读的货架，AI 导购成单后抽佣。有 SKU 的场景下那是一条真实的销售渠道——也不是 GeoLook 在做的事。
+近一年出现的一类新产品，把你的**商品目录**放上 agent 可读的货架，AI 导购成单后抽佣。有 SKU 的场景下那是一条真实的销售渠道——也不是 Grounded 在做的事。
 
 两者回答的是不同的问题，而且只有一个对多数站点成立：
 
 - **它们需要 SKU。** B2B、SaaS、专业服务、本地服务、媒体都没有目录可上架。而这些恰恰是 GEO 需求的主体，按成交抽佣的模式在这里无从定价。
-- **它们从「你已经进了候选名单」之后开始。** 能不能被推荐是上游问题——页面抓不抓得到、机器读不读得懂、有没有值得引用的段落。这是 GeoLook 测量和修复的问题。
-- **真有 SKU 的时候，两者是叠加关系。** 交易轨道交给商务后端，用 GeoLook 查清助手到底提不提你，以及不提的原因该怎么修。
+- **它们从「你已经进了候选名单」之后开始。** 能不能被推荐是上游问题——页面抓不抓得到、机器读不读得懂、有没有值得引用的段落。这是 Grounded 测量和修复的问题。
+- **真有 SKU 的时候，两者是叠加关系。** 交易轨道交给商务后端，用 Grounded 查清助手到底提不提你，以及不提的原因该怎么修。
 
-诚实说明边界：GeoLook 是单机工具，没有账号体系和团队协作；采样频率与样本量由你自己的 API 预算决定；「疑似负面」等判定是线索提示，定性仍需人工复核——这些是刻意的设计取舍，不是还没做完。
+诚实说明边界：Grounded 是单机工具，没有账号体系和团队协作；采样频率与样本量由你自己的 API 预算决定；「疑似负面」等判定是线索提示，定性仍需人工复核——这些是刻意的设计取舍，不是还没做完。
 
 ## 四、部署教程
 
@@ -157,7 +157,7 @@ Windows 上有两处不同：
 ```bash
 # 1. 克隆并安装依赖
 git clone https://github.com/aigclink/geolook.git
-cd geolook
+cd grounded
 pip3 install requests beautifulsoup4 lxml
 
 # 2. 启动看板（自动打开浏览器）
@@ -182,11 +182,11 @@ ssh -N -L 8765:127.0.0.1:8765 user@your-server
 # 然后本地浏览器打开 http://127.0.0.1:8765
 
 # 方式 B：绑定公网 + 访问令牌（两个变量缺一不可，不设令牌会拒绝启动）
-export GEOLOOK_TOKEN=$(openssl rand -hex 16)
-export GEOLOOK_HOST=0.0.0.0
+export GROUNDED_TOKEN=$(openssl rand -hex 16)
+export GROUNDED_HOST=0.0.0.0
 python3 scripts/geo.py ui
 # 浏览器首次访问输入令牌（或打开 http://server:8765/?token=令牌），
-# 之后凭 HttpOnly cookie 访问；API 调用带 X-Geolook-Token 头
+# 之后凭 HttpOnly cookie 访问；API 调用带 X-Grounded-Token 头
 ```
 
 公网部署建议再套一层 HTTPS 反向代理（nginx/caddy），令牌走明文 HTTP 会被中间人看到。`.env` 与 `work/` 含密钥和项目数据，注意文件权限。
@@ -267,7 +267,7 @@ python3 scripts/geo.py sample-import --slug <项目> --file <采样表>
 
 **Q：AI 回答每次都不一样，采样结果怎么保证稳定？**
 
-单条 AI 回答天然有随机性，所以 GeoLook 的指标**从不看单条回答**，稳定性靠四层机制：
+单条 AI 回答天然有随机性，所以 Grounded 的指标**从不看单条回答**，稳定性靠四层机制：
 
 1. **聚合口径**——提及率等指标是「几十道题 × 多个引擎」的比例，单题抖动会被摊平；
 2. **固定变量**——每个引擎的采样模型版本固定（设置里可查可改），问题库固定，同一套题跨期复用，变的只有时间；
