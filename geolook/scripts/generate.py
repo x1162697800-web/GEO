@@ -217,9 +217,12 @@ def gen_definition_block(slug: str, lang: str = "zh") -> str:
     f = parse_facts(slug)
     cfg = G.load_config(slug)
     b = cfg["brand"]
-    d = f.get("definition") or "（待补定义句）"
-    nums = f.get("numbers", [])[:4]
     zh = lang == "zh"
+    # 片段要贴进真实页面，所以数字同样过滤未确认的。定义句缺失时保留显式占位符
+    # ——它是给人看的「这里要填」提示，与「把待确认当事实发出去」是两件事。
+    defn = f.get("definition") or ""
+    d = defn if _confirmed(defn) else ("（待补定义句）" if zh else "(definition TBD)")
+    nums = [n for n in f.get("numbers", []) if _confirmed(n.get("value", ""))][:4]
     items = "".join(f'\n    <li><strong>{html.escape(n["value"])}</strong> — {html.escape(n["fact"])}</li>'
                     for n in nums)
     dis = b.get("disambiguation") or []
