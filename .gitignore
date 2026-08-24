@@ -15,3 +15,6 @@ Thumbs.db
 nohup.out
 .sync-github.lock
 .cursor/hooks/.sync.lock
+
+# 临时分析脚本与中间结果，不入库
+nile-xval/
