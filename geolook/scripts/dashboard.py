@@ -138,6 +138,9 @@ def project(slug: str) -> dict:
         "facts_struct": _facts_struct(slug),
         # MCP 客户端把 server 当子进程启动，必须给绝对路径——相对路径它解析不了
         "mcp_server_path": str((G.ROOT / "scripts" / "mcp_server.py").resolve()),
+        # 引擎接入是交付时预配置的，不是用户的待办。界面据此决定
+        # 「去跑采样」还是「引擎没配好，找交付方」——而不是一律催用户配 key
+        "engines": _engines_ready(),
     }
 
 
