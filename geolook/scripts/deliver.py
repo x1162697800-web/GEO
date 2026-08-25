@@ -132,8 +132,8 @@ index.html            ← 先看这个
 03-工单表.html/.csv
 04-验收表.html
 assets/
-  llms.txt            部署到网站根目录
-  llms.en.txt         英文版（面向海外 AI）
+  llms.txt            部署到网站根目录（语言随目标市场，海外项目这份就是英文）
+  llms.en.txt         仅双市场项目才有：英文版
   jsonld/             按页面类型贴进 <head>
   snippets/           定义块与 FAQ 块的 HTML
   outlines/           每个目标问题一份内容大纲
