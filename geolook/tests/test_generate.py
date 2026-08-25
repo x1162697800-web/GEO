@@ -40,18 +40,44 @@ FACTS_EMPTY = """# 品牌事实卡
 > 待确认
 """
 
+# 英文事实卡：结构与中文对应，标题是英文的
+FACTS_EN = """# Brand facts
 
-def _project(root, slug="x", market="both", facts=FACTS_FULL, site="https://x.com"):
+## One-line definition
+
+> Grounded is a self-hosted platform for generative engine optimization.
+
+## Key numbers
+
+| Fact | Value | Source | Evidence |
+|---|---|---|---|
+| Engines supported | 17 | Website | A |
+| Phone | TBD | — | D |
+
+**Good fit**:
+- Teams that need GEO turned into execution
+
+**Not a fit**:
+- Teams that only want a dashboard
+"""
+
+
+def _project(root, slug="x", market="both", facts=FACTS_FULL, site="https://x.com",
+             facts_en=None, brand_en=None, questions=None):
     pdir = Path(root) / slug
     (pdir / "content").mkdir(parents=True)
-    cfg = {"brand": {"name": "Grounded · Open", "site": site,
-                     "aliases": ["Grounded", "grounded"], "industry": "GEO 工具",
-                     "target_users": "待确认",
-                     "disambiguation": ["GEO 指生成式引擎优化，不是地理信息"]},
-           "market": market, "questions": []}
+    brand = {"name": "Grounded · Open", "site": site,
+             "aliases": ["Grounded", "grounded"], "industry": "GEO 工具",
+             "target_users": "待确认",
+             "disambiguation": ["GEO 指生成式引擎优化，不是地理信息"]}
+    if brand_en is not None:
+        brand["en"] = brand_en
+    cfg = {"brand": brand, "market": market, "questions": questions or []}
     (pdir / "geo.json").write_text(json.dumps(cfg, ensure_ascii=False), "utf-8")
     if facts is not None:
         (pdir / "content" / "facts.md").write_text(facts, "utf-8")
+    if facts_en is not None:
+        (pdir / "content" / "facts.en.md").write_text(facts_en, "utf-8")
     G.write_json(pdir / "audit.json", {"pages": [], "avg_score": 50, "page_count": 0})
     return pdir
 
