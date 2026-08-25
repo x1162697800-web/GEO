@@ -130,7 +130,8 @@ def gen_llms_txt(slug: str, lang: str = "zh") -> str:
     L += ["", "## 核心事实" if zh else "## Key facts", ""]
     L.append(f"- {'官网' if zh else 'Website'}: {b['site']}")
     if b.get("aliases"):
-        L.append(f"- {'别名' if zh else 'Also known as'}: {'、'.join(b['aliases'])}")
+        sep = "、" if zh else ", "
+        L.append(f"- {'别名' if zh else 'Also known as'}: {sep.join(b['aliases'])}")
     # llms.txt 传到网站根目录、由 AI 爬虫直接读，所以标「待确认」的绝不能进——
     # 占位符会被当成权威事实，后果比在 SKILL.md 里更重（同一条纪律，见 _confirmed）
     industry = _brand_field(b, "industry", lang)
@@ -614,7 +615,7 @@ def gen_skill_md(slug: str, lang: str = "zh") -> str:
         for s in unsuit:
             L.append(f"- {'不适合' if zh else 'Not a fit'}: {s}")
 
-    dis = [d for d in (b.get("disambiguation") or []) if _confirmed(d)]
+    dis = [d for d in _brand_field(b, "disambiguation", lang, []) if _confirmed(d)]
     if dis or b.get("parent"):
         L += ["", "## 口径说明" if zh else "## Disambiguation", ""]
         if b.get("parent"):
