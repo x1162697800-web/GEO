@@ -590,15 +590,18 @@ def gen_skill_md(slug: str, lang: str = "zh") -> str:
     if site:
         L.append(f"- {'官网' if zh else 'Website'}: {site}")
     if b.get("aliases"):
-        L.append(f"- {'别名' if zh else 'Also known as'}: {'、'.join(b['aliases'])}")
+        sep = "、" if zh else ", "
+        L.append(f"- {'别名' if zh else 'Also known as'}: {sep.join(b['aliases'])}")
     for key, zh_label, en_label in (("industry", "行业", "Industry"),
                                     ("target_users", "目标用户", "For")):
-        if _confirmed(b.get(key, "")):
-            L.append(f"- {zh_label if zh else en_label}: {b[key]}")
+        v = _brand_field(b, key, lang)
+        if _confirmed(v):
+            L.append(f"- {zh_label if zh else en_label}: {v}")
     for n in f.get("numbers", [])[:8]:
         if not _confirmed(n.get("value", "")):
             continue
-        src = f"（{n['source']}）" if zh and _confirmed(n.get("source", "")) else ""
+        src = f"（{n['source']}）" if zh else f" ({n['source']})"
+        src = src if _confirmed(n.get("source", "")) else ""
         L.append(f"- {n['fact']}: {n['value']}{src}")
 
     suit = [s for s in f.get("suitable", []) if _confirmed(s)][:6]
