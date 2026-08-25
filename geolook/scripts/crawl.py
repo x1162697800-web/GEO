@@ -226,15 +226,24 @@ def probe_ai_ua(root: str, home: dict, robots_txt: str,
     return probe, ua_blocked, rate_limited
 
 
+def llms_txt_links(root: str, llms_txt: str) -> list[str]:
+    """llms.txt 里指向本站的链接——站点主人点名「优先引用这些页」的清单。
+
+    比任何启发式排序都可靠：这是站点主人自己的判断，所以也用来定抓取优先级。
+    """
+    urls = []
+    for u in re.findall(r"https?://[^\s)\]>\"'`]+", llms_txt or ""):
+        u = u.rstrip(".,;:")
+        if G.same_site(root, u) and G.is_fetchable(u) and u not in urls:
+            urls.append(u)
+    return urls
+
+
 def check_llms_txt(root: str, llms_txt: str, robots_txt: str) -> dict | None:
     """llms.txt 只有指向可抓取的有效页面才有意义：抽样验证里面的链接。"""
     if not llms_txt:
         return None
-    urls = []
-    for u in re.findall(r"https?://[^\s)\]>\"'`]+", llms_txt):
-        u = u.rstrip(".,;:")
-        if G.same_site(root, u) and G.is_fetchable(u) and u not in urls:
-            urls.append(u)
+    urls = llms_txt_links(root, llms_txt)
     groups = G.robots_parse(robots_txt)
     broken, robots_blocked = [], []
     sample = urls[:6]
