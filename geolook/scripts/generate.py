@@ -61,23 +61,7 @@ def parse_facts(slug: str, lang: str = "zh") -> dict:
     text = p.read_text("utf-8")
     out = {"definition": "", "numbers": [], "suitable": [], "unsuitable": [], "raw": text}
 
-    # 一句话定义：整个引用块可能跨多行，要合并；否则会在句子中间截断
-    m = re.search(spec["definition"], text, re.S)
-    if m:
-        body = m.group(1)
-        quoted = [l.strip()[1:].strip() for l in body.split("\n") if l.strip().startswith(">")]
-        if quoted:
-            line = " ".join(quoted)
-        else:
-            line = next((l.strip() for l in body.split("\n")
-                         if l.strip() and not l.strip().startswith(("#", "-", "|"))), "")
-        line = re.sub(r"\*\*(.+?)\*\*", r"\1", line)      # 去掉 markdown 加粗
-        line = re.sub(r"`(.+?)`", r"\1", line)
-        line = re.sub(r"\s+", " ", line).strip()
-        # 中文换行合并会留下多余空格（"生成 整体方案"、"SaaS： 把"）。
-        # 汉字和全角标点两侧的空格都要去掉，否则会带进 JSON-LD description。
-        CJK = r"[一-鿿　-〿＀-￯]"
-        out["definition"] = re.sub(rf"(?<={CJK}) (?={CJK})", "", line)
+    out["definition"] = _clean_line(_definition_of(text, spec))
 
     # 关键数字表：| 事实 | 数值 | 来源 | 证据 |
     m = re.search(spec["numbers"], text, re.S)
@@ -87,13 +71,41 @@ def parse_facts(slug: str, lang: str = "zh") -> dict:
             if a and a.lower() not in spec["header"] and not set(a) <= set("-: "):
                 out["numbers"].append({"fact": a, "value": b, "source": c})
 
-    m = re.search(spec["suitable"], text, re.S)
-    if m:
-        out["suitable"] = [l.strip("- ").strip() for l in m.group(1).split("\n") if l.strip().startswith("-")]
-    m = re.search(spec["unsuitable"], text, re.S)
-    if m:
-        out["unsuitable"] = [l.strip("- ").strip() for l in m.group(1).split("\n") if l.strip().startswith("-")]
+    for key in ("suitable", "unsuitable"):
+        m = re.search(spec[key], text, re.S)
+        items = ([l.strip("-* ").strip() for l in m.group(1).split("\n")
+                  if l.strip().startswith(("-", "*"))] if m else [])
+        if not items:      # 退回行内写法：`- 适合：…`
+            items = re.findall(spec[f"{key}_inline"], text, re.M)
+        out[key] = [x.strip() for x in items if x.strip()]
     return out
+
+
+def _definition_of(text: str, spec: dict) -> str:
+    """先按独立小节找，再退回行内条目。两种写法参考文档里都出现过。"""
+    m = re.search(spec["definition"], text, re.S)
+    if m:
+        body = m.group(1)
+        # 引用块可能跨多行，要合并；否则会在句子中间截断
+        quoted = [l.strip()[1:].strip() for l in body.split("\n") if l.strip().startswith(">")]
+        if quoted:
+            return " ".join(quoted)
+        plain = next((l.strip() for l in body.split("\n")
+                      if l.strip() and not l.strip().startswith(("#", "-", "|", "*"))), "")
+        if plain:
+            return plain
+    m = re.search(spec["definition_inline"], text, re.M)
+    return m.group(1) if m else ""
+
+
+def _clean_line(line: str) -> str:
+    line = re.sub(r"\*\*(.+?)\*\*", r"\1", line)      # 去掉 markdown 加粗
+    line = re.sub(r"`(.+?)`", r"\1", line)
+    line = re.sub(r"\s+", " ", line).strip()
+    # 中文换行合并会留下多余空格（"生成 整体方案"、"SaaS： 把"）。
+    # 汉字和全角标点两侧的空格都要去掉，否则会带进 JSON-LD description。
+    CJK = r"[一-鿿　-〿＀-￯]"
+    return re.sub(rf"(?<={CJK}) (?={CJK})", "", line)
 
 
 def _brand_field(b: dict, key: str, lang: str, default=""):
