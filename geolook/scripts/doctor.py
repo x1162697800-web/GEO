@@ -158,6 +158,33 @@ def _check_projects(r: Report):
             r.add(WARN, f"项目 {s} 问题库为空",
                   "采样与选题都依赖它",
                   fix=f"geo.py bootstrap --slug {s}（需引擎）或到看板「问题库」手填")
+        _check_fact_sources(r, s, cfg)
+
+
+def _check_fact_sources(r: Report, slug: str, cfg: dict):
+    """每个目标市场都要有对应语言的事实源，否则那语言的资产是空的。
+
+    英文资产不透传中文事实（翻错的品牌声明等于编造），所以 facts.en.md 缺失时
+    llms.txt / SKILL.md / JSON-LD 会静默产出空壳——看起来生成成功了，实际没内容。
+    """
+    import generate as GEN
+
+    for lang in GEN._langs(cfg.get("market", "cn")):
+        src = GEN.FACTS_FILE[lang]
+        p = G.WORK / slug / "content" / src
+        name = "中文" if lang == "zh" else "英文"
+        if not p.exists():
+            r.add(WARN, f"项目 {slug} 缺{name}事实卡",
+                  f"content/{src} 不存在，{name}资产会是空壳",
+                  fix=f"照 references/content-patterns.md 第 1 节写 content/{src}")
+        elif not GEN._confirmed(GEN.parse_facts(slug, lang).get("definition", "")):
+            r.add(WARN, f"项目 {slug} 的{name}定义句未确认",
+                  f"content/{src} 里「一句话定义」还是占位符",
+                  fix="补齐后重新生成——未确认的事实不会写进任何资产")
+        if lang == "en" and not (cfg.get("brand", {}).get("en") or {}).get("industry"):
+            r.add(WARN, f"项目 {slug} 缺 brand.en",
+                  "geo.json 里没有英文的行业/目标用户/口径说明，英文资产会省略这几行",
+                  fix='在 geo.json 的 brand 下加 "en": {"industry": …, "target_users": …}')
 
 
 def run() -> int:
