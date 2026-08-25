@@ -71,20 +71,30 @@ def parse_facts(slug: str, lang: str = "zh") -> dict:
         out["definition"] = re.sub(rf"(?<={CJK}) (?={CJK})", "", line)
 
     # 关键数字表：| 事实 | 数值 | 来源 | 证据 |
-    m = re.search(r"##\s*关键数字.*?\n(.*?)(?=\n##|\Z)", text, re.S)
+    m = re.search(spec["numbers"], text, re.S)
     if m:
         for row in re.findall(r"^\|([^|\n]+)\|([^|\n]+)\|([^|\n]+)\|", m.group(1), re.M):
             a, b, c = (x.strip() for x in row)
-            if a and a not in ("事实", "---", "项") and not set(a) <= set("-: "):
+            if a and a.lower() not in spec["header"] and not set(a) <= set("-: "):
                 out["numbers"].append({"fact": a, "value": b, "source": c})
 
-    m = re.search(r"\*\*适合\*\*[：:]?(.*?)(?=\*\*不适合|##|\Z)", text, re.S)
+    m = re.search(spec["suitable"], text, re.S)
     if m:
         out["suitable"] = [l.strip("- ").strip() for l in m.group(1).split("\n") if l.strip().startswith("-")]
-    m = re.search(r"\*\*不适合.*?\*\*[：:]?(.*?)(?=\n##|\Z)", text, re.S)
+    m = re.search(spec["unsuitable"], text, re.S)
     if m:
         out["unsuitable"] = [l.strip("- ").strip() for l in m.group(1).split("\n") if l.strip().startswith("-")]
     return out
+
+
+def _brand_field(b: dict, key: str, lang: str, default=""):
+    """英文产物只取 brand.en 里的英文事实，缺失则留空。
+
+    透传中文比留空更糟：llms.txt 与 JSON-LD 由爬虫直读，`Industry: GEO 工具`
+    会被当成英文语境下的权威事实收走。品牌名与别名是标识符不是文案，不走这里。
+    """
+    src = (b.get("en") or {}) if lang == "en" else b
+    return src.get(key) or default
 
 
 # ---------------------------------------------------------------- 事实可信度
@@ -101,7 +111,7 @@ def _confirmed(text: str) -> bool:
 
 def gen_llms_txt(slug: str, lang: str = "zh") -> str:
     cfg = G.load_config(slug)
-    f = parse_facts(slug)
+    f = parse_facts(slug, lang)
     b = cfg["brand"]
     audit = G.read_json(G.project_dir(slug) / "audit.json", {})
     pages = sorted(audit.get("pages", []), key=lambda p: -p["score"])[:12]
