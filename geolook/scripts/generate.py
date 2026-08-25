@@ -87,7 +87,15 @@ def gen_llms_txt(slug: str, lang: str = "zh") -> str:
 
     zh = lang == "zh"
     L = [f"# {b['name']}", ""]
-    L.append(f"> {f.get('definition') or '（待补：一句话定义，必须与官网首屏和 JSON-LD description 逐字一致）'}")
+    # 定义句未确认时不能写成引用块——llms.txt 由 AI 爬虫直读，引用块会被当成
+    # 权威定义抄走。与 SKILL.md 同一处理：退化成注释，措辞随 lang 走。
+    defn = f.get("definition", "")
+    if _confirmed(defn):
+        L.append(f"> {defn}")
+    else:
+        L.append("<!-- 一句话定义尚未确认：先在品牌事实库补上「一句话定义」再重新生成 -->"
+                 if zh else
+                 "<!-- One-line definition not confirmed yet: fill it in Brand Facts and regenerate -->")
     L += ["", "## 核心事实" if zh else "## Key facts", ""]
     L.append(f"- {'官网' if zh else 'Website'}: {b['site']}")
     if b.get("aliases"):
