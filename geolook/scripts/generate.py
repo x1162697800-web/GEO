@@ -688,8 +688,18 @@ ASSETS = ["llms", "jsonld", "snippets", "outlines", "attribution", "skill"]
 
 
 def _langs(market: str) -> list[str]:
-    """项目按市场决定要产哪几种语言的资产。文件名约定：中文不带后缀，英文加 .en。"""
+    """项目按市场决定要产哪几种语言的资产，第一个是主语言。"""
     return ["zh"] if market == "cn" else ["en"] if market == "global" else ["zh", "en"]
+
+
+def _sfx(lang: str, market: str) -> str:
+    """主语言用无后缀文件名，次语言加 .<lang>。
+
+    llms.txt 必须落在规范路径 /llms.txt。market=global 的项目主语言就是英文，
+    若产成 llms.en.txt，DEPLOY.md 指的 assets/llms.txt 根本不存在，而审计又会
+    因为站点缺 /llms.txt 扣分——自己教的部署方式过不了自己的体检。
+    """
+    return "" if lang == _langs(market)[0] else f".{lang}"
 
 
 def run(slug: str, which: list[str] | None = None, with_draft: bool = False,
@@ -800,8 +810,10 @@ def run(slug: str, which: list[str] | None = None, with_draft: bool = False,
             G.info(f"起草 {o['question_id']} · {o['target_question'][:30]}…")
             text = draft(slug, o)
             if text:
+                banner = ("<!-- 初稿，需人工核实所有事实后再发布 · " if _langs(market)[0] == "zh"
+                          else "<!-- Draft. Verify every fact by hand before publishing · ")
                 (d / f"{o['question_id']}.md").write_text(
-                    f"<!-- 初稿，需人工核实所有事实后再发布 · {G.today()} -->\n\n" + text, "utf-8")
+                    f"{banner}{G.today()} -->\n\n" + text, "utf-8")
                 made.append(f"assets/drafts/{o['question_id']}.md")
             else:
                 G.info("  没有可用的 LLM API Key，跳过起草")
