@@ -300,18 +300,27 @@ def gen_definition_block(slug: str, lang: str = "zh") -> str:
 
 def gen_faq_block(slug: str, lang: str = "zh") -> str:
     cfg = G.load_config(slug)
-    mk = "cn" if lang == "zh" else "global"
+    zh = lang == "zh"
+    mk = "cn" if zh else "global"
     qs = [q for q in cfg.get("questions", []) if q.get("market") in (mk, "both")][:8]
+    # 片段里的注释会跟着进客户的生产页面源码，所以注释也得随 lang 走
+    hint = ("第一句直接给结论，再展开。不要营销话术" if zh else
+            "Lead with the answer, then expand. No marketing copy")
     body = "\n".join(
         f"""  <details open>
     <summary><h3>{html.escape(q['text'])}</h3></summary>
-    <p><!-- 第一句直接给结论，再展开。不要营销话术 --></p>
+    <p><!-- {hint} --></p>
   </details>""" for q in qs)
-    return f"""<!-- FAQ 块。关键：答案必须在静态 HTML 里可见。
+    head = ("""<!-- FAQ 块。关键：答案必须在静态 HTML 里可见。
      只放进 JSON-LD 而正文折叠靠 JS 渲染的话，读渲染文本的抓取器全部丢失。
-     用 <details open> 或直接展开，别用纯 JS 手风琴。 -->
+     用 <details open> 或直接展开，别用纯 JS 手风琴。 -->""" if zh else
+            """<!-- FAQ block. Critical: answers must be visible in the static HTML.
+     If they live only in JSON-LD while the body is collapsed behind JS,
+     every crawler that reads rendered text loses them.
+     Use <details open> or plain expanded markup, not a JS-only accordion. -->""")
+    return f"""{head}
 <section class="geo-faq">
-  <h2>{'常见问题' if lang == 'zh' else 'FAQ'}</h2>
+  <h2>{'常见问题' if zh else 'FAQ'}</h2>
 {body}
 </section>"""
 
