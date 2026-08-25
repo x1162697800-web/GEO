@@ -209,37 +209,43 @@ def gen_jsonld(slug: str, lang: str = "zh") -> dict[str, dict]:
         "name": b["name"], "url": site, "description": desc,
         "applicationCategory": b.get("application_category", "BusinessApplication"),
         "operatingSystem": "Web",
-        "publisher": {"@type": "Organization", "name": b["parent"] or b["name"]
-                      if b.get("parent") else b["name"]},
+        "publisher": {"@type": "Organization", "name": b.get("parent") or b["name"]},
     }
     offers = b.get("offers")
     if offers:
         out_offers = []
         for o in offers:
             item = {"@type": "Offer", "name": o.get("name", ""), "price": str(o.get("price", "")),
-                    "priceCurrency": o.get("currency", "CNY")}
+                    "priceCurrency": o.get("currency", "CNY" if zh else "USD")}
             if o.get("desc"):
                 item["description"] = o["desc"]
             out_offers.append(item)
         app["offers"] = out_offers
     else:
-        app["offers"] = {"@type": "Offer", "price": "<填>", "priceCurrency": "<填 CNY/HKD/USD>"}
-    if b.get("audience"):
-        app["audience"] = {"@type": "Audience", "audienceType": b["audience"]}
+        app["offers"] = {"@type": "Offer",
+                         "price": "<填>" if zh else "<fill>",
+                         "priceCurrency": "<填 CNY/HKD/USD>" if zh else "<fill USD/EUR/GBP>"}
+    audience = _brand_field(b, "audience", lang)
+    if audience:
+        app["audience"] = {"@type": "Audience", "audienceType": audience}
 
     # 空的 FAQPage 不是「无用」而是「有害」：按 audit.py 的 SCHEMA_CONTENT_MISMATCH，
     # 声明了 FAQPage 却没有可见问答会被判成负信号——检索系统拿可见文本对账，对不上
     # 时结构化数据反而扣分。所以问题库为空就不产这个文件。
+    # 问题按市场取：英文 JSON-LD 配英文问题，否则会把中文问答贴进英文页面的 <head>
+    mk = ("cn", "both") if zh else ("global", "both")
     faq_items = [{"@type": "Question", "name": q["text"],
                   "acceptedAnswer": {"@type": "Answer",
-                                     "text": "<填：第一句就是结论，再展开>"}}
-                 for q in cfg.get("questions", []) if q.get("market") in ("cn", "both")][:8]
+                                     "text": "<填：第一句就是结论，再展开>" if zh else
+                                             "<fill: lead with the answer, then expand>"}}
+                 for q in cfg.get("questions", []) if q.get("market") in mk][:8]
     faq = ({"@context": "https://schema.org", "@type": "FAQPage",
             "mainEntity": faq_items} if faq_items else None)
 
     article = {
         "@context": "https://schema.org", "@type": "Article",
-        "headline": "<填：含目标问题原词的标题>",
+        "headline": "<填：含目标问题原词的标题>" if zh else
+                    "<fill: title containing the target question verbatim>",
         "datePublished": "<YYYY-MM-DD>", "dateModified": "<YYYY-MM-DD>",
         "author": {"@type": "Organization", "name": b["name"]},
         "publisher": {"@type": "Organization", "name": b["name"]},
@@ -247,8 +253,9 @@ def gen_jsonld(slug: str, lang: str = "zh") -> dict[str, dict]:
     }
 
     breadcrumb = {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
-        {"@type": "ListItem", "position": 1, "name": "首页", "item": site},
-        {"@type": "ListItem", "position": 2, "name": "<栏目>", "item": f"{site}/<path>"},
+        {"@type": "ListItem", "position": 1, "name": "首页" if zh else "Home", "item": site},
+        {"@type": "ListItem", "position": 2,
+         "name": "<栏目>" if zh else "<section>", "item": f"{site}/<path>"},
     ]}
     out = {"organization": org, "software-application": app,
            "article": article, "breadcrumb": breadcrumb}
