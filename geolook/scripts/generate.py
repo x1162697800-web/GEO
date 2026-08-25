@@ -763,7 +763,8 @@ def run(slug: str, which: list[str] | None = None, with_draft: bool = False,
     if "attribution" in which:
         d = adir / "attribution"
         d.mkdir(parents=True, exist_ok=True)
-        for name, body in gen_attribution(slug).items():
+        # 归因包不分语言变体，跟项目主语言（both 视为中文优先）
+        for name, body in gen_attribution(slug, _langs(market)[0]).items():
             (d / name).write_text(body, "utf-8")
             made.append(f"assets/attribution/{name}")
 
@@ -787,7 +788,9 @@ def run(slug: str, which: list[str] | None = None, with_draft: bool = False,
             if o["facts_to_use"]:
                 body += ["## 可用的已核实事实", ""] + [f"- {x}" for x in o["facts_to_use"]] + [""]
             (d / f"{o['question_id']}.md").write_text("\n".join(body), "utf-8")
-        made.append(f"assets/outlines/（{len(outlines)} 份）")
+            # index.json 的 assets 是机读路径列表，其余资产都记真实路径；
+            # 这里原先塞的是「（N 份）」摘要标签，既不是路径也把中文带进了数据文件
+            made.append(f"assets/outlines/{o['question_id']}.md")
         G.write_json(adir / "outlines" / "_index.json", outlines)
 
     if with_draft and outlines:
