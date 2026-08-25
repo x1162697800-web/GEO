@@ -720,32 +720,36 @@ def run(slug: str, which: list[str] | None = None, with_draft: bool = False,
 
     if "llms" in which:
         (adir).mkdir(parents=True, exist_ok=True)
-        if market in ("cn", "both"):
-            (adir / "llms.txt").write_text(gen_llms_txt(slug, "zh"), "utf-8")
-            made.append("assets/llms.txt")
-        if market in ("global", "both"):
-            (adir / "llms.en.txt").write_text(gen_llms_txt(slug, "en"), "utf-8")
-            made.append("assets/llms.en.txt")
+        want = {f"llms{_sfx(l, market)}.txt": l for l in _langs(market)}
+        for fn, lang in want.items():
+            (adir / fn).write_text(gen_llms_txt(slug, lang), "utf-8")
+            made.append(f"assets/{fn}")
+        # 改市场会换主语言（both → global 时英文从 .en 升为主名），旧名字留着
+        # 就会被打进交付包，客户按 DEPLOY.md 部署时不知道该传哪个
+        for fn in ("llms.txt", "llms.en.txt", "llms.zh.txt"):
+            if fn not in want and (adir / fn).exists():
+                (adir / fn).unlink()
+                G.info(f"移除已不适用的 assets/{fn}")
 
     if "jsonld" in which:
         d = adir / "jsonld"
         d.mkdir(parents=True, exist_ok=True)
-        langs = _langs(market)
-        # 生成器必须对「不再产出」也幂等：判据变了（比如问题库清空后不再产 FAQPage）
-        # 而旧文件留在原地，就会被打进交付包发给客户。只清自己认领的那几个名字，
-        # 不碰用户在资产页手动加的文件。市场收窄时整套语言变体也要一并清掉。
-        for lang in ("zh", "en"):
-            sfx = "" if lang == "zh" else ".en"
-            produced = gen_jsonld(slug, lang) if lang in langs else {}
-            for name, obj in produced.items():
-                (d / f"{name}{sfx}.json").write_text(
-                    json.dumps(obj, ensure_ascii=False, indent=2), "utf-8")
-                made.append(f"assets/jsonld/{name}{sfx}.json")
-            for name in JSONLD_NAMES - produced.keys():
-                stale = d / f"{name}{sfx}.json"
-                if stale.exists():
-                    stale.unlink()
-                    G.info(f"移除已不适用的 assets/jsonld/{name}{sfx}.json")
+        want: dict[str, dict] = {}
+        for lang in _langs(market):
+            sfx = _sfx(lang, market)
+            for name, obj in gen_jsonld(slug, lang).items():
+                want[f"{name}{sfx}.json"] = obj
+        for fn, obj in want.items():
+            (d / fn).write_text(json.dumps(obj, ensure_ascii=False, indent=2), "utf-8")
+            made.append(f"assets/jsonld/{fn}")
+        # 幂等有两种失效：判据变了（问题库清空后不再产 FAQPage）、市场变了（主语言
+        # 换名，旧的 .en 变孤儿）。两者都会让旧文件被打进交付包，所以按「该有哪些」
+        # 反推该删哪些。只清自己认领的名字，不碰用户在资产页手动加的文件。
+        owned = {f"{n}{s}.json" for n in JSONLD_NAMES for s in ("", ".zh", ".en")}
+        for fn in sorted(owned - want.keys()):
+            if (d / fn).exists():
+                (d / fn).unlink()
+                G.info(f"移除已不适用的 assets/jsonld/{fn}")
 
     if "snippets" in which:
         d = adir / "snippets"
