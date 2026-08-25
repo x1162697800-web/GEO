@@ -158,6 +158,30 @@ class TestUnconfirmedFactsNeverShipped(unittest.TestCase):
         self.assertNotIn("待确认", out)
         self.assertNotIn("For:", out)               # target_users 未确认
 
+    def test_llms_txt_never_quotes_an_unconfirmed_definition(self):
+        """定义句未确认时不能写成引用块——爬虫会把它当权威定义抄走。
+
+        回归自实跑：wagnab 的 llms.en.txt 首行是
+        「> （待补：一句话定义…）」——占位符 + 中文，两重错误。
+        """
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, facts=FACTS_EMPTY)
+                out = GEN.gen_llms_txt("x", "zh")
+        self.assertNotIn("待确认", out)
+        self.assertNotIn("待补", out)
+        for line in out.splitlines():
+            self.assertFalse(line.startswith(">"), f"未确认的定义句仍被写成引用块：{line}")
+
+    def test_llms_txt_en_placeholder_is_not_chinese(self):
+        """英文资产传到客户网站根目录，占位提示必须也是英文。"""
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, facts=FACTS_EMPTY)
+                out = GEN.gen_llms_txt("x", "en")
+        self.assertIn("One-line definition not confirmed yet", out)
+        self.assertNotIn("一句话定义", out)
+        self.assertNotIn("待补", out)
 
     def test_jsonld_description_drops_unconfirmed_definition(self):
         """JSON-LD 贴进 <head> 给爬虫读，未确认的定义句不能进 description。"""
