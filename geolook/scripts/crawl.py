@@ -85,6 +85,27 @@ def rank(urls: list[str], root: str) -> list[str]:
     return sorted(seen.values(), key=key)
 
 
+def stratify(urls: list[str]) -> list[str]:
+    """按 URL 家族轮转取样，避免单个栏目把抓取额度吃光。
+
+    rank() 把「命中优先关键词」排在路径深度之前，而 PRIORITY 里有 product：
+    一个有 175 个 SKU 的站，/products/<sku> 会整批压过 /odm、/private-label、
+    /collections/* 这些同样重要的浅层页。实测 wagnab 时 25 页额度有 18 页
+    花在商品详情页上，站点自己在 llms.txt 里点名的 14 页漏了 8 个。
+    体检要的是站点的代表性切面，不是某一个栏目的枚举。
+    """
+    fams: "OrderedDict[str, list[str]]" = OrderedDict()
+    for u in urls:
+        seg = [x for x in (urlparse(u).path or "/").split("/") if x]
+        fams.setdefault(seg[0].lower() if seg else "/", []).append(u)
+    out: list[str] = []
+    while any(fams.values()):
+        for q in fams.values():
+            if q:
+                out.append(q.pop(0))
+    return out
+
+
 def analyze_page(url: str, res: dict) -> dict:
     soup = G.parse_html(res["html"])
     text = G.main_text(soup)
