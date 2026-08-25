@@ -491,6 +491,76 @@ class TestJsonldFollowsMarket(unittest.TestCase):
         self.assertIn("organization.json", left)
 
 
+# 参考文档 content-patterns.md 第 1 节的写法：定义与适用都是行内条目，
+# 不是独立小节。解析器必须两种都认。
+FACTS_DOC_SHAPE = """## 实体
+- 规范名：Grounded
+- 一句话定义：Grounded 是一个自托管的生成式引擎优化实施平台。
+- 官网：https://x.com
+
+## 关键数字（每条必须带来源和核验日期）
+
+| 事实 | 数值 | 来源 | 核验日期 | 证据等级 |
+|---|---|---|---|---|
+| 支持引擎数 | 17 个 | 官网 | 2026-08-25 | A |
+
+## 适用与不适用
+- 适合：需要把 GEO 落到执行的团队
+- 不适合：只想看监控面板的团队
+"""
+
+
+class TestFactsCardShapesBothParse(unittest.TestCase):
+    """事实卡的两种写法都要能抽出内容。
+
+    回归自实测：照 references/content-patterns.md 第 1 节写出来的事实卡，
+    4 个可抽取字段里有 3 个抽不到——包括一句话定义。它供给 llms.txt 首句、
+    JSON-LD description 和 SKILL.md 正文，抽不到就是全线为空，而且没有提示。
+    """
+
+    def _facts(self, body, lang="zh"):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, facts=body)
+                return GEN.parse_facts("x", lang)
+
+    def test_inline_shape_yields_definition(self):
+        f = self._facts(FACTS_DOC_SHAPE)
+        self.assertIn("自托管的生成式引擎优化实施平台", f["definition"])
+
+    def test_inline_shape_yields_scope(self):
+        f = self._facts(FACTS_DOC_SHAPE)
+        self.assertEqual(f["suitable"], ["需要把 GEO 落到执行的团队"])
+        self.assertEqual(f["unsuitable"], ["只想看监控面板的团队"])
+
+    def test_inline_shape_yields_numbers(self):
+        f = self._facts(FACTS_DOC_SHAPE)
+        self.assertEqual([(n["fact"], n["value"]) for n in f["numbers"]],
+                         [("支持引擎数", "17 个")])
+
+    def test_section_shape_still_works(self):
+        """小节写法是原有形态，不能因为加了行内兜底而回退。"""
+        f = self._facts(FACTS_FULL)
+        self.assertIn("自托管的生成式引擎优化实施平台", f["definition"])
+        self.assertEqual(len(f["suitable"]), 2)
+
+    def test_unsuitable_inline_does_not_leak_into_suitable(self):
+        """`- 不适合：` 里含「适合」二字，不能被 suitable 的行内规则误吞。"""
+        f = self._facts(FACTS_DOC_SHAPE)
+        self.assertNotIn("只想看监控面板的团队", f["suitable"])
+
+    def test_inline_shape_works_in_english(self):
+        body = ("## Entity\n- One-line definition: Grounded is a self-hosted GEO platform.\n"
+                "\n## Where it fits\n- Good fit: Agencies\n- Not a fit: Dashboard shoppers\n")
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, facts_en=body)
+                f = GEN.parse_facts("x", "en")
+        self.assertIn("self-hosted GEO platform", f["definition"])
+        self.assertEqual(f["suitable"], ["Agencies"])
+        self.assertEqual(f["unsuitable"], ["Dashboard shoppers"])
+
+
 class TestCanonicalLlmsTxtPath(unittest.TestCase):
     """llms.txt 必须落在规范路径 /llms.txt，主语言不加后缀。
 
