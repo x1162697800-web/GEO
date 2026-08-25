@@ -22,17 +22,38 @@ from pathlib import Path
 import geolib as G
 
 # ---------------------------------------------------------------- 事实卡解析
+# 中英各一份事实源。英文资产的事实必须来自人工撰写的 facts.en.md——机器翻译
+# 品牌事实等于编造事实（同 _confirmed 的纪律），而这些产物是爬虫直读的权威来源。
+FACTS_FILE = {"zh": "facts.md", "en": "facts.en.md"}
+_FACTS_RE = {
+    "zh": {"definition": r"##\s*一句话定义.*?\n(.*?)(?=\n##|\Z)",
+           "numbers": r"##\s*关键数字.*?\n(.*?)(?=\n##|\Z)",
+           "suitable": r"\*\*适合\*\*[：:]?(.*?)(?=\*\*不适合|##|\Z)",
+           "unsuitable": r"\*\*不适合.*?\*\*[：:]?(.*?)(?=\n##|\Z)",
+           "header": ("事实", "---", "项")},
+    "en": {"definition": r"##\s*One-line definition.*?\n(.*?)(?=\n##|\Z)",
+           "numbers": r"##\s*Key numbers.*?\n(.*?)(?=\n##|\Z)",
+           "suitable": r"\*\*Good fit\*\*[：:]?(.*?)(?=\*\*Not a fit|##|\Z)",
+           "unsuitable": r"\*\*Not a fit.*?\*\*[：:]?(.*?)(?=\n##|\Z)",
+           "header": ("fact", "---", "item")},
+}
 
-def parse_facts(slug: str) -> dict:
-    """从 content/facts.md 里抽出结构化事实。抽不到就返回空，调用方负责提示。"""
-    p = G.project_dir(slug) / "content" / "facts.md"
+
+def parse_facts(slug: str, lang: str = "zh") -> dict:
+    """从事实卡里抽出结构化事实。抽不到就返回空，调用方负责提示。
+
+    lang="en" 读 content/facts.en.md。该文件不存在时返回空字典，让调用方走
+    「未确认」分支——英文产物宁可留空，也不能把中文事实透传出去。
+    """
+    spec = _FACTS_RE.get(lang, _FACTS_RE["zh"])
+    p = G.project_dir(slug) / "content" / FACTS_FILE.get(lang, "facts.md")
     if not p.exists():
         return {}
     text = p.read_text("utf-8")
     out = {"definition": "", "numbers": [], "suitable": [], "unsuitable": [], "raw": text}
 
     # 一句话定义：整个引用块可能跨多行，要合并；否则会在句子中间截断
-    m = re.search(r"##\s*一句话定义.*?\n(.*?)(?=\n##|\Z)", text, re.S)
+    m = re.search(spec["definition"], text, re.S)
     if m:
         body = m.group(1)
         quoted = [l.strip()[1:].strip() for l in body.split("\n") if l.strip().startswith(">")]
