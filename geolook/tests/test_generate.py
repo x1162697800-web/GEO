@@ -453,16 +453,25 @@ class TestJsonldFollowsMarket(unittest.TestCase):
             self.assertNotIn(bad, blob, f"英文 JSON-LD 里残留「{bad}」")
 
     def test_market_controls_jsonld_variants(self):
-        for market, expect_en in (("cn", False), ("global", True), ("both", True)):
+        """只有 market=both 才有第二语言变体；单市场项目一律无后缀。"""
+        for market, expect_en_suffix in (("cn", False), ("global", False), ("both", True)):
             with tempfile.TemporaryDirectory() as td:
                 with mock.patch.object(G, "WORK", Path(td)):
                     _project(td, market=market)
                     GEN.run("x", which=["jsonld"])
                     got = {p.name for p in (Path(td) / "x" / "assets" / "jsonld").iterdir()}
-            self.assertEqual(any(n.endswith(".en.json") for n in got), expect_en,
-                             f"market={market} 的英文变体不对：{sorted(got)}")
-            self.assertEqual(any(not n.endswith(".en.json") for n in got),
-                             market != "global", f"market={market}：{sorted(got)}")
+            self.assertEqual(any(n.endswith(".en.json") for n in got), expect_en_suffix,
+                             f"market={market}：{sorted(got)}")
+            self.assertIn("organization.json", got, f"market={market}：{sorted(got)}")
+
+    def test_global_jsonld_is_english_under_the_plain_name(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, market="global", questions=self.QS)
+                GEN.run("x", which=["jsonld"])
+                d = Path(td) / "x" / "assets" / "jsonld"
+                faq = json.loads((d / "faq-page.json").read_text("utf-8"))
+        self.assertEqual([q["name"] for q in faq["mainEntity"]], ["What is GEO"])
 
     def test_narrowing_market_cleans_stale_language_variants(self):
         """both → cn 之后，英文 JSON-LD 必须消失，否则会被打进交付包。"""
@@ -480,6 +489,57 @@ class TestJsonldFollowsMarket(unittest.TestCase):
                 left = {p.name for p in d.iterdir()}
         self.assertFalse(any(n.endswith(".en.json") for n in left), sorted(left))
         self.assertIn("organization.json", left)
+
+
+class TestCanonicalLlmsTxtPath(unittest.TestCase):
+    """llms.txt 必须落在规范路径 /llms.txt，主语言不加后缀。
+
+    回归：market=global 的项目原先只产 llms.en.txt，而 DEPLOY.md 教客户传
+    `assets/llms.txt`——那个文件不存在，站点根目录永远缺 /llms.txt，
+    接着自家审计又会因为「没有 /llms.txt」扣分。自己教的部署过不了自己的体检。
+    """
+
+    def _names(self, td, market):
+        with mock.patch.object(G, "WORK", Path(td)):
+            _project(td, market=market)
+            GEN.run("x", which=["llms"])
+            return {p.name for p in (Path(td) / "x" / "assets").iterdir() if p.is_file()}
+
+    def test_every_market_produces_plain_llms_txt(self):
+        for market in ("cn", "global", "both"):
+            with tempfile.TemporaryDirectory() as td:
+                got = self._names(td, market)
+            self.assertIn("llms.txt", got, f"market={market}：{sorted(got)}")
+
+    def test_only_both_gets_a_second_variant(self):
+        for market, expect in (("cn", False), ("global", False), ("both", True)):
+            with tempfile.TemporaryDirectory() as td:
+                got = self._names(td, market)
+            self.assertEqual("llms.en.txt" in got, expect, f"market={market}：{sorted(got)}")
+
+    def test_global_plain_llms_txt_is_english(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, market="global", facts_en=FACTS_EN)
+                GEN.run("x", which=["llms"])
+                body = (Path(td) / "x" / "assets" / "llms.txt").read_text("utf-8")
+        self.assertIn("## Key facts", body)
+        self.assertNotIn("## 核心事实", body)
+
+    def test_switching_market_leaves_no_orphan_variant(self):
+        """both → global：英文从 .en 升为主名，旧的 llms.en.txt 不能留下。"""
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                pdir = _project(td, market="both")
+                GEN.run("x", which=["llms"])
+                self.assertTrue((pdir / "assets" / "llms.en.txt").exists())
+
+                cfg = json.loads((pdir / "geo.json").read_text("utf-8"))
+                cfg["market"] = "global"
+                (pdir / "geo.json").write_text(json.dumps(cfg, ensure_ascii=False), "utf-8")
+                GEN.run("x", which=["llms"])
+                left = {p.name for p in (pdir / "assets").iterdir() if p.is_file()}
+        self.assertEqual(left, {"llms.txt", "index.json"}, sorted(left))
 
 
 if __name__ == "__main__":
