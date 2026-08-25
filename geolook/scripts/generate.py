@@ -284,7 +284,7 @@ def gen_definition_block(slug: str, lang: str = "zh") -> str:
     nums = [n for n in f.get("numbers", []) if _confirmed(n.get("value", ""))][:4]
     items = "".join(f'\n    <li><strong>{html.escape(n["value"])}</strong> — {html.escape(n["fact"])}</li>'
                     for n in nums)
-    dis = b.get("disambiguation") or []
+    dis = _brand_field(b, "disambiguation", lang, [])
     dis_html = ("\n  <p class=\"geo-disambiguation\"><small>"
                 + " ".join(html.escape(x) for x in dis) + "</small></p>") if dis else ""
     return f"""<!-- 定义块：放在首屏口号下方。口号负责转化，这一段负责被 AI 摘走。 -->
@@ -552,7 +552,7 @@ def gen_skill_md(slug: str, lang: str = "zh") -> str:
        所以正文只放稳定事实，易变的部分指回 llms.txt 和官网。
     """
     cfg = G.load_config(slug)
-    f = parse_facts(slug)
+    f = parse_facts(slug, lang)
     b = cfg["brand"]
     zh = lang == "zh"
     site = (b.get("site") or "").rstrip("/")
