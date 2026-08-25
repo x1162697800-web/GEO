@@ -330,5 +330,146 @@ class TestSkillAssetWiring(unittest.TestCase):
         self.assertIn("skill", GEN.ASSETS)
 
 
+class TestEnglishAssetsCarryNoChineseFacts(unittest.TestCase):
+    """英文资产不能是「英文标签套中文内容」。
+
+    回归自实跑：market=global 的项目拿到的 llms.en.txt 里是
+    `- Industry: GEO 工具`。这些文件传到客户公网站点、由爬虫直读，
+    透传中文等于把中文事实当成英文语境下的权威口径发出去。
+
+    纪律：英文事实只能来自人工撰写的 facts.en.md 与 brand.en；缺失就留空，
+    绝不透传，也绝不机器翻译——翻错的品牌声明就是编造的声明。
+    """
+
+    def test_en_facts_come_from_facts_en_md(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, facts_en=FACTS_EN)
+                out = GEN.gen_llms_txt("x", "en")
+        self.assertIn("Grounded is a self-hosted platform", out)
+        self.assertIn("Engines supported: 17", out)
+        self.assertNotIn("TBD", out)                    # 未确认的照样过滤
+        self.assertNotIn("自托管", out)                  # 中文定义句不能串进来
+
+    def test_en_ignores_chinese_facts_md_entirely(self):
+        """只有中文事实卡时，英文资产宁可空着也不透传。"""
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td)                            # 只有 facts.md
+                out = GEN.gen_llms_txt("x", "en")
+        self.assertNotIn("支持引擎数", out)
+        self.assertNotIn("自托管", out)
+        self.assertIn("One-line definition not confirmed yet", out)
+
+    def test_en_brand_prose_requires_brand_en(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td)                            # industry 是中文「GEO 工具」
+                out = GEN.gen_llms_txt("x", "en")
+        self.assertNotIn("GEO 工具", out)
+        self.assertNotIn("Industry:", out, "没有英文行业说法就该整行不出")
+        self.assertNotIn("生成式引擎优化", out)          # 中文消歧句同样不能进
+
+    def test_en_brand_prose_used_when_provided(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, brand_en={"industry": "GEO tooling",
+                                       "target_users": "In-house SEO teams",
+                                       "disambiguation": ["GEO here means generative engine optimization."]})
+                out = GEN.gen_llms_txt("x", "en")
+        self.assertIn("Industry: GEO tooling", out)
+        self.assertIn("For: In-house SEO teams", out)
+        self.assertIn("generative engine optimization", out)
+        self.assertNotIn("GEO 工具", out)
+
+    def test_zh_assets_unchanged_by_brand_en(self):
+        """brand.en 只服务英文产物，不能影响中文产物。"""
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, brand_en={"industry": "GEO tooling"})
+                out = GEN.gen_llms_txt("x", "zh")
+        self.assertIn("行业: GEO 工具", out)
+        self.assertNotIn("GEO tooling", out)
+
+    def test_skill_en_carries_no_chinese_facts(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td)
+                out = GEN.gen_skill_md("x", "en")
+        self.assertNotIn("GEO 工具", out)
+        self.assertNotIn("支持引擎数", out)
+        self.assertNotIn("、", out, "英文产物不该出现顿号分隔的别名")
+
+    def test_definition_snippet_en_carries_no_chinese(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td)
+                out = GEN.gen_definition_block("x", "en")
+        self.assertNotIn("生成式引擎优化", out)
+        self.assertIn("(definition TBD)", out)
+
+
+class TestJsonldFollowsMarket(unittest.TestCase):
+    """JSON-LD 贴进客户页面 <head>，语言必须跟着市场走。"""
+
+    QS = [{"text": "GEO 是什么", "market": "cn"},
+          {"text": "What is GEO", "market": "global"}]
+
+    def test_en_faq_uses_global_questions(self):
+        """回归：FAQ 筛选曾写死 ("cn","both")，global 项目会拿中文问答填英文页面。"""
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, questions=self.QS)
+                out = GEN.gen_jsonld("x", "en")
+        names = [q["name"] for q in out["faq-page"]["mainEntity"]]
+        self.assertEqual(names, ["What is GEO"])
+
+    def test_zh_faq_uses_cn_questions(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, questions=self.QS)
+                out = GEN.gen_jsonld("x", "zh")
+        names = [q["name"] for q in out["faq-page"]["mainEntity"]]
+        self.assertEqual(names, ["GEO 是什么"])
+
+    def test_en_jsonld_has_no_chinese_placeholders(self):
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, questions=self.QS)
+                out = GEN.gen_jsonld("x", "en")
+        blob = json.dumps(out, ensure_ascii=False)
+        for bad in ("填", "首页", "栏目", "CNY"):
+            self.assertNotIn(bad, blob, f"英文 JSON-LD 里残留「{bad}」")
+
+    def test_market_controls_jsonld_variants(self):
+        for market, expect_en in (("cn", False), ("global", True), ("both", True)):
+            with tempfile.TemporaryDirectory() as td:
+                with mock.patch.object(G, "WORK", Path(td)):
+                    _project(td, market=market)
+                    GEN.run("x", which=["jsonld"])
+                    got = {p.name for p in (Path(td) / "x" / "assets" / "jsonld").iterdir()}
+            self.assertEqual(any(n.endswith(".en.json") for n in got), expect_en,
+                             f"market={market} 的英文变体不对：{sorted(got)}")
+            self.assertEqual(any(not n.endswith(".en.json") for n in got),
+                             market != "global", f"market={market}：{sorted(got)}")
+
+    def test_narrowing_market_cleans_stale_language_variants(self):
+        """both → cn 之后，英文 JSON-LD 必须消失，否则会被打进交付包。"""
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                pdir = _project(td, market="both")
+                GEN.run("x", which=["jsonld"])
+                d = pdir / "assets" / "jsonld"
+                self.assertTrue(any(p.name.endswith(".en.json") for p in d.iterdir()))
+
+                cfg = json.loads((pdir / "geo.json").read_text("utf-8"))
+                cfg["market"] = "cn"
+                (pdir / "geo.json").write_text(json.dumps(cfg, ensure_ascii=False), "utf-8")
+                GEN.run("x", which=["jsonld"])
+                left = {p.name for p in d.iterdir()}
+        self.assertFalse(any(n.endswith(".en.json") for n in left), sorted(left))
+        self.assertIn("organization.json", left)
+
+
 if __name__ == "__main__":
     unittest.main()
