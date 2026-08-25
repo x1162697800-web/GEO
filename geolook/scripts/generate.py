@@ -273,7 +273,7 @@ JSONLD_NAMES = {"organization", "software-application", "faq-page",
 # ---------------------------------------------------------------- HTML 片段
 
 def gen_definition_block(slug: str, lang: str = "zh") -> str:
-    f = parse_facts(slug)
+    f = parse_facts(slug, lang)
     cfg = G.load_config(slug)
     b = cfg["brand"]
     zh = lang == "zh"
