@@ -642,6 +642,11 @@ def gen_skill_md(slug: str, lang: str = "zh") -> str:
 ASSETS = ["llms", "jsonld", "snippets", "outlines", "attribution", "skill"]
 
 
+def _langs(market: str) -> list[str]:
+    """项目按市场决定要产哪几种语言的资产。文件名约定：中文不带后缀，英文加 .en。"""
+    return ["zh"] if market == "cn" else ["en"] if market == "global" else ["zh", "en"]
+
+
 def run(slug: str, which: list[str] | None = None, with_draft: bool = False,
         draft_limit: int = 3) -> dict:
     cfg = G.load_config(slug)
@@ -670,23 +675,27 @@ def run(slug: str, which: list[str] | None = None, with_draft: bool = False,
     if "jsonld" in which:
         d = adir / "jsonld"
         d.mkdir(parents=True, exist_ok=True)
-        produced = gen_jsonld(slug)
-        for name, obj in produced.items():
-            (d / f"{name}.json").write_text(json.dumps(obj, ensure_ascii=False, indent=2), "utf-8")
-            made.append(f"assets/jsonld/{name}.json")
+        langs = _langs(market)
         # 生成器必须对「不再产出」也幂等：判据变了（比如问题库清空后不再产 FAQPage）
         # 而旧文件留在原地，就会被打进交付包发给客户。只清自己认领的那几个名字，
-        # 不碰用户在资产页手动加的文件。
-        for name in JSONLD_NAMES - produced.keys():
-            stale = d / f"{name}.json"
-            if stale.exists():
-                stale.unlink()
-                G.info(f"移除已不适用的 assets/jsonld/{name}.json")
+        # 不碰用户在资产页手动加的文件。市场收窄时整套语言变体也要一并清掉。
+        for lang in ("zh", "en"):
+            sfx = "" if lang == "zh" else ".en"
+            produced = gen_jsonld(slug, lang) if lang in langs else {}
+            for name, obj in produced.items():
+                (d / f"{name}{sfx}.json").write_text(
+                    json.dumps(obj, ensure_ascii=False, indent=2), "utf-8")
+                made.append(f"assets/jsonld/{name}{sfx}.json")
+            for name in JSONLD_NAMES - produced.keys():
+                stale = d / f"{name}{sfx}.json"
+                if stale.exists():
+                    stale.unlink()
+                    G.info(f"移除已不适用的 assets/jsonld/{name}{sfx}.json")
 
     if "snippets" in which:
         d = adir / "snippets"
         d.mkdir(parents=True, exist_ok=True)
-        for lang in (["zh"] if market == "cn" else ["en"] if market == "global" else ["zh", "en"]):
+        for lang in _langs(market):
             (d / f"definition.{lang}.html").write_text(gen_definition_block(slug, lang), "utf-8")
             (d / f"faq.{lang}.html").write_text(gen_faq_block(slug, lang), "utf-8")
             made += [f"assets/snippets/definition.{lang}.html", f"assets/snippets/faq.{lang}.html"]
