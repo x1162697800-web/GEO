@@ -288,14 +288,21 @@ def gen_definition_block(slug: str, lang: str = "zh") -> str:
     dis = _brand_field(b, "disambiguation", lang, [])
     dis_html = ("\n  <p class=\"geo-disambiguation\"><small>"
                 + " ".join(html.escape(x) for x in dis) + "</small></p>") if dis else ""
-    return f"""<!-- 定义块：放在首屏口号下方。口号负责转化，这一段负责被 AI 摘走。 -->
+    # 注释会跟着片段进客户的生产页面源码，所以也得随 lang 走
+    head = ("<!-- 定义块：放在首屏口号下方。口号负责转化，这一段负责被 AI 摘走。 -->" if zh else
+            "<!-- Definition block: place it under the hero tagline. The tagline converts;\n"
+            "     this paragraph is what AI lifts as the answer. -->")
+    foot = ("<!-- 纪律：这段文字必须与 llms.txt、JSON-LD description、关于页逐字一致 -->" if zh else
+            "<!-- Discipline: this wording must match llms.txt, the JSON-LD description,\n"
+            "     and the About page verbatim -->")
+    return f"""{head}
 <section class="geo-definition">
   <h2>{html.escape(b['name'])}{'是什么' if zh else ': what it is'}</h2>
   <p>{html.escape(d)}</p>
   <ul>{items}
   </ul>{dis_html}
 </section>
-<!-- 纪律：这段文字必须与 llms.txt、JSON-LD description、关于页逐字一致 -->"""
+{foot}"""
 
 
 def gen_faq_block(slug: str, lang: str = "zh") -> str:
@@ -523,28 +530,53 @@ AI_REFERRERS = {
 }
 
 
-def gen_attribution(slug: str) -> dict[str, str]:
-    """AI 流量归因配置包：GA4 渠道组正则 + 日志分析命令 + 接入说明。"""
+def gen_attribution(slug: str, lang: str = "zh") -> dict[str, str]:
+    """AI 流量归因配置包：GA4 渠道组正则 + 日志分析命令 + 接入说明。
+
+    交给客户的分析团队照着做，所以说明文字随项目主语言走。
+    """
     cfg = G.load_config(slug)
     market = cfg.get("market", "cn")
     doms = (AI_REFERRERS["cn"] if market == "cn"
             else AI_REFERRERS["global"] if market == "global"
             else AI_REFERRERS["cn"] + AI_REFERRERS["global"])
     rx = "|".join(d.replace(".", r"\.") for d in doms)
-    ga4 = (f"AI 来源渠道组（GA4 · 来源 匹配正则）\n\n{rx}\n\n"
-           "配置路径：管理 → 数据显示 → 渠道组 → 新建渠道「AI 引擎」，条件：来源 与正则匹配。\n"
-           "注意：测到的是下界（App 内打开常不带 referrer），报告口径写「可归因的 AI 会话 ≥ N」。\n")
-    log_cmd = ("#!/bin/sh\n# AI 来源会话 / AI 爬虫抓取量（在服务器上对 access.log 运行）\n"
-               f"echo 'AI 来源会话：'; grep -icE '{rx}' access.log\n"
-               "echo 'AI 爬虫抓取：'; grep -icE 'GPTBot|OAI-SearchBot|ClaudeBot|PerplexityBot|Bytespider' access.log\n"
-               "# 抓取变多通常先于引用变多，是前置信号；两条命令都可加日期过滤按周对比\n")
-    readme = ("# AI 流量归因接入说明\n\n"
-              "1. `ga4-channel.txt`：GA4 建「AI 引擎」渠道组的匹配正则\n"
-              "2. `log-count.sh`：服务器日志统计 AI 来源会话与 AI 爬虫抓取量\n"
-              "3. 转化事件（注册/留资/下单）里保存来源快照：点击 ID > UTM > referrer > 直接/未知\n\n"
-              "纪律（详见 references/attribution.md）：referrer 清单是「常见」口径，"
-              "先在自己日志里核对；测到的 AI 流量是下界，不外推；"
-              "公开内容不堆 UTM（带参 URL 会稀释规范 URL 的引用份额）。\n")
+    crawlers = "GPTBot|OAI-SearchBot|ClaudeBot|PerplexityBot|Bytespider"
+    if lang == "zh":
+        ga4 = (f"AI 来源渠道组（GA4 · 来源 匹配正则）\n\n{rx}\n\n"
+               "配置路径：管理 → 数据显示 → 渠道组 → 新建渠道「AI 引擎」，条件：来源 与正则匹配。\n"
+               "注意：测到的是下界（App 内打开常不带 referrer），报告口径写「可归因的 AI 会话 ≥ N」。\n")
+        log_cmd = ("#!/bin/sh\n# AI 来源会话 / AI 爬虫抓取量（在服务器上对 access.log 运行）\n"
+                   f"echo 'AI 来源会话：'; grep -icE '{rx}' access.log\n"
+                   f"echo 'AI 爬虫抓取：'; grep -icE '{crawlers}' access.log\n"
+                   "# 抓取变多通常先于引用变多，是前置信号；两条命令都可加日期过滤按周对比\n")
+        readme = ("# AI 流量归因接入说明\n\n"
+                  "1. `ga4-channel.txt`：GA4 建「AI 引擎」渠道组的匹配正则\n"
+                  "2. `log-count.sh`：服务器日志统计 AI 来源会话与 AI 爬虫抓取量\n"
+                  "3. 转化事件（注册/留资/下单）里保存来源快照：点击 ID > UTM > referrer > 直接/未知\n\n"
+                  "纪律（详见 references/attribution.md）：referrer 清单是「常见」口径，"
+                  "先在自己日志里核对；测到的 AI 流量是下界，不外推；"
+                  "公开内容不堆 UTM（带参 URL 会稀释规范 URL 的引用份额）。\n")
+    else:
+        ga4 = (f"AI referral channel group (GA4 · Source matches regex)\n\n{rx}\n\n"
+               "Where: Admin -> Data display -> Channel groups -> new channel \"AI engines\",\n"
+               "condition: Source matches regex.\n"
+               "Note: this measures a lower bound — in-app opens often send no referrer. "
+               "Report it as \"attributable AI sessions >= N\".\n")
+        log_cmd = ("#!/bin/sh\n# AI referral sessions / AI crawler hits (run against access.log on the server)\n"
+                   f"echo 'AI referral sessions:'; grep -icE '{rx}' access.log\n"
+                   f"echo 'AI crawler hits:'; grep -icE '{crawlers}' access.log\n"
+                   "# Crawl volume usually rises before citations do, so it is a leading signal;\n"
+                   "# add a date filter to either command to compare week over week\n")
+        readme = ("# AI traffic attribution setup\n\n"
+                  "1. `ga4-channel.txt` — regex for the \"AI engines\" channel group in GA4\n"
+                  "2. `log-count.sh` — count AI referral sessions and AI crawler hits from server logs\n"
+                  "3. On conversion events (signup/lead/order), store a source snapshot: "
+                  "click ID > UTM > referrer > direct/unknown\n\n"
+                  "Discipline (see references/attribution.md): the referrer list covers the common "
+                  "cases, so verify it against your own logs first; measured AI traffic is a lower "
+                  "bound, do not extrapolate; do not pile UTM parameters onto public content "
+                  "(parameterised URLs dilute the canonical URL's citation share).\n")
     return {"ga4-channel.txt": ga4, "log-count.sh": log_cmd, "README.md": readme}
 
 
