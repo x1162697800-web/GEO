@@ -1,12 +1,17 @@
 """资产生成器：把工单变成可以直接部署/发布的东西。
 
-产出到 `work/<slug>/assets/`，中英分开：
-  llms.txt / llms.en.txt        官方事实索引，传到网站根目录
+产出到 `work/<slug>/assets/`：
+  llms.txt                      官方事实索引，传到网站根目录
   jsonld/*.json                 每种页面类型的 JSON-LD，直接贴进 <head>
   snippets/definition.*.html    定义块（首屏用）
   snippets/faq.*.html           FAQ 块，含可见正文 + FAQPage schema
+  skill/SKILL.md                品牌 Agent Skill，装进 Claude / Codex / Cursor
   outlines/*.md                 每个目标问题一份内容大纲（证据页骨架）
   drafts/*.md                   可选：调用已配的 LLM API 出全文初稿
+
+语言由项目 `market` 决定：主语言用上面这些无后缀的名字（global 项目的主语言就是
+英文），只有 `both` 才额外产一套 `.en` 变体。llms.txt 必须能落到规范路径
+`/llms.txt`，所以不能按语言给主文件改名——见 `_sfx`。
 
 设计分工：**结构性资产由代码确定性生成**（不会漏 schema 字段、不会写错格式）；
 **文章正文由 Claude 或 LLM 按 outline 写**（代码写不出好文案）。

@@ -119,6 +119,10 @@ python3 scripts/geo.py init --url <产品官网> --name <品牌名> --market bot
 **每条事实标证据等级 A–E，没来源的标"待确认"，不许编。**
 这份文件是后面所有资产生成的输入——`llms.txt`、JSON-LD、定义块都从它来。
 
+`market` 含 `global` 时还要写 `content/facts.en.md`（英文标题，结构同上）并在 `brand`
+下加 `en` 口径。**英文事实人工撰写，不从中文翻译**；缺的话英文资产会省略对应条目
+而不是填中文——爬虫直读的权威文件里串语言等于编造事实。
+
 材料不够就直接问用户要，别猜产品能力和价格。
 
 ## 步骤 2 · 建问题库
@@ -351,7 +355,7 @@ python3 scripts/geo.py status --slug <项目>     # 进度看板
 │   └── report.py    报告渲染    geolib.py    共用工具
 └── work/<slug>/
     ├── geo.json        品牌、竞品、问题库、平台、目标
-    ├── content/facts.md 品牌事实卡（所有资产的输入）
+    ├── content/facts.md 品牌事实卡（所有资产的输入；海外市场另加 facts.en.md）
     ├── evidence/       抓取快照      audit.json  体检结果
     ├── samples/        采样原始答案   metrics/    每期指标
     ├── tasks.json      工单（执行状态单一真相源）
