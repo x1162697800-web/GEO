@@ -25,16 +25,25 @@ import geolib as G
 # 中英各一份事实源。英文资产的事实必须来自人工撰写的 facts.en.md——机器翻译
 # 品牌事实等于编造事实（同 _confirmed 的纪律），而这些产物是爬虫直读的权威来源。
 FACTS_FILE = {"zh": "facts.md", "en": "facts.en.md"}
+# 每项都有两种写法：独立小节（`## 一句话定义` + 引用块）和行内条目
+# （`- 一句话定义：…`）。事实卡是人手写的，参考文档里两种形态都出现过，
+# 只认一种就会让照着写的人得到一张抽不出东西的事实卡——而且毫无提示。
 _FACTS_RE = {
     "zh": {"definition": r"##\s*一句话定义.*?\n(.*?)(?=\n##|\Z)",
+           "definition_inline": r"^[-*]\s*一句话定义[：:]\s*(.+)$",
            "numbers": r"##\s*关键数字.*?\n(.*?)(?=\n##|\Z)",
            "suitable": r"\*\*适合\*\*[：:]?(.*?)(?=\*\*不适合|##|\Z)",
+           "suitable_inline": r"^[-*]\s*适合[：:]\s*(.+)$",
            "unsuitable": r"\*\*不适合.*?\*\*[：:]?(.*?)(?=\n##|\Z)",
+           "unsuitable_inline": r"^[-*]\s*不适合[：:]\s*(.+)$",
            "header": ("事实", "---", "项")},
     "en": {"definition": r"##\s*One-line definition.*?\n(.*?)(?=\n##|\Z)",
+           "definition_inline": r"^[-*]\s*One-line definition[：:]\s*(.+)$",
            "numbers": r"##\s*Key numbers.*?\n(.*?)(?=\n##|\Z)",
            "suitable": r"\*\*Good fit\*\*[：:]?(.*?)(?=\*\*Not a fit|##|\Z)",
+           "suitable_inline": r"^[-*]\s*Good fit[：:]\s*(.+)$",
            "unsuitable": r"\*\*Not a fit.*?\*\*[：:]?(.*?)(?=\n##|\Z)",
+           "unsuitable_inline": r"^[-*]\s*Not a fit[：:]\s*(.+)$",
            "header": ("fact", "---", "item")},
 }
 
