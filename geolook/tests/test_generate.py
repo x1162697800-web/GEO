@@ -307,8 +307,9 @@ class TestNoEmptyFaqSchema(unittest.TestCase):
 
 class TestSkillAssetWiring(unittest.TestCase):
     def test_market_controls_which_languages(self):
+        """主语言用无后缀名，次语言加后缀——所以 global 项目也叫 SKILL.md。"""
         for market, expect in (("cn", {"SKILL.md"}),
-                               ("global", {"SKILL.en.md"}),
+                               ("global", {"SKILL.md"}),
                                ("both", {"SKILL.md", "SKILL.en.md"})):
             with tempfile.TemporaryDirectory() as td:
                 with mock.patch.object(G, "WORK", Path(td)):
@@ -316,6 +317,16 @@ class TestSkillAssetWiring(unittest.TestCase):
                     GEN.run("x", which=["skill"])
                     got = {p.name for p in (Path(td) / "x" / "assets" / "skill").iterdir()}
             self.assertEqual(got, expect, f"market={market}")
+
+    def test_global_skill_md_is_english(self):
+        """global 项目的 SKILL.md 不带后缀，但内容必须是英文的。"""
+        with tempfile.TemporaryDirectory() as td:
+            with mock.patch.object(G, "WORK", Path(td)):
+                _project(td, market="global")
+                GEN.run("x", which=["skill"])
+                body = (Path(td) / "x" / "assets" / "skill" / "SKILL.md").read_text("utf-8")
+        self.assertIn("## Key facts", body)
+        self.assertNotIn("## 核心事实", body)
 
     def test_skipped_without_own_site(self):
         """SKILL.md 的权威来源指向 llms.txt，没有自有域名就没有意义。"""

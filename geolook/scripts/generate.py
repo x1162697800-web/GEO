@@ -761,18 +761,21 @@ def run(slug: str, which: list[str] | None = None, with_draft: bool = False,
 
     if "skill" in which:
         d = adir / "skill"
-        for lang in _langs(market):
-            name = "SKILL.md" if lang == "zh" else "SKILL.en.md"
-            d.mkdir(parents=True, exist_ok=True)
+        d.mkdir(parents=True, exist_ok=True)
+        want = {f"SKILL{_sfx(l, market)}.md": l for l in _langs(market)}
+        for name, lang in want.items():
             (d / name).write_text(gen_skill_md(slug, lang), "utf-8")
             made.append(f"assets/skill/{name}")
             # 只写已确认的事实，所以事实库空的时候产物也是空的——这不是 bug，
             # 但用户需要知道为什么，否则会以为生成失败。要点名是哪份事实卡缺，
             # 否则英文项目会被指去改中文那份。
             if not _confirmed(parse_facts(slug, lang).get("definition", "")):
-                src = FACTS_FILE[lang]
-                G.info(f"{name} 里没有定义句：{src} 的「一句话定义」还没确认。"
+                G.info(f"{name} 里没有定义句：{FACTS_FILE[lang]} 的「一句话定义」还没确认。"
                        f"补齐后重新生成——SKILL.md 只写已确认的事实，不编。")
+        for fn in ("SKILL.md", "SKILL.en.md", "SKILL.zh.md"):
+            if fn not in want and (d / fn).exists():
+                (d / fn).unlink()
+                G.info(f"移除已不适用的 assets/skill/{fn}")
 
     if "attribution" in which:
         d = adir / "attribution"
