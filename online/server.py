@@ -311,6 +311,10 @@ class Handler(BaseHTTPRequestHandler):
             est = ACC.estimate(user)
             if est["blocked"]:
                 return self._json(402, {"error": "本月次数用完", "quota": est["quota"]})
+            paid = ACC.consume(user["email"])
+            if not paid.get("ok"):
+                return self._json(402, {"error": paid.get("error") or "本月次数用完",
+                                        "quota": paid.get("quota")})
             no_sample = not any(S.available(p) for p in S.PROVIDERS)
             try:
                 job = J.start(slug, "detect", {
@@ -319,10 +323,11 @@ class Handler(BaseHTTPRequestHandler):
                     "--limit": body.get("limit"),
                 })
             except RuntimeError:
+                ACC.refund(user["email"])
                 return self._json(409, {"error": "已经在检测中，请稍等"})
             except Exception:
+                ACC.refund(user["email"])
                 return self._json(500, {"error": "启动检测失败，请稍后重试"})
-            paid = ACC.consume(user["email"])
             return self._json(200, {"ok": True, "job": job,
                                     "quota": paid.get("quota"),
                                     "estimate": est["text"]})
@@ -380,6 +385,31 @@ class Handler(BaseHTTPRequestHandler):
                 b["aliases"] = [str(x).strip() for x in raw if str(x).strip()]
             G.write_json(G.project_dir(slug) / "geo.json", cfg)
             return self._json(200, {"ok": True, "brand": b})
+
+        if path == "/api/plugin/token":
+            user = self._need_user()
+            if not user:
+                return
+            tok = ACC.plugin_token(user["email"])
+            return self._json(200, {"ok": True, "issued": True, "len": len(tok)})
+
+        if path.startswith("/api/collect/") and not path.startswith("/api/collect/queue"):
+            slug = path.split("/")[-1]
+            if not self._plugin_ok(slug):
+                return self._json(401, {"error": "采集令牌无效或已过期"})
+            records = body.get("records")
+            if not isinstance(records, list) or not records:
+                return self._json(400, {"error": "没有可回传的答案"})
+            if len(records) > 200:
+                return self._json(400, {"error": "一次最多回传 200 条"})
+            jid = J.running_for(slug)
+            job = J.get(jid) if jid else None
+            if job and job.get("action") in ("sample", "detect", "serve"):
+                return self._json(409, {"error": "正在检测，等它结束再回传网页里采的答案"})
+            r = S.collect_import(slug, records)
+            if not r.get("ok"):
+                return self._json(400, {"error": r.get("error") or "回传没有成功"})
+            return self._json(200, r)
 
         if path == "/api/plugin/sample":
             pu = ACC.plugin_user(self._plugin_tok() or body.get("token"))
