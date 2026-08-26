@@ -7,6 +7,9 @@ key 拼错、依赖没装、端口被占。这些在用户手上表现为「采�
 
 用法：python3 scripts/geo.py doctor
 退出码 0 = 可交付；1 = 有阻塞项。
+
+客户产品端口 8787（geo.py online）；顾问看板仍是 8765（geo.py ui）。
+密钥只在本目录 .env，客户网站不会出现填写框。
 """
 
 from __future__ import annotations
@@ -61,7 +64,7 @@ def _check_env_file(r: Report):
     p = G.ROOT / ".env"
     if not p.exists():
         r.add(WARN, ".env 不存在", "没有引擎接入，自动采样会整段跳过",
-              fix="cp .env.example .env 后填入 key")
+              fix="复制 .env.example 为 .env 后填入 key（客户不填，部署时配）")
         return
     raw = p.read_bytes()
     if raw.startswith(b"\xef\xbb\xbf"):
@@ -120,16 +123,43 @@ def _check_engines(r: Report):
         r.add(WARN, "海外市场无可用引擎", fix="双市场项目需要至少一个海外引擎")
 
 
-def _check_port(r: Report, port: int = 8765):
+def _check_port(r: Report, port: int, label: str, start_hint: str):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(0.4)
         busy = s.connect_ex(("127.0.0.1", port)) == 0
     if busy:
-        r.add(WARN, f"端口 {port} 已被占用",
-              "看板会拒绝启动（不会静默绑上别人的服务）",
-              fix=f"启动时换端口：geo.py ui --port {port + 1}")
+        r.add(WARN, f"{label}端口 {port} 已被占用",
+              "新进程会拒绝启动（不会静默绑上别人的服务）",
+              fix=start_hint)
     else:
-        r.add(OK, f"端口 {port} 可用")
+        r.add(OK, f"{label}端口 {port} 可用")
+
+
+ONLINE = Path(__file__).resolve().parent.parent.parent / "online"
+
+
+def _check_online(r: Report):
+    """客户自助站与 geolook 同级。只交顾问仓时允许缺，但要说清楚。"""
+    if not ONLINE.exists():
+        r.add(WARN, "客户网站目录不存在",
+              "当前安装按顾问工作台交付；客户自助需要仓库根目录的 online/",
+              fix="把 online/ 与 geolook/ 放在一起后再跑 geo.py online")
+        return
+    app = ONLINE / "app.html"
+    if not app.exists():
+        r.add(FAIL, "客户网站 app.html 缺失",
+              fix="不要只拷 geolook/scripts，把 online/app.html 一并交付")
+    else:
+        r.add(OK, "客户网站界面", "online/app.html")
+    data = ONLINE / "data"
+    try:
+        data.mkdir(parents=True, exist_ok=True)
+        probe = data / ".doctor-probe"
+        probe.write_text("x", "utf-8")
+        probe.unlink()
+        r.add(OK, "online/data/ 可写")
+    except OSError as e:
+        r.add(FAIL, "online/data/ 不可写", str(e))
 
 
 def _check_writable(r: Report):
@@ -157,7 +187,7 @@ def _check_projects(r: Report):
         if not qs:
             r.add(WARN, f"项目 {s} 问题库为空",
                   "采样与选题都依赖它",
-                  fix=f"geo.py bootstrap --slug {s}（需引擎）或到看板「问题库」手填")
+                  fix=f"geo.py bootstrap --slug {s}（需引擎）；客户站会在检测时自动推导")
         _check_fact_sources(r, s, cfg)
 
 
@@ -192,9 +222,11 @@ def run() -> int:
     _check_python(r)
     _check_deps(r)
     _check_writable(r)
+    _check_online(r)
     _check_env_file(r)
     _check_engines(r)
-    _check_port(r)
+    _check_port(r, 8787, "客户网站", "启动时换端口：geo.py online --port 8788")
+    _check_port(r, 8765, "顾问看板", "启动时换端口：geo.py ui --port 8766")
     _check_projects(r)
 
     print(f"\n交付前置自检 · {G.ROOT}\n" + "─" * 68)
