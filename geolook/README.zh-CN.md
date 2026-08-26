@@ -160,17 +160,16 @@ git clone https://github.com/aigclink/geolook.git
 cd grounded
 pip3 install requests beautifulsoup4 lxml
 
-# 2. 启动看板（自动打开浏览器）
-python3 scripts/geo.py ui        # → http://127.0.0.1:8765
-#    macOS 可注册为常驻服务：./scripts/service.sh install
-#   （登录自启、崩溃自动拉起、关终端不停）
+# 2. 启动客户网站（主路径，自动打开浏览器）
+python3 scripts/geo.py online    # → http://127.0.0.1:8787
+#    顾问内部看板：python3 scripts/geo.py ui  → http://127.0.0.1:8765
 
 # 3. 配置引擎接入 —— 这是部署环节的事，不是用户的待办
 #    cp .env.example .env 填好 key，然后校验：
 python3 scripts/geo.py doctor
 ```
 
-**引擎接入在部署时配好。** 部署 Grounded 的人填一次 `.env`，用它的人从头到尾不碰 key。交付前跑一次 `geo.py doctor`——它会校验引擎可用性、依赖、文件权限和端口，并明确告诉你缺什么。
+**引擎接入在部署时配好。** 部署的人填一次 `.env`，用它的人从头到尾不碰 key。交付前跑一次 `geo.py doctor`——它会校验客户网站目录、引擎可用性、依赖、文件权限和端口，并明确告诉你缺什么。
 
 **没接引擎也能用**：抓取、站点体检、工单、部署资产完全不依赖引擎，人工采样表产出的指标与自动采样一致。需要引擎的只有自动采样和「AI 推导问题库 / 品牌事实」。
 
