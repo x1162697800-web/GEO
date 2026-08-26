@@ -120,6 +120,21 @@ class Handler(BaseHTTPRequestHandler):
             return None
         return slug
 
+    def _local(self) -> bool:
+        return self.client_address[0] in ("127.0.0.1", "::1")
+
+    def _plugin_ok(self, slug: str):
+        """插件令牌、登录态，或本机 127.0.0.1（与顾问看板同口径）。"""
+        pu = ACC.plugin_user(self._plugin_tok())
+        if pu and ACC.owns(pu, slug):
+            return pu
+        user = ACC.user_of(self._token())
+        if user and ACC.owns(user, slug):
+            return user
+        if self._local() and (G.project_dir(slug) / "geo.json").exists():
+            return {"email": "local-plugin", "projects": [slug]}
+        return None
+
     def do_GET(self):
         path = urlparse(self.path).path.rstrip("/") or "/"
         if path in ("/", "/app", "/app.html"):
