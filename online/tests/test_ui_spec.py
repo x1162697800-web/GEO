@@ -24,10 +24,11 @@ class SpecNavCase(unittest.TestCase):
         self.assertNotIn("插件", nav)
 
     def test_no_key_form(self):
-        self.assertNotIn("API Key", self.html)
-        self.assertNotIn("API_KEY", self.html)
         self.assertNotIn("ZHIPUAI", self.html)
-        self.assertNotIn("粘贴", self.html)  # 客户不粘贴 Key
+        self.assertNotIn("OPENAI_API_KEY", self.html)
+        self.assertNotIn('type="password" placeholder', self.html)
+        # 可以提到「不填 Key」，但不能出现密钥输入框
+        self.assertNotIn('id="api_key"', self.html)
 
     def test_unmeasured_copy_exists(self):
         self.assertIn("还没测", self.html)
