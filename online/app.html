@@ -180,7 +180,7 @@ function vOverview(){
         <strong style="margin-left:8px">${esc(t.do)}</strong>
         <p class="muted" style="margin:6px 0 0">${esc(t.why)}</p>
         <p style="margin:4px 0 0">做到什么算完成：${esc(t.done_when)}</p>
-        <button class="btn ghost" onclick="go('plan');location.hash='${t.id}'">去这条</button></div>`;
+        <button class="btn ghost" onclick="goTask('${t.id}')">去这条</button></div>`;
     });
     html+=`<button class="btn quiet" onclick="go('plan')">看完整计划</button>`;
   }
@@ -193,7 +193,7 @@ function vOverview(){
   }
   if(D.competitors&&D.competitors.length){
     html+=`<h2>同样的问题，AI 在推谁</h2>`;
-    D.competitors.forEach(c=> html+=`<div class="card">${esc(c.label||c.name)}</div>`);
+    D.competitors.forEach((c,i)=> html+=`<div class="card" onclick="openComp(${i})" style="cursor:pointer">${esc(c.label||c.name)}</div>`);
   }
   if(D.trend&&D.trend.length>=2){
     html+=`<h2>最近几次有没有变好</h2><p class="muted">每一期的分数当时就定死，后来改网站不会改写历史。</p>`;
@@ -270,7 +270,7 @@ function vSettings(){
     <h2>检测用的问题 <button class="btn quiet" onclick="qopen=!qopen;render()">展开 / 收起</button></h2>
     <p class="muted">默认折叠。系统自动生成，一般不用改。</p>
     ${window.qopen?`<ul>${(s.questions||[]).map(q=>`<li>${esc(q.text)}</li>`).join("")||"<li class=muted>还没有</li>"}</ul>`:""}
-    ${s.plugin_token?`<p class="muted" style="margin-top:24px">网页采样用的短时令牌已签发给插件，页面上不展示密钥。</p>`:""}`;
+    ${s.plugin_needed?`<p class="muted" style="margin-top:24px">有几家引擎要在网页里采一次。装好采样插件，把地址写成当前这个网站。页面上不展示密钥。</p>`:""}`;
 }
 
 window.qopen=false;
