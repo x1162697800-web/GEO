@@ -260,9 +260,6 @@ class Handler(BaseHTTPRequestHandler):
             est = ACC.estimate(user)
             if est["blocked"]:
                 return self._json(402, {"error": "本月次数用完", "quota": est["quota"]})
-            paid = ACC.consume(user["email"])
-            if not paid.get("ok"):
-                return self._json(402, {"error": paid.get("error") or "本月次数用完"})
             no_sample = not any(S.available(p) for p in S.PROVIDERS)
             try:
                 job = J.start(slug, "detect", {
@@ -274,7 +271,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(409, {"error": "已经在检测中，请稍等"})
             except Exception:
                 return self._json(500, {"error": "启动检测失败，请稍后重试"})
-            return self._json(200, {"ok": True, "job": job, "quota": paid["quota"],
+            paid = ACC.consume(user["email"])
+            return self._json(200, {"ok": True, "job": job,
+                                    "quota": paid.get("quota"),
                                     "estimate": est["text"]})
 
         if path.startswith("/api/plan/") and path.endswith("/status"):
