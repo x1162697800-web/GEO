@@ -24,7 +24,7 @@ const store = {
   async set(k, v) { await chrome.storage.local.set({ [k]: v }); },
 };
 
-function serverUrl() { return $("#server").value.trim().replace(/\/$/, "") || "http://127.0.0.1:8765"; }
+function serverUrl() { return $("#server").value.trim().replace(/\/$/, "") || "http://127.0.0.1:8787"; }
 function slug() { return $("#slug").value; }
 
 async function apiGet(path) {
