@@ -703,7 +703,7 @@ def main():
     s = sub.add_parser("list", help="列出所有项目")
     s.set_defaults(func=cmd_list)
 
-    s = sub.add_parser("doctor", help="交付前置自检（依赖/引擎/权限/端口）")
+    s = sub.add_parser("doctor", help="交付前置自检（客户网站/引擎/权限/端口）")
     s.set_defaults(func=cmd_doctor)
 
     a = p.parse_args()

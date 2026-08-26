@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import secrets
 import time
 from pathlib import Path
@@ -46,8 +47,20 @@ def _hash(password: str, salt: str) -> str:
     return hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 120_000).hex()
 
 
-def ensure_demo() -> None:
+def demo_allowed(host: str | None = None) -> bool:
+    """演示账号只给本机交付验收。公网或显式关掉时不种已知密码。"""
+    flag = (os.environ.get("GROUNDED_DEMO") or "1").strip().lower()
+    if flag in ("0", "false", "no", "off"):
+        return False
+    if host and host not in ("127.0.0.1", "localhost", "::1"):
+        return False
+    return True
+
+
+def ensure_demo(host: str | None = None) -> None:
     """本地演示账号绑到已有的 wagnab 项目，方便按执行文档走主路径。"""
+    if not demo_allowed(host):
+        return
     db = _load()
     if "demo@wagnab.com" in db["users"]:
         return

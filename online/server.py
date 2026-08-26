@@ -29,6 +29,14 @@ APP = HERE / "app.html"
 PORT_DEFAULT = 8787
 
 
+def is_loopback(host: str | None) -> bool:
+    return (host or "") in ("127.0.0.1", "localhost", "::1")
+
+
+class Server(ThreadingHTTPServer):
+    allow_reuse_address = os.name != "nt"
+
+
 def _infer_slug(url: str, name: str, explicit: str | None = None) -> str:
     if explicit:
         return G.slugify(explicit)
@@ -74,10 +82,11 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        extra = "; Secure" if os.environ.get("GROUNDED_ONLINE_HTTPS") else ""
         if set_cookie:
             self.send_header(
                 "Set-Cookie",
-                f"sid={set_cookie}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1209600")
+                f"sid={set_cookie}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1209600{extra}")
         if clear_cookie:
             self.send_header("Set-Cookie", "sid=; Path=/; Max-Age=0")
         self.end_headers()
@@ -135,7 +144,26 @@ class Handler(BaseHTTPRequestHandler):
             return {"email": "local-plugin", "projects": [slug]}
         return None
 
+    def _fail(self, e: BaseException):
+        G.info(f"{self.command} {self.path} {type(e).__name__}: {e}")
+        try:
+            self._json(500, {"error": "出了点问题，请稍后重试"})
+        except Exception:  # noqa: BLE001
+            pass
+
     def do_GET(self):
+        try:
+            self._dispatch_get()
+        except Exception as e:  # noqa: BLE001
+            self._fail(e)
+
+    def do_POST(self):
+        try:
+            self._dispatch_post()
+        except Exception as e:  # noqa: BLE001
+            self._fail(e)
+
+    def _dispatch_get(self):
         path = urlparse(self.path).path.rstrip("/") or "/"
         if path in ("/", "/app", "/app.html"):
             return self._html()
@@ -229,8 +257,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(404, {"error": "任务不存在"})
             if not ACC.owns(user, job.get("slug")):
                 return self._json(403, {"error": "这个项目不属于你"})
+            public_job = {k: v for k, v in job.items() if k not in ("cmd", "pid")}
             log, new_off = J.tail(jid, off)
-            return self._json(200, {"job": job, "log": log, "offset": new_off})
+            return self._json(200, {"job": public_job, "log": log, "offset": new_off})
         if path == "/api/plugin/queue":
             pu = ACC.plugin_user(self._plugin_tok())
             if not pu:
