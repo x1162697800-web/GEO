@@ -501,6 +501,14 @@ def cmd_detect(a):
         G.info(f"验收跳过：{type(e).__name__}: {e}")
 
 
+def cmd_online(a):
+    online_dir = Path(__file__).resolve().parent.parent.parent / "online"
+    sys.path.insert(0, str(online_dir))
+    import server as online
+    online.run(port=a.port, host=getattr(a, "host", None),
+               open_browser=not a.no_open)
+
+
 def cmd_ui(a):
     import dashboard
 
@@ -673,7 +681,20 @@ def main():
     s.add_argument("--draft-limit", type=int, default=3, dest="draft_limit")
     s.set_defaults(func=cmd_serve)
 
-    s = sub.add_parser("ui", help="启动可观测看板（趋势、工单、信源、验收历史）")
+    s = sub.add_parser("detect", help="线上版检测：抓站→体检→采样→待办（不出顾问交付包）")
+    s.add_argument("--slug", required=True)
+    s.add_argument("--max-pages", type=int, default=None, dest="max_pages")
+    s.add_argument("--limit", type=int, default=None)
+    s.add_argument("--no-sample", action="store_true", dest="no_sample")
+    s.set_defaults(func=cmd_detect)
+
+    s = sub.add_parser("online", help="启动客户自助网站（总览 / 该做什么 / 效果 / 报告）")
+    s.add_argument("--port", type=int, default=8787)
+    s.add_argument("--host", default=None)
+    s.add_argument("--no-open", action="store_true", dest="no_open")
+    s.set_defaults(func=cmd_online)
+
+    s = sub.add_parser("ui", help="启动顾问工作台（原 Grounded 看板）")
     s.add_argument("--port", type=int, default=8765)
     s.add_argument("--no-open", action="store_true", dest="no_open")
     s.set_defaults(func=cmd_ui)
