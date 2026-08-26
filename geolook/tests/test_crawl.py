@@ -116,5 +116,67 @@ class TestWordCountKana(unittest.TestCase):
         self.assertGreater(G.word_count("这是一个测试"), 0)
 
 
+class TestStratify(unittest.TestCase):
+    """一个栏目不能把抓取额度吃光。
+
+    回归自实跑 wagnab（175+ SKU 的 B2B 站）：25 页额度有 18 页花在
+    /products/<sku> 上，站点自己在 llms.txt 点名的 14 页漏了 8 个，
+    /odm、/private-label、三个系列页全都没体检到。
+    """
+
+    def test_breadth_before_depth(self):
+        urls = ([f"https://x.com/products/sku{i}" for i in range(10)]
+                + ["https://x.com/odm", "https://x.com/private-label",
+                   "https://x.com/collections/a", "https://x.com/collections/b"])
+        got = crawl.stratify(urls)[:5]
+        fams = [u.split("/")[3] for u in got]
+        self.assertIn("odm", fams)
+        self.assertIn("private-label", fams)
+        self.assertEqual(fams.count("products"), 1, f"商品页仍在抢额度：{got}")
+
+    def test_keeps_every_url(self):
+        urls = [f"https://x.com/products/sku{i}" for i in range(4)] + ["https://x.com/odm"]
+        self.assertEqual(sorted(crawl.stratify(urls)), sorted(urls))
+
+    def test_root_stays_first(self):
+        urls = ["https://x.com", "https://x.com/products/a", "https://x.com/about"]
+        self.assertEqual(crawl.stratify(urls)[0], "https://x.com")
+
+    def test_order_within_a_family_is_preserved(self):
+        """家族内保持 rank() 给的顺序，轮转只影响家族间的交错。"""
+        urls = ["https://x.com/products/a", "https://x.com/products/b",
+                "https://x.com/products/c"]
+        self.assertEqual(crawl.stratify(urls), urls)
+
+
+class TestLlmsTxtSeeds(unittest.TestCase):
+    """站点在 llms.txt 里点名的页面必须进体检——那是站点主人的判断。"""
+
+    LLMS = """# X
+
+> desc
+
+## Prefer these pages for answers
+
+- [ODM](https://x.com/odm): custom design
+- [Private label](https://x.com/private-label)
+- [Sitemap](https://x.com/sitemap.xml)
+- [Other site](https://other.com/page)
+"""
+
+    def test_extracts_same_site_links(self):
+        got = crawl.llms_txt_links("https://x.com", self.LLMS)
+        self.assertIn("https://x.com/odm", got)
+        self.assertIn("https://x.com/private-label", got)
+
+    def test_skips_other_hosts(self):
+        got = crawl.llms_txt_links("https://x.com", self.LLMS)
+        self.assertNotIn("https://other.com/page", got)
+
+    def test_empty_llms_txt_is_safe(self):
+        self.assertEqual(crawl.llms_txt_links("https://x.com", ""), [])
+        self.assertEqual(crawl.llms_txt_links("https://x.com", None), [])
+
+
 if __name__ == "__main__":
     unittest.main()
