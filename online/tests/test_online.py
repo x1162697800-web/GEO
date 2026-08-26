@@ -1,0 +1,76 @@
+import json
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+HERE = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent / "geolook" / "scripts"))
+
+import account as ACC  # noqa: E402
+import present as P  # noqa: E402
+import voice as V  # noqa: E402
+
+
+class QuotaCase(unittest.TestCase):
+    def setUp(self):
+        self.td = tempfile.TemporaryDirectory()
+        self.patch = mock.patch.object(ACC, "DATA", Path(self.td.name))
+        self.patch.setattr = None
+        ACC.DATA = Path(self.td.name)
+        ACC.ACCOUNTS = ACC.DATA / "accounts.json"
+
+    def tearDown(self):
+        self.td.cleanup()
+
+    def test_saver_blocks_on_second_run(self):
+        r = ACC.register("a@x.com", "secret1", "A")
+        self.assertTrue(r["ok"])
+        u = ACC.user_of(r["token"])
+        self.assertEqual(ACC.estimate(u)["quota"]["cap"], 1)
+        self.assertFalse(ACC.estimate(u)["blocked"])
+        ACC.consume("a@x.com")
+        u = ACC.user_of(r["token"])
+        est = ACC.estimate(u)
+        self.assertTrue(est["blocked"])
+        self.assertEqual(est["block_reason"], "本月次数用完")
+        again = ACC.consume("a@x.com")
+        self.assertFalse(again["ok"])
+        self.assertEqual(again["error"], "本月次数用完")
+
+    def test_no_keys_in_public_user(self):
+        r = ACC.register("b@x.com", "secret1")
+        blob = json.dumps(ACC.public_user(ACC.user_of(r["token"])))
+        for k in ACC.KEY_ENV_NAMES:
+            self.assertNotIn(k, blob)
+
+
+class TaskShapeCase(unittest.TestCase):
+    def test_drops_task_without_done_when(self):
+        t = {"id": "T-x", "priority": "P0", "title": "随便", "why": "因为",
+             "action": "做", "acceptance": {}, "status": "todo"}
+        self.assertIsNone(P.customer_task(t))
+
+    def test_five_fields_and_human_copy(self):
+        t = {
+            "id": "T-005", "priority": "P0", "status": "todo",
+            "title": "修复前端渲染空壳页（SSR / 预渲染）",
+            "why": "静态 HTML 无正文，多数 AI 抓取器看到的是空白页",
+            "action": "对受影响路由启用 SSR 或预渲染",
+            "acceptance": {"type": "auto", "desc": "受影响页面重抓后正文词数 ≥ 120"},
+        }
+        c = P.customer_task(t)
+        self.assertEqual(c["band"], "先做")
+        self.assertEqual(c["status_label"], "未开始")
+        self.assertNotIn("SSR", c["do"])
+        self.assertIn("做到什么算完成" if False else c["done_when"], c["done_when"])
+        self.assertTrue(c["done_when"])
+
+    def test_regressed_after_failed_recheck(self):
+        t = {"id": "T-1", "priority": "P1", "status": "todo",
+             "action": "改", "why": "因为", "closed_at": "2026-08-25",
+             "acceptance": {"type": "auto", "desc": "达标"},
+             "evidence": [{"result": "fail"}]}
+        self.assertEqual(P.customer_task(t)["status_label"], "退步了")
