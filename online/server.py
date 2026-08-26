@@ -270,9 +270,16 @@ class Handler(BaseHTTPRequestHandler):
                 return
             url = (body.get("url") or "").strip()
             name = (body.get("name") or "").strip()
+            materials = (body.get("materials") or "").strip()
             no_site = bool(body.get("no_site")) or not url
             if no_site and not name:
                 return self._json(400, {"error": "没有官网时，请写下品牌或商品名"})
+            slug = _infer_slug(url, name, body.get("slug"))
+            existing = G.project_dir(slug) / "geo.json"
+            if existing.exists():
+                if ACC.owns(user, slug):
+                    return self._json(200, {"ok": True, "slug": slug, "existing": True})
+                return self._json(400, {"error": "这个网站已经建过项目"})
             import geo as CLI
 
             class A:
@@ -280,24 +287,17 @@ class Handler(BaseHTTPRequestHandler):
             a = A()
             a.url = url
             a.name = name or None
-            a.slug = body.get("slug") or None
+            a.slug = slug
             a.market = body.get("market") or ("global" if no_site else "both")
             a.max_pages = int(body.get("max_pages") or 60)
             a.force = False
             a.no_site = no_site
+            a.materials = materials
             try:
                 CLI.cmd_init(a)
-            except SystemExit as e:
-                msg = str(e) if str(e) else "项目已存在，换个名字"
-                return self._json(400, {"error": msg})
-            slug = a.slug
-            if not slug:
-                from urllib.parse import urlparse as up
-                if url:
-                    host = up(url if url.startswith("http") else "https://" + url).netloc
-                    slug = G.slugify(host.removeprefix("www.").split(".")[0])
-                else:
-                    slug = G.slugify(name)
+            except SystemExit:
+                return self._json(400, {"error": "建项目没有成功，请换个网站或品牌名"})
+            slug = a.slug or slug
             ACC.attach_project(user["email"], slug)
             return self._json(200, {"ok": True, "slug": slug})
 
