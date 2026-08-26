@@ -65,7 +65,6 @@ class TaskShapeCase(unittest.TestCase):
         self.assertEqual(c["band"], "先做")
         self.assertEqual(c["status_label"], "未开始")
         self.assertNotIn("SSR", c["do"])
-        self.assertIn("做到什么算完成" if False else c["done_when"], c["done_when"])
         self.assertTrue(c["done_when"])
 
     def test_regressed_after_failed_recheck(self):
