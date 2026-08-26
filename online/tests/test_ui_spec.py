@@ -38,3 +38,8 @@ class SpecNavCase(unittest.TestCase):
         src = SERVER.read_text("utf-8")
         self.assertNotIn("write_env", src)
         self.assertIn("_strip_secrets", src)
+
+    def test_detect_polling_and_task_jump(self):
+        self.assertIn("D.detecting", self.html)
+        self.assertIn("goTask", self.html)
+        self.assertIn("本月次数用完", SERVER.read_text("utf-8"))

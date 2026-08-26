@@ -42,6 +42,13 @@ class QuotaCase(unittest.TestCase):
         self.assertFalse(again["ok"])
         self.assertEqual(again["error"], "本月次数用完")
 
+    def test_refund_restores_one_run(self):
+        ACC.register("c@x.com", "secret1")
+        ACC.consume("c@x.com")
+        ACC.refund("c@x.com")
+        u = ACC.user_of(ACC.login("c@x.com", "secret1")["token"])
+        self.assertFalse(ACC.estimate(u)["blocked"])
+
     def test_no_keys_in_public_user(self):
         r = ACC.register("b@x.com", "secret1")
         blob = json.dumps(ACC.public_user(ACC.user_of(r["token"])))
@@ -90,8 +97,16 @@ class WagnabPresentCase(unittest.TestCase):
 
     def test_overview_does_not_fake_zero_health_without_samples(self):
         ov = P.overview("wagnab")
-        if ov["mention"]["state"] == "unmeasured":
-            self.assertNotEqual(ov["mention"]["label"], "0%")
-        if ov["health"]["state"] == "unmeasured":
-            self.assertEqual(ov["health"]["label"], "还没测")
+        self.assertEqual(ov["conclusion"]["kind"], "empty")
+        self.assertEqual(ov["health"]["state"], "unmeasured")
+        self.assertEqual(ov["health"]["label"], "还没测")
+        self.assertEqual(ov["mention"]["state"], "unmeasured")
+        self.assertNotEqual(ov["mention"]["label"], "0%")
+        self.assertFalse(ov["engines"])
+        self.assertIsNone(ov["plugin"])
+        self.assertTrue(ov["next3"])
+        self.assertEqual(len(ov["next3"]), 3)
+
+    def test_effect_hides_baseline_verify(self):
+        self.assertTrue(P.effect("wagnab")["empty"])
 

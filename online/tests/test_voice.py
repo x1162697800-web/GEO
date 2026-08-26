@@ -24,3 +24,8 @@ class VoiceCase(unittest.TestCase):
 
     def test_llms_txt_becomes_plain(self):
         self.assertIn("官方说明页", V.humanize("把 llms.txt 传到根目录"))
+
+    def test_consultant_doc_refs_leave(self):
+        t = V.humanize("口径不一致（content-patterns.md 第 6 节）。参照 content-patterns.md，补定义块")
+        self.assertNotIn(".md", t)
+        self.assertNotIn("content-patterns", t)
