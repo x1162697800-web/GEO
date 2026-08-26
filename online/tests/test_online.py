@@ -3,6 +3,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HERE))
@@ -53,6 +54,16 @@ class QuotaCase(unittest.TestCase):
         blob = json.dumps(ACC.public_user(ACC.user_of(r["token"])))
         for k in ACC.KEY_ENV_NAMES:
             self.assertNotIn(k, blob)
+
+
+class DemoGateCase(unittest.TestCase):
+    def test_public_host_does_not_seed_demo(self):
+        self.assertFalse(ACC.demo_allowed("0.0.0.0"))
+        self.assertTrue(ACC.demo_allowed("127.0.0.1"))
+
+    def test_env_can_disable_demo(self):
+        with mock.patch.dict("os.environ", {"GROUNDED_DEMO": "0"}):
+            self.assertFalse(ACC.demo_allowed("127.0.0.1"))
 
 
 class TaskShapeCase(unittest.TestCase):
