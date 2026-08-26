@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>看 AI 认不认识你</title>
+<style>
+:root{
+  --paper:#f4efe6; --ink:#1c1915; --muted:#6b6458; --line:#ddd4c4;
+  --card:#fffaf2; --accent:#1f5c45; --accent-2:#c45c26; --good:#1f5c45;
+  --warn:#8a4b12; --bad:#9b2c2c; --chip:#ece4d4;
+  --serif:"Iowan Old Style","Palatino Linotype","Songti SC","Noto Serif SC",serif;
+  --sans:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--sans)}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+a{color:var(--accent)}
+#app{min-height:100vh}
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+#side{padding:28px 18px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:22px}
+.brand{font-family:var(--serif);font-size:22px;letter-spacing:-.03em;line-height:1.15}
+.brand small{display:block;font-family:var(--sans);font-size:11px;color:var(--muted);margin-top:6px;letter-spacing:.04em}
+.nav button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 10px;border-radius:8px;color:var(--muted)}
+.nav button.on{background:#e7efe9;color:var(--accent);font-weight:600}
+.nav button:hover{background:#efe8da}
+.side-foot{margin-top:auto;font-size:12px;color:var(--muted)}
+#view{padding:36px 44px 80px;max-width:980px}
+h1{font-family:var(--serif);font-size:42px;font-weight:500;letter-spacing:-.03em;line-height:1.15;margin:0 0 12px}
+h2{font-family:var(--serif);font-size:22px;font-weight:500;margin:28px 0 10px}
+.lede{font-size:18px;color:var(--muted);max-width:42em}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.kpi .k{font-size:12px;color:var(--muted)}
+.kpi .v{font-family:var(--serif);font-size:28px;margin-top:4px}
+.kpi .h{font-size:12px;color:var(--muted);margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:12px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:8px 14px;border-radius:8px}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.quiet{border-color:var(--line);background:transparent;color:var(--ink)}
+.chip{display:inline-block;background:var(--chip);border-radius:99px;padding:2px 10px;font-size:12px}
+.chip.p0{background:#f3d9c8;color:var(--accent-2)}
+.chip.p1{background:#e7efe9;color:var(--accent)}
+.chip.p2{background:var(--chip);color:var(--muted)}
+.chip.st-done{background:#e7efe9}
+.chip.st-regressed{background:#f6d6d6;color:var(--bad)}
+.gate{background:#eef4ef;border:1px dashed var(--accent);border-radius:12px;padding:14px 16px;margin:16px 0}
+.warn{background:#f8eadc;border:1px solid #efd2b3;border-radius:12px;padding:14px 16px;margin:16px 0}
+.auth{max-width:420px;margin:12vh auto;padding:0 20px}
+.field{margin:12px 0}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.table{width:100%;border-collapse:collapse;font-size:14px}
+.table th{text-align:left;font-size:11px;color:var(--muted);padding:8px 6px;border-bottom:1px solid var(--line)}
+.table td{padding:10px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.task{border-bottom:1px solid var(--line);padding:16px 0}
+.task:last-child{border:0}
+.muted{color:var(--muted)}
+.draw{position:fixed;inset:0;background:rgba(28,25,21,.35);display:grid;place-items:end}
+.draw .box{background:var(--card);width:min(520px,100%);height:100%;padding:28px;overflow:auto;border-left:1px solid var(--line)}
+@media(max-width:800px){.shell{grid-template-columns:1fr}#side{display:none}.kpis{grid-template-columns:1fr}#view{padding:24px 18px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const NAV=[["overview","总览"],["plan","该做什么"],["effect","效果"],["report","报告"]];
+let R="overview", D=null, U=null, DRAW=null, SLUG=null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+async function api(path, opt){
+  const r = await fetch(path, Object.assign({credentials:"same-origin", headers:{"Content-Type":"application/json"}}, opt||{}));
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error || "请求失败");
+  return j;
+}
+function go(k){ R=k; history.replaceState({}, "", "#"+k); render(); }
+function metric(m){
+  if(!m || m.state==="unmeasured") return {v:"还没测", h:"没有样本时不写成 0"};
+  if(m.state==="na") return {v:"不适用", h:"没有自己的网站"};
+  return {v:m.label, h:""};
+}
+
+function authView(err){
+  return `<div class="auth">
+    <div class="brand">看 AI<br>认不认识你</div>
+    <p class="lede" style="margin:14px 0 22px">打开就能看三件事：有没有提到你、先改哪几条、改完有没有变好。</p>
+    <div class="field"><label>邮箱</label><input class="input" id="em" value="demo@wagnab.com"></div>
+    <div class="field"><label>密码</label><input class="input" id="pw" type="password" value="wagnab"></div>
+    ${err?`<p style="color:var(--bad)">${esc(err)}</p>`:""}
+    <div class="row">
+      <button class="btn" onclick="doLogin()">登录</button>
+      <button class="btn ghost" onclick="doReg()">注册</button>
+    </div>
+    <p class="muted" style="margin-top:18px;font-size:13px">演示账号已填好，对应网站 wagnab.com。全程不会让你填任何 API Key。</p>
+  </div>`;
+}
+async function doLogin(){
+  try{ await api("/api/login",{method:"POST",body:JSON.stringify({email:$("#em").value,password:$("#pw").value})}); boot(); }
+  catch(e){ $("#app").innerHTML=authView(e.message); }
+}
+async function doReg(){
+  try{ await api("/api/register",{method:"POST",body:JSON.stringify({email:$("#em").value,password:$("#pw").value})}); boot(); }
+  catch(e){ $("#app").innerHTML=authView(e.message); }
+}
+
+function onboard(){
+  return `<div>
+    <h1>从你的网站开始</h1>
+    <p class="lede">贴网址我们就去看 AI 认不认识你。没有官网也可以，写下品牌或商品名。</p>
+    <div class="field" style="max-width:520px"><label>网站</label><input class="input" id="url" placeholder="https://wagnab.com"></div>
+    <div class="field" style="max-width:520px"><label>没有官网时的品牌名</label><input class="input" id="nm" placeholder="可空"></div>
+    <button class="btn" onclick="createP()">开始</button>
+    <p id="cerr" class="muted"></p>
+  </div>`;
+}
+async function createP(){
+  try{
+    const r=await api("/api/projects",{method:"POST",body:JSON.stringify({url:$("#url").value,name:$("#nm").value})});
+    SLUG=r.slug; R="overview"; await load();
+  }catch(e){ $("#cerr").textContent=e.message; }
+}
+
+function side(){
+  const b=(D&&D.brand)||"项目";
+  return `<div class="brand">Grounded<small>客户自助版</small></div>
+    <div class="muted" style="font-size:13px">${esc(b)}<br><span style="font-size:12px">${esc((D&&D.site)||"")}</span></div>
+    <nav class="nav">${NAV.map(([k,t])=>`<button class="${R===k?"on":""}" onclick="go('${k}')">${t}${k==="plan"&&D&&D.plan_open?` · ${D.plan_open}`:""}</button>`).join("")}
+      <button class="${R==="settings"?"on":""}" onclick="go('settings')">设置</button>
+    </nav>
+    <div class="side-foot">${esc((U&&U.quota&&U.quota.label)||"")}<br>
+      <button class="btn quiet" style="margin-top:10px" onclick="logout()">退出</button></div>`;
+}
+
+function vOverview(){
+  if(!D) return "";
+  const c=D.conclusion||{};
+  const h=metric(D.health), m=metric(D.mention), ci=metric(D.cite);
+  const detecting=D.detecting;
+  let html=`<h1>${esc(c.text||"还没测")}</h1>
+    <p class="lede">你每次进来，先看这一句。数字只是补充。</p>`;
+  if(detecting) html+=`<div class="gate">正在检测。国内接口引擎会自动跑完；有几家只能在网页里采，到时会提醒你。</div>`;
+  else if(c.kind==="empty") html+=`<div class="row" style="margin:18px 0">
+      <button class="btn" onclick="detect()">${esc((D.estimate&&D.estimate.text)||"开始检测")}</button>
+      <span class="muted">${esc((U&&U.quota&&U.quota.label)||"")}</span></div>`;
+  else html+=`<div class="row" style="margin:12px 0 0"><button class="btn ghost" onclick="detect()">再测一轮</button>
+      <span class="muted">${esc((D.estimate&&D.estimate.text)||"")}</span></div>`;
+  if(D.plugin&&D.plugin.count) html+=`<div class="warn">还有 ${D.plugin.count} 个引擎要在网页里采一次（${D.plugin.engines.map(e=>esc(e.name)).join("、")}）。装好采样插件，打开对应网页按队列提取即可。导航里没有「插件」——它不是单独产品。</div>`;
+  if(c.kind!=="empty"&&!detecting){
+    html+=`<div class="kpis">
+      <div class="kpi"><div class="k">整体表现</div><div class="v">${esc(h.v)}</div><div class="h">${esc(h.h)}</div></div>
+      <div class="kpi"><div class="k">AI 会不会主动说到你</div><div class="v">${esc(m.v)}</div><div class="h">点名问你是谁的题不算</div></div>
+      <div class="kpi"><div class="k">答案有没有指向你的来源</div><div class="v">${esc(ci.v)}</div><div class="h">${esc(ci.h)}</div></div>
+    </div>`;
+  }
+  if(D.next3&&D.next3.length){
+    html+=`<h2>先做这 3 条</h2>`;
+    D.next3.forEach(t=>{
+      html+=`<div class="task"><span class="chip ${t.priority==="P0"?"p0":t.priority==="P1"?"p1":"p2"}">${esc(t.band)}</span>
+        <strong style="margin-left:8px">${esc(t.do)}</strong>
+        <p class="muted" style="margin:6px 0 0">${esc(t.why)}</p>
+        <p style="margin:4px 0 0">做到什么算完成：${esc(t.done_when)}</p>
+        <button class="btn ghost" onclick="go('plan');location.hash='${t.id}'">去这条</button></div>`;
+    });
+    html+=`<button class="btn quiet" onclick="go('plan')">看完整计划</button>`;
+  }
+  if(D.engines&&D.engines.length){
+    html+=`<h2>哪家 AI 认识你</h2><table class="table"><thead><tr><th>引擎</th><th>会不会主动说到你</th><th>有没有进前三</th><th>有没有指向你</th></tr></thead><tbody>`;
+    D.engines.forEach((e,i)=>{
+      html+=`<tr onclick="openEngine(${i})" style="cursor:pointer"><td>${esc(e.name)}</td><td>${esc(e.mention.label)}</td><td>${esc(e.top3)}</td><td>${e.cites_you?"有":"没有"}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  }
+  if(D.competitors&&D.competitors.length){
+    html+=`<h2>同样的问题，AI 在推谁</h2>`;
+    D.competitors.forEach(c=> html+=`<div class="card">${esc(c.label||c.name)}</div>`);
+  }
+  if(D.trend&&D.trend.length>=2){
+    html+=`<h2>最近几次有没有变好</h2><p class="muted">每一期的分数当时就定死，后来改网站不会改写历史。</p>`;
+    html+=`<div class="row">${D.trend.map(p=>`<div class="kpi" style="min-width:120px"><div class="k">${esc(p.date)}</div><div class="v">${p.health??"还没测"}</div></div>`).join("")}</div>`;
+  }
+  return html;
+}
+
+function vPlan(){
+  const items=(window.PLAN||[]);
+  if(!items.length) return `<h1>该做什么</h1><p class="lede">还没有可验收的待办。先跑一轮检测。</p>`;
+  let html=`<h1>该做什么</h1><p class="lede">每条都能说清做到什么算完成。客户付钱是为了这个，不是仪表盘。</p>`;
+  items.forEach(t=>{
+    html+=`<div class="task" id="${esc(t.id)}">
+      <div class="row"><span class="chip ${t.priority==="P0"?"p0":t.priority==="P1"?"p1":"p2"}">${esc(t.band)}</span>
+        <span class="chip st-${esc(t.status)}">${esc(t.status_label)}</span>
+        <span class="muted">${esc(t.id)}</span></div>
+      <h3 style="margin:8px 0 4px">${esc(t.do)}</h3>
+      <p class="muted">为什么：${esc(t.why)}</p>
+      <p>做到什么算完成：${esc(t.done_when)}</p>
+      <div class="row">${t.auto
+        ? `<span class="muted">改完点「效果」里的重测，系统会打勾。</span>`
+        : `<button class="btn ghost" onclick="markDone('${t.id}')">我已上线，请确认</button>`}
+        ${t.status!=="done"?`<button class="btn quiet" onclick="markDoing('${t.id}')">开始做</button>`:""}
+      </div></div>`;
+  });
+  return html;
+}
+
+function vEffect(){
+  const E=window.EFF||{items:[],empty:true};
+  if(E.empty) return `<h1>效果</h1><p class="lede">还没有重测记录。改完待办后来这里，看哪些真的好了。</p>
+    <button class="btn" onclick="recheck()">重测上次让你改的</button>`;
+  let html=`<h1>上次让你改的，哪些真的好了</h1>
+    <p class="muted">${esc(E.date||"")}　<button class="btn ghost" onclick="recheck()">再测一次</button></p>`;
+  E.items.forEach(t=>{
+    html+=`<div class="task"><span class="chip">${esc(t.effect)}</span> <strong>${esc(t.do)}</strong>
+      <p class="muted">${esc(t.note)}</p></div>`;
+  });
+  return html;
+}
+
+function vReport(){
+  const rp=window.REP||{};
+  return `<h1>${esc(rp.brand||"")} · 一页给同事看的</h1>
+    <p class="lede">${esc(rp.conclusion||"")}</p>
+    <div class="kpis">
+      <div class="kpi"><div class="k">整体表现</div><div class="v">${esc((rp.health&&rp.health.label)||"还没测")}</div></div>
+      <div class="kpi"><div class="k">AI 会不会主动说到你</div><div class="v">${esc((rp.mention&&rp.mention.label)||"还没测")}</div></div>
+    </div>
+    <h2>引擎</h2>
+    <table class="table"><thead><tr><th>引擎</th><th>会不会主动说到你</th><th>出现顺序</th></tr></thead><tbody>
+    ${(rp.engines||[]).map(e=>`<tr><td>${esc(e.name)}</td><td>${esc(e.mention)}</td><td>${esc(e.top3)}</td></tr>`).join("")||"<tr><td colspan=3 class=muted>还没测</td></tr>"}
+    </tbody></table>
+    <h2>竞品</h2><p>${esc(rp.competitor_line||"")}</p>
+    <h2>本月完成</h2>${(rp.done||[]).map(t=>`<p>✓ ${esc(t.do)}</p>`).join("")||"<p class=muted>还没有完成项</p>"}
+    <h2>还没做完</h2>${(rp.open||[]).map(t=>`<p>· ${esc(t.band)}　${esc(t.do)}</p>`).join("")}
+    <p class="muted" style="margin-top:24px">打印或存 PDF：用浏览器的打印即可。</p>`;
+}
+
+function vSettings(){
+  const s=window.SET||{brand:{},user:{},questions:[]};
+  const b=s.brand||{};
+  return `<h1>设置</h1>
+    <h2>账号与套餐</h2>
+    <p>${esc(s.user.email||"")} · ${esc(s.user.plan_label||"")}档 · ${esc((s.user.quota&&s.user.quota.label)||"")}</p>
+    <p class="muted">${esc(s.user.plan_blurb||"")}。你不选模型，也不填 Key。</p>
+    <h2>我们是谁 ${s.facts_missing?'<span class="chip p0">待补全</span>':""}</h2>
+    <div class="field"><label>品牌名</label><input class="input" id="bn" value="${esc(b.name)}"></div>
+    <div class="field"><label>网站</label><input class="input" id="bs" value="${esc(b.site)}"></div>
+    <div class="field"><label>一行行业</label><input class="input" id="bi" value="${esc(b.industry)}"></div>
+    <div class="field"><label>写给谁用</label><input class="input" id="bu" value="${esc(b.target_users)}"></div>
+    <button class="btn" onclick="saveBrand()">保存</button>
+    <h2>检测用的问题 <button class="btn quiet" onclick="qopen=!qopen;render()">展开 / 收起</button></h2>
+    <p class="muted">默认折叠。系统自动生成，一般不用改。</p>
+    ${window.qopen?`<ul>${(s.questions||[]).map(q=>`<li>${esc(q.text)}</li>`).join("")||"<li class=muted>还没有</li>"}</ul>`:""}
+    ${s.plugin_token?`<p class="muted" style="margin-top:24px">网页采样用的短时令牌已签发给插件，页面上不展示密钥。</p>`:""}`;
+}
+
+window.qopen=false;
+
+function openEngine(i){
+  const e=D.engines[i]; if(!e) return;
+  DRAW=`<div class="draw" onclick="if(event.target===this)DRAW=null,render()"><div class="box">
+    <h2>${esc(e.name)}</h2>
+    <p>${esc(e.question||"还没有摘录")}</p>
+    <p>${esc(e.excerpt||"还没有真实回答摘录。接口引擎跑完就会出现。")}</p>
+    <button class="btn quiet" onclick="DRAW=null;render()">关闭</button>
+  </div></div>`;
+  render();
+}
+
+async function detect(){
+  try{
+    const r=await api("/api/detect?slug="+encodeURIComponent(SLUG),{method:"POST",body:"{}"});
+    await load();
+  }catch(e){ alert(e.message); }
+}
+async function recheck(){
+  try{ await api("/api/effect/recheck?slug="+encodeURIComponent(SLUG),{method:"POST",body:"{}"}); await load(); }
+  catch(e){ alert(e.message); }
+}
+async function markDone(id){
+  await api("/api/plan/"+id+"/status?slug="+encodeURIComponent(SLUG),{method:"POST",body:JSON.stringify({status:"done"})});
+  await load();
+}
+async function markDoing(id){
+  await api("/api/plan/"+id+"/status?slug="+encodeURIComponent(SLUG),{method:"POST",body:JSON.stringify({status:"doing"})});
+  await load();
+}
+async function saveBrand(){
+  await api("/api/settings/brand?slug="+encodeURIComponent(SLUG),{method:"POST",body:JSON.stringify({
+    name:$("#bn").value, site:$("#bs").value, industry:$("#bi").value, target_users:$("#bu").value
+  })});
+  await load();
+}
+async function logout(){ await api("/api/logout",{method:"POST",body:"{}"}); U=null; D=null; $("#app").innerHTML=authView(); }
+
+async function load(){
+  D=await api("/api/overview?slug="+encodeURIComponent(SLUG));
+  U=D.user;
+  window.PLAN=(await api("/api/plan?slug="+encodeURIComponent(SLUG))).items;
+  window.EFF=await api("/api/effect?slug="+encodeURIComponent(SLUG));
+  window.REP=await api("/api/report?slug="+encodeURIComponent(SLUG));
+  window.SET=await api("/api/settings?slug="+encodeURIComponent(SLUG));
+  render();
+}
+function render(){
+  if(!U){ $("#app").innerHTML=authView(); return; }
+  if(!(U.projects||[]).length && !SLUG){
+    $("#app").innerHTML=`<div class="shell"><aside id="side">${side()}</aside><main id="view">${onboard()}</main></div>`;
+    return;
+  }
+  const fn={overview:vOverview,plan:vPlan,effect:vEffect,report:vReport,settings:vSettings}[R]||vOverview;
+  $("#app").innerHTML=`<div class="shell"><aside id="side">${side()}</aside><main id="view">${fn()}</main></div>${DRAW||""}`;
+}
+
+async function boot(){
+  const me=await api("/api/me");
+  U=me.user;
+  if(!U){ $("#app").innerHTML=authView(); return; }
+  SLUG=(U.projects||[])[0]||null;
+  const h=(location.hash||"").replace("#","");
+  if(["overview","plan","effect","report","settings"].includes(h)) R=h;
+  if(SLUG) await load(); else render();
+}
+boot();
+</script>
+</body>
+</html>
