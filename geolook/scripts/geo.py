@@ -51,6 +51,7 @@ def cmd_init(a):
             url = "https://" + url
         host = urlparse(url).netloc.removeprefix("www.")
         slug = a.slug or G.slugify(host.split(".")[0])
+    a.slug = slug
 
     # 已存在的项目绝不覆盖：geo.json 里有问题库、竞品、事实口径，
     # 覆盖等于把一期的人工投入清零。要重建必须显式加 --force。

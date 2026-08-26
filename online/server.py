@@ -29,6 +29,16 @@ APP = HERE / "app.html"
 PORT_DEFAULT = 8787
 
 
+def _infer_slug(url: str, name: str, explicit: str | None = None) -> str:
+    if explicit:
+        return G.slugify(explicit)
+    if url:
+        from urllib.parse import urlparse as up
+        host = up(url if url.startswith("http") else "https://" + url).netloc
+        return G.slugify(host.removeprefix("www.").split(".")[0])
+    return G.slugify(name)
+
+
 def _strip_secrets(obj):
     secrets = [os.environ.get(k) for k in ACC.KEY_ENV_NAMES if os.environ.get(k)]
     blob = json.dumps(obj, ensure_ascii=False)
