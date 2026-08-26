@@ -22,6 +22,12 @@ class VoiceCase(unittest.TestCase):
         self.assertNotIn("实体消歧", t)
         self.assertIn("我们是谁", t)
 
+    def test_route_ssr_sentence(self):
+        t = V.humanize("对受影响路由启用 SSR 或预渲染，确保 curl 拿到的 HTML 含完整正文")
+        self.assertNotIn("SSR", t)
+        self.assertNotIn("curl", t)
+        self.assertIn("打开后就能读到正文", t)
+
     def test_llms_txt_becomes_plain(self):
         self.assertIn("官方说明页", V.humanize("把 llms.txt 传到根目录"))
 
