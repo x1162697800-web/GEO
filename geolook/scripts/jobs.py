@@ -50,6 +50,8 @@ ACTIONS: dict[str, dict] = {
     "serve":    {"label": "跑完整周期", "args": ["--max-pages", "--limit", "--no-sample",
                                                  "--draft", "--draft-limit"],
                  "desc": "抓取→体检→采样→工单→资产→报告→验收→交付", "slow": True},
+    "detect":   {"label": "开始检测", "args": ["--max-pages", "--limit", "--no-sample"],
+                 "desc": "抓站→体检→采样→工单（线上版客户主路径）", "slow": True},
 }
 
 FLAG_ARGS = {"--no-recrawl", "--draft", "--no-sample", "--skip-llm", "--no-llm"}  # 布尔开关，无值

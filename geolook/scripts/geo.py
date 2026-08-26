@@ -459,6 +459,48 @@ def cmd_serve(a):
     deliver.run(a.slug)
 
 
+def cmd_detect(a):
+    """线上版客户主路径：抓站 → 体检 → 采样（可跳）→ 工单。
+
+    不产顾问交付包、不产阵地地图、不产内容工作台。单引擎失败整期继续。
+    """
+    import audit as A
+    import crawl as C
+    import sample as S
+    import tasks
+
+    G.info("═══ 1/4 抓取官网 ═══")
+    C.run(a.slug, max_pages=a.max_pages)
+    G.info("═══ 2/4 页面体检 ═══")
+    A.run(a.slug)
+    G.info("═══ 3/4 AI 会不会提到你 ═══")
+    cfg = G.load_config(a.slug)
+    if not cfg.get("questions"):
+        try:
+            import bootstrap
+            G.info("问题库还是空的，先从官网推导一轮")
+            bootstrap.run(a.slug)
+            cfg = G.load_config(a.slug)
+        except Exception as e:  # noqa: BLE001
+            G.info(f"推导跳过：{type(e).__name__}: {e}")
+    if not cfg.get("questions"):
+        G.info("跳过采样：还没有检测用的问题")
+    elif getattr(a, "no_sample", False):
+        G.info("跳过采样：--no-sample")
+    else:
+        try:
+            S.run(a.slug, limit=a.limit)
+        except Exception as e:  # noqa: BLE001
+            G.info(f"采样未全部完成，先出待办：{type(e).__name__}: {e}")
+    G.info("═══ 4/4 生成待办 ═══")
+    tasks.build(a.slug)
+    try:
+        import verify as V
+        V.run(a.slug, recrawl=False)
+    except Exception as e:  # noqa: BLE001
+        G.info(f"验收跳过：{type(e).__name__}: {e}")
+
+
 def cmd_ui(a):
     import dashboard
 
