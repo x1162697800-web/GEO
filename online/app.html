@@ -286,11 +286,27 @@ function openEngine(i){
   render();
 }
 
+function openComp(i){
+  const c=D.competitors[i]; if(!c) return;
+  DRAW=`<div class="draw" onclick="if(event.target===this)DRAW=null,render()"><div class="box">
+    <h2>${esc(c.name)}</h2>
+    <p>${esc(c.label||"")}</p>
+    <p class="muted">它强在哪类问题，要等这一期样本够了才会拆开。现在先记住：同样的问题，AI 更常提到它。</p>
+    <button class="btn quiet" onclick="DRAW=null;render()">关闭</button>
+  </div></div>`;
+  render();
+}
+function goTask(id){
+  R="plan"; history.replaceState({}, "", "#plan"); render();
+  const el=document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+}
 async function detect(){
+  FLASH="";
   try{
-    const r=await api("/api/detect?slug="+encodeURIComponent(SLUG),{method:"POST",body:"{}"});
+    await api("/api/detect?slug="+encodeURIComponent(SLUG),{method:"POST",body:"{}"});
     await load();
-  }catch(e){ alert(e.message); }
+  }catch(e){ FLASH=e.message; render(); }
 }
 async function recheck(){
   try{ await api("/api/effect/recheck?slug="+encodeURIComponent(SLUG),{method:"POST",body:"{}"}); await load(); }
@@ -320,6 +336,9 @@ async function load(){
   window.REP=await api("/api/report?slug="+encodeURIComponent(SLUG));
   window.SET=await api("/api/settings?slug="+encodeURIComponent(SLUG));
   render();
+  if(POLL) clearTimeout(POLL);
+  POLL=null;
+  if(D&&D.detecting) POLL=setTimeout(()=>load().catch(()=>{}), 2500);
 }
 function render(){
   if(!U){ $("#app").innerHTML=authView(); return; }
