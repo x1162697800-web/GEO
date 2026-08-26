@@ -61,13 +61,13 @@ def customer_task(t: dict) -> dict | None:
     st = _customer_status(t)
     return {
         "id": t.get("id"),
-        "band": C.band(t.get("priority") or "P1"),
+        "band": V.band(t.get("priority") or "P1"),
         "priority": t.get("priority") or "P1",
-        "do": C.humanize(t.get("action") or t.get("title") or ""),
-        "why": C.humanize(t.get("why") or ""),
-        "done_when": C.humanize(done_when),
+        "do": V.humanize(t.get("action") or t.get("title") or ""),
+        "why": V.humanize(t.get("why") or ""),
+        "done_when": V.humanize(done_when),
         "status": st,
-        "status_label": C.status_label(st),
+        "status_label": V.status_label(st),
         "auto": acc.get("type") == "auto",
         "confirm_needed": acc.get("type") == "manual" and st != "done",
         "affected": t.get("affected") or [],
@@ -128,7 +128,7 @@ def _metric(value, *, cite_na=False):
         return {"state": "na", "label": "不适用", "value": None}
     if value is None:
         return {"state": "unmeasured", "label": "还没测", "value": None}
-    return {"state": "ok", "label": C.pct_or_unmeasured(value), "value": value}
+    return {"state": "ok", "label": V.pct_or_unmeasured(value), "value": value}
 
 
 def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> dict:
@@ -189,9 +189,9 @@ def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> 
 def effect(slug: str) -> dict:
     """效果页只回答：上次让你改的，哪些真的好了。"""
     pdir = G.project_dir(slug)
-    import verify as V
+    import verify as VER
     vdir = pdir / "verify"
-    files = sorted(vdir.glob("*.json"), key=V.report_key) if vdir.exists() else []
+    files = sorted(vdir.glob("*.json"), key=VER.report_key) if vdir.exists() else []
     latest = G.read_json(files[-1], {}) if files else {}
     results = []
     for r in latest.get("results") or []:
@@ -209,7 +209,7 @@ def effect(slug: str) -> dict:
             t["effect"] = "需人工确认"
         else:
             t["effect"] = "还没好"
-        t["note"] = C.humanize(r.get("note") or "")
+        t["note"] = V.humanize(r.get("note") or "")
         results.append(t)
     return {
         "date": (latest.get("verified_at") or "")[:10] or None,
