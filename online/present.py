@@ -170,8 +170,9 @@ def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> 
         "job": {"id": (job or {}).get("id"), "status": (job or {}).get("status"),
                 "label": (job or {}).get("label")} if job else None,
         "conclusion": _conclusion(an, detecting),
-        "health": _metric(None if score is None else score / 100) if score is None
-                  else {"state": "ok", "label": str(score), "value": score},
+        "health": ({"state": "unmeasured", "label": "还没测", "value": None}
+                   if score is None else
+                   {"state": "ok", "label": str(score), "value": score}),
         "mention": _metric(mention),
         "cite": _metric(cite, cite_na=not bool(site)),
         "trend": trend if len(trend) >= 2 else [],
