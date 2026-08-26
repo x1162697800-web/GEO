@@ -190,3 +190,195 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {"slug": slug, "queue": P.plugin_queue(slug)})
         return self._json(404, {"error": "没有这个页面"})
 
+    def do_POST(self):
+        path = urlparse(self.path).path.rstrip("/") or "/"
+        body = self._read_json()
+
+        if path == "/api/login":
+            r = ACC.login(body.get("email", ""), body.get("password", ""))
+            if not r.get("ok"):
+                return self._json(400, r)
+            return self._json(200, {"ok": True,
+                                    "user": ACC.public_user(ACC.user_of(r["token"]))},
+                              set_cookie=r["token"])
+        if path == "/api/register":
+            r = ACC.register(body.get("email", ""), body.get("password", ""),
+                             body.get("name", ""))
+            if not r.get("ok"):
+                return self._json(400, r)
+            return self._json(200, {"ok": True,
+                                    "user": ACC.public_user(ACC.user_of(r["token"]))},
+                              set_cookie=r["token"])
+        if path == "/api/logout":
+            ACC.logout(self._token())
+            return self._json(200, {"ok": True}, clear_cookie=True)
+
+        if path == "/api/projects":
+            user = self._need_user()
+            if not user:
+                return
+            url = (body.get("url") or "").strip()
+            name = (body.get("name") or "").strip()
+            no_site = bool(body.get("no_site")) or not url
+            if no_site and not name:
+                return self._json(400, {"error": "没有官网时，请写下品牌或商品名"})
+            import geo as CLI
+
+            class A:
+                pass
+            a = A()
+            a.url = url
+            a.name = name or None
+            a.slug = body.get("slug") or None
+            a.market = body.get("market") or ("global" if no_site else "both")
+            a.max_pages = int(body.get("max_pages") or 60)
+            a.force = False
+            a.no_site = no_site
+            try:
+                CLI.cmd_init(a)
+            except SystemExit as e:
+                msg = str(e) if str(e) else "项目已存在，换个名字"
+                return self._json(400, {"error": msg})
+            slug = a.slug
+            if not slug:
+                from urllib.parse import urlparse as up
+                if url:
+                    host = up(url if url.startswith("http") else "https://" + url).netloc
+                    slug = G.slugify(host.removeprefix("www.").split(".")[0])
+                else:
+                    slug = G.slugify(name)
+            ACC.attach_project(user["email"], slug)
+            return self._json(200, {"ok": True, "slug": slug})
+
+        if path == "/api/detect":
+            user = self._need_user()
+            if not user:
+                return
+            slug = self._need_slug(user)
+            if not slug:
+                return
+            est = ACC.estimate(user)
+            if est["blocked"]:
+                return self._json(402, {"error": "本月次数用完", "quota": est["quota"]})
+            paid = ACC.consume(user["email"])
+            if not paid.get("ok"):
+                return self._json(402, {"error": paid.get("error") or "本月次数用完"})
+            no_sample = not any(S.available(p) for p in S.PROVIDERS)
+            try:
+                job = J.start(slug, "detect", {
+                    "--max-pages": body.get("max_pages") or 60,
+                    "--no-sample": no_sample,
+                    "--limit": body.get("limit"),
+                })
+            except RuntimeError:
+                return self._json(409, {"error": "已经在检测中，请稍等"})
+            except Exception:
+                return self._json(500, {"error": "启动检测失败，请稍后重试"})
+            return self._json(200, {"ok": True, "job": job, "quota": paid["quota"],
+                                    "estimate": est["text"]})
+
+        if path.startswith("/api/plan/") and path.endswith("/status"):
+            user = self._need_user()
+            if not user:
+                return
+            slug = self._need_slug(user)
+            if not slug:
+                return
+            tid = path.split("/")[3]
+            st = body.get("status")
+            if st not in ("todo", "doing", "done"):
+                return self._json(400, {"error": "状态不对"})
+            import tasks as T
+            try:
+                T.set_status(slug, tid, st)
+            except KeyError:
+                return self._json(404, {"error": "找不到这条待办"})
+            return self._json(200, {"ok": True})
+
+        if path == "/api/effect/recheck":
+            user = self._need_user()
+            if not user:
+                return
+            slug = self._need_slug(user)
+            if not slug:
+                return
+            est = ACC.estimate(user)
+            if est["blocked"]:
+                return self._json(402, {"error": "本月次数用完", "quota": est["quota"]})
+            try:
+                job = J.start(slug, "verify", {})
+            except RuntimeError:
+                return self._json(409, {"error": "已经在检测中，请稍等"})
+            return self._json(200, {"ok": True, "job": job})
+
+        if path == "/api/settings/brand":
+            user = self._need_user()
+            if not user:
+                return
+            slug = self._need_slug(user)
+            if not slug:
+                return
+            cfg = G.load_config(slug)
+            b = cfg.setdefault("brand", {})
+            for k in ("name", "industry", "target_users", "site"):
+                if k in body and body[k] is not None:
+                    b[k] = str(body[k]).strip()
+            if "aliases" in body:
+                raw = body["aliases"]
+                if isinstance(raw, str):
+                    raw = raw.replace("，", ",").split(",")
+                b["aliases"] = [str(x).strip() for x in raw if str(x).strip()]
+            G.write_json(G.project_dir(slug) / "geo.json", cfg)
+            return self._json(200, {"ok": True, "brand": b})
+
+        if path == "/api/plugin/sample":
+            pu = ACC.plugin_user(self._plugin_tok() or body.get("token"))
+            if not pu:
+                return self._json(401, {"error": "采集令牌无效或已过期"})
+            slug = (pu.get("projects") or [None])[0]
+            if not slug:
+                return self._json(400, {"error": "还没有项目"})
+            r = S.collect_import(slug, [body])
+            if not r.get("ok"):
+                return self._json(400, {"error": r.get("error") or "回传没有成功"})
+            return self._json(200, r)
+        return self._json(404, {"error": "没有这个接口"})
+
+
+def _port_taken(host: str, port: int) -> bool:
+    probe = "127.0.0.1" if host == "0.0.0.0" else host
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.4)
+        return s.connect_ex((probe, port)) == 0
+
+
+def run(port: int = PORT_DEFAULT, host: str | None = None, open_browser: bool = True):
+    G.load_env()
+    ACC.ensure_demo()
+    host = host or os.environ.get("GROUNDED_ONLINE_HOST") or "127.0.0.1"
+    if _port_taken(host, port):
+        G.die(f"端口 {port} 已被占用。换一个：py online/server.py --port {port + 1}")
+    httpd = ThreadingHTTPServer((host, port), Handler)
+    url = f"http://{'127.0.0.1' if host == '0.0.0.0' else host}:{port}/"
+    G.info(f"客户网站已启动：{url}")
+    G.info("演示账号 demo@wagnab.com / wagnab（项目 wagnab.com）")
+    if open_browser:
+        threading.Timer(0.5, lambda: webbrowser.open(url)).start()
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        G.info("已停止")
+    finally:
+        httpd.server_close()
+
+
+if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--port", type=int, default=PORT_DEFAULT)
+    ap.add_argument("--host", default=None)
+    ap.add_argument("--no-open", action="store_true")
+    args = ap.parse_args()
+    run(port=args.port, host=args.host, open_browser=not args.no_open)
+
+
