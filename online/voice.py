@@ -18,6 +18,7 @@ STATUS = {
 
 # 长的先换。括号里的内部词也要清掉，否则「（SSR / 预渲染）」会漏网。
 _PHRASES = [
+    ("实体消歧的地基", "先让人分清我们是谁"),
     ("实体消歧地基", "先让人分清我们是谁"),
     ("实体消歧", "先统一「我们是谁」这一句话"),
     ("SSR / 预渲染", "打开网页就能读到正文"),
@@ -55,6 +56,10 @@ def humanize(text: str | None) -> str:
     out = re.sub(r"\bP2\b", "可以后做", out)
     # 顾问文档引用客户看不懂，整段括号拿掉
     out = re.sub(r"[（(][^）)]*\.md[^）)]*[）)]", "", out)
+    out = re.sub(r"`geo\.py[^`]*`", "导出的说明", out)
+    out = re.sub(r"[\w./-]+\.md", "", out)
+    out = re.sub(r"参照\s*[，,]?\s*", "", out)
+    out = re.sub(r"\baudit\.json\b", "体检结果", out)
     return re.sub(r"\s{2,}", " ", out).strip()
 
 

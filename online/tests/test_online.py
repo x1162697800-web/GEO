@@ -17,12 +17,14 @@ import voice as V  # noqa: E402
 class QuotaCase(unittest.TestCase):
     def setUp(self):
         self.td = tempfile.TemporaryDirectory()
-        self.patch = mock.patch.object(ACC, "DATA", Path(self.td.name))
-        self.patch.setattr = None
+        self._old_data = ACC.DATA
+        self._old_acc = ACC.ACCOUNTS
         ACC.DATA = Path(self.td.name)
         ACC.ACCOUNTS = ACC.DATA / "accounts.json"
 
     def tearDown(self):
+        ACC.DATA = self._old_data
+        ACC.ACCOUNTS = self._old_acc
         self.td.cleanup()
 
     def test_saver_blocks_on_second_run(self):
