@@ -114,7 +114,7 @@ async function loadProjects() {
     const saved = await store.get("slug");
     if (saved && ps.some(p => p.slug === saved)) $("#slug").value = saved;
   } catch (e) {
-    $("#qmeta").textContent = "连不上看板——先启动 geo.py ui";
+    $("#qmeta").textContent = "连不上网站——先启动客户网站（geo.py online，端口 8787）";
   }
 }
 
