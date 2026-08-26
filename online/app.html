@@ -135,14 +135,14 @@ function onboard(){
 }
 async function createP(){
   try{
-    const r=await api("/api/projects",{method:"POST",body:JSON.stringify({url:$("#url").value,name:$("#nm").value})});
+    const r=await api("/api/projects",{method:"POST",body:JSON.stringify({url:$("#url").value,name:$("#nm").value,materials:($("#mat")&&$("#mat").value)||""})});
     SLUG=r.slug; R="overview"; await load();
   }catch(e){ $("#cerr").textContent=e.message; }
 }
 
 function side(){
   const b=(D&&D.brand)||"项目";
-  return `<div class="brand">Grounded<small>客户自助版</small></div>
+  return `<div class="brand">看 AI<br>认不认识你<small>打开就能看懂</small></div>
     <div class="muted" style="font-size:13px">${esc(b)}<br><span style="font-size:12px">${esc((D&&D.site)||"")}</span></div>
     <nav class="nav">${NAV.map(([k,t])=>`<button class="${R===k?"on":""}" onclick="go('${k}')">${t}${k==="plan"&&D&&D.plan_open?` · ${D.plan_open}`:""}</button>`).join("")}
       <button class="${R==="settings"?"on":""}" onclick="go('settings')">设置</button>
@@ -157,14 +157,15 @@ function vOverview(){
   const h=metric(D.health), m=metric(D.mention), ci=metric(D.cite);
   const detecting=D.detecting;
   let html=`<h1>${esc(c.text||"还没测")}</h1>
-    <p class="lede">你每次进来，先看这一句。数字只是补充。</p>`;
-  if(detecting) html+=`<div class="gate">正在检测。国内接口引擎会自动跑完；有几家只能在网页里采，到时会提醒你。</div>`;
+    <p class="lede">${c.kind==="detecting" ? esc(c.detail||"") : "你每次进来，先看这一句。数字只是补充。"}</p>`;
+  if(FLASH) html+=`<div class="warn">${esc(FLASH)}</div>`;
+  if(detecting) html+=`<div class="gate">${esc(c.detail||"正在检测。国内接口引擎会自动跑完；有几家只能在网页里采，到时会提醒你。")}</div>`;
   else if(c.kind==="empty") html+=`<div class="row" style="margin:18px 0">
       <button class="btn" onclick="detect()">${esc((D.estimate&&D.estimate.text)||"开始检测")}</button>
       <span class="muted">${esc((U&&U.quota&&U.quota.label)||"")}</span></div>`;
   else html+=`<div class="row" style="margin:12px 0 0"><button class="btn ghost" onclick="detect()">再测一轮</button>
       <span class="muted">${esc((D.estimate&&D.estimate.text)||"")}</span></div>`;
-  if(D.plugin&&D.plugin.count) html+=`<div class="warn">还有 ${D.plugin.count} 个引擎要在网页里采一次（${D.plugin.engines.map(e=>esc(e.name)).join("、")}）。装好采样插件，打开对应网页按队列提取即可。导航里没有「插件」——它不是单独产品。</div>`;
+  if(D.plugin&&D.plugin.count) html+=`<div class="warn">还有 ${D.plugin.count} 个引擎要在网页里采一次（${D.plugin.engines.map(e=>esc(e.name)).join("、")}）。装好采样插件，把地址写成当前这个网站，打开对应网页按队列提取即可。</div>`;
   if(c.kind!=="empty"&&!detecting){
     html+=`<div class="kpis">
       <div class="kpi"><div class="k">整体表现</div><div class="v">${esc(h.v)}</div><div class="h">${esc(h.h)}</div></div>
