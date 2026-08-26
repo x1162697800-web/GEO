@@ -87,10 +87,15 @@ def next_three(slug: str) -> list[dict]:
     return [t for t in action_plan(slug) if t["status"] != "done"][:3]
 
 
+def _has_samples(an: dict) -> bool:
+    """有真实答案才算测过。只有体检/蓝图时不算，避免把覆盖率当成整体表现。"""
+    return any((e.get("samples") or 0) > 0 for e in (an.get("engines") or []))
+
+
 def _plugin_pending(slug: str, engines: list[dict]) -> dict:
     """无公开 API 的引擎：不挡第一份报告，总览一条提示去装插件。"""
     cfg = _cfg(slug)
-    sampled = {e.get("platform") for e in engines}
+    sampled = {e.get("platform") for e in engines if (e.get("samples") or 0) > 0}
     want = []
     for code in cfg.get("platforms") or []:
         if code in S.MANUAL_ONLY and code not in sampled:
@@ -102,15 +107,14 @@ def _conclusion(an: dict, detecting: bool) -> dict:
     if detecting:
         return {
             "kind": "detecting",
-            "text": ("正在用我们的引擎检测，大约 10–20 分钟。"
-                     "国内接口引擎会自动跑完；有几家只能在网页里采，到时会提醒你。"),
+            "text": "正在检测",
+            "detail": ("大约 10–20 分钟。国内接口引擎会自动跑完；"
+                       "有几家只能在网页里采，到时会提醒你。"),
         }
-    health = (an.get("health") or {}).get("score")
     engines = an.get("engines") or []
     mentioned = [e for e in engines
                  if e.get("mention") is not None and e["mention"] > 0]
-    sampled = any(e.get("samples") for e in engines) or bool(an.get("latest_date"))
-    if not sampled:
+    if not _has_samples(an):
         return {
             "kind": "empty",
             "text": "还没测过 AI 认不认识你。点「开始检测」，我们用自己的引擎跑一轮。",
