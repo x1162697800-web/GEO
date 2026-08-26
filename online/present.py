@@ -305,3 +305,38 @@ def plugin_queue(slug: str) -> list[dict]:
                 "question": q.get("text"),
             })
     return out
+
+
+def collect_queue(slug: str, *, limit: int = 40, groups: list[str] | None = None,
+                  intent: str = "") -> dict:
+    """兼容现有采样插件的队列形状（/api/collect/queue/{slug}）。"""
+    cfg = _cfg(slug)
+    picked = [g for g in (groups or []) if g]
+    if not picked and intent == "buyer":
+        picked = sorted(S.BUYER_GROUPS)
+    allq = cfg.get("questions") or []
+    qs = [x for x in allq if not picked or x.get("group") in picked][:limit]
+    counts: dict[str, int] = {}
+    for x in allq:
+        g2 = x.get("group") or "未分组"
+        counts[g2] = counts.get(g2, 0) + 1
+    group_rows = [{"name": g2, "count": c, "buyer": g2 in S.BUYER_GROUPS}
+                  for g2, c in sorted(counts.items(), key=lambda kv: -kv[1])]
+    plats = [{"code": c, "label": lb, "market": mk}
+             for c, (lb, mk) in S.MANUAL_ONLY.items()]
+    plats += [{"code": c, "label": s2["name"], "market": s2["market"]}
+              for c, s2 in S.PROVIDERS.items() if not S.available(c)]
+    return {
+        "slug": slug,
+        "brand": (cfg.get("brand") or {}).get("name") or slug,
+        "questions": qs,
+        "platforms": plats,
+        "groups": group_rows,
+        "selected": picked,
+    }
+
+
+def project_card(slug: str) -> dict:
+    cfg = _cfg(slug) if (G.project_dir(slug) / "geo.json").exists() else {}
+    b = cfg.get("brand") or {}
+    return {"slug": slug, "name": b.get("name") or slug, "site": b.get("site") or ""}
