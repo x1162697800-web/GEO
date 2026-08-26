@@ -82,7 +82,7 @@ h2{font-family:var(--serif);font-size:22px;font-weight:500;margin:28px 0 10px}
 <div id="app"></div>
 <script>
 const NAV=[["overview","总览"],["plan","该做什么"],["effect","效果"],["report","报告"]];
-let R="overview", D=null, U=null, DRAW=null, SLUG=null;
+let R="overview", D=null, U=null, DRAW=null, SLUG=null, FLASH="", POLL=null;
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
@@ -128,6 +128,7 @@ function onboard(){
     <p class="lede">贴网址我们就去看 AI 认不认识你。没有官网也可以，写下品牌或商品名。</p>
     <div class="field" style="max-width:520px"><label>网站</label><input class="input" id="url" placeholder="https://wagnab.com"></div>
     <div class="field" style="max-width:520px"><label>没有官网时的品牌名</label><input class="input" id="nm" placeholder="可空"></div>
+    <div class="field" style="max-width:520px"><label>没有官网时，把产品介绍贴在这里</label><textarea class="input" id="mat" rows="5" placeholder="可空。有官网时不用填。"></textarea></div>
     <button class="btn" onclick="createP()">开始</button>
     <p id="cerr" class="muted"></p>
   </div>`;
