@@ -345,7 +345,21 @@ def run(slug: str, max_pages: int | None = None, delay: float = 0.5) -> dict:
     link_urls = discover_links(root, home["html"]) if home["html"] else []
 
     seeds = [u for u in cfg.get("pages", {}).get("seed", []) if u]
-    candidates = rank(seeds + sitemap_urls + link_urls, root)[:limit]
+    # llms.txt 里点名的页面是站点主人自己的判断，比启发式排序可靠；
+    # sitemap.xml / robots.txt 这类非内容链接排除掉
+    nominated = [u for u in llms_txt_links(root, llms_txt)
+                 if not u.lower().endswith((".xml", ".txt", ".json"))]
+    ranked = rank(seeds + nominated + sitemap_urls + link_urls, root)
+
+    # 显式指定的先抓（配置 seed 是我们的判断，llms.txt 是站点主人的判断），
+    # 其余按家族轮转，防止某个栏目把额度吃光
+    want = {u.rstrip("/") for u in seeds + nominated}
+    pinned = [u for u in ranked if u.rstrip("/") == root or u.rstrip("/") in want]
+    rest = [u for u in ranked if u.rstrip("/") != root and u.rstrip("/") not in want]
+    candidates = (pinned + stratify(rest))[:limit]
+    if nominated:
+        got = len([u for u in candidates if u.rstrip("/") in want])
+        G.info(f"llms.txt 点名 {len(nominated)} 页，其中 {got} 页进入本次体检")
 
     def crawl_one(i: int, u: str) -> dict:
         res = home if u.rstrip("/") == root else G.fetch(u)
