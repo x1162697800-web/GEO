@@ -142,6 +142,30 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/me":
             user = ACC.user_of(self._token())
             return self._json(200, {"user": ACC.public_user(user) if user else None})
+        if path == "/api/projects":
+            user = ACC.user_of(self._token())
+            if user:
+                return self._json(200, [P.project_card(s) for s in (user.get("projects") or [])])
+            if self._local():
+                slugs = []
+                if G.WORK.exists():
+                    slugs = [p.name for p in G.WORK.iterdir()
+                             if (p / "geo.json").exists()]
+                return self._json(200, [P.project_card(s) for s in slugs])
+            return self._json(401, {"error": "请先登录"})
+        if path.startswith("/api/collect/queue/"):
+            slug = path.split("/")[-1]
+            if not self._plugin_ok(slug):
+                return self._json(401, {"error": "采集令牌无效或已过期"})
+            q = parse_qs(urlparse(self.path).query)
+            try:
+                limit = max(1, min(200, int((q.get("limit") or ["40"])[0])))
+            except ValueError:
+                limit = 40
+            groups = [g for g in ((q.get("groups") or [""])[0] or "").split(",") if g.strip()]
+            intent = (q.get("intent") or [""])[0]
+            return self._json(200, P.collect_queue(slug, limit=limit, groups=groups,
+                                                   intent=intent))
         if path == "/api/overview":
             user = self._need_user()
             if not user:
@@ -154,6 +178,8 @@ class Handler(BaseHTTPRequestHandler):
             ov = P.overview(slug, detecting=bool(job), job=job)
             ov["user"] = ACC.public_user(user)
             ov["estimate"] = ACC.estimate(user)
+            if ov.get("plugin"):
+                ov["plugin"]["has_token"] = True
             return self._json(200, ov)
         if path == "/api/plan":
             user = self._need_user()
@@ -189,7 +215,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             out = P.settings(slug)
             out["user"] = ACC.public_user(user)
-            out["plugin_token"] = ACC.plugin_token(user["email"])
+            out["plugin_needed"] = bool((P.overview(slug).get("plugin") or {}).get("count"))
             return self._json(200, out)
         if path == "/api/job":
             user = self._need_user()
