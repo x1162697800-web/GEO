@@ -33,6 +33,8 @@ _PHRASES = [
     ("健康分", "整体表现"),
     ("JSON-LD", "给搜索和 AI 看的页面说明"),
     ("llms.txt", "给 AI 看的官方说明页"),
+    ("content/facts.en.md", "「我们是谁」这份说明"),
+    ("content/facts.md", "「我们是谁」这份说明"),
     ("facts.md", "「我们是谁」这份说明"),
     ("brand_rank", "出现顺序"),
     ("X-Robots-Tag", "网站返回的抓取指令"),
@@ -51,6 +53,8 @@ def humanize(text: str | None) -> str:
     out = re.sub(r"\bP0\b", "先做", out)
     out = re.sub(r"\bP1\b", "接着做", out)
     out = re.sub(r"\bP2\b", "可以后做", out)
+    # 顾问文档引用客户看不懂，整段括号拿掉
+    out = re.sub(r"[（(][^）)]*\.md[^）)]*[）)]", "", out)
     return re.sub(r"\s{2,}", " ", out).strip()
 
 

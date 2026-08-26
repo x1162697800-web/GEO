@@ -188,20 +188,35 @@ def consume(email: str) -> dict:
         return {"ok": False, "error": "这个账号暂时被冻结，请联系我们"}
     q = _quota(u)
     if q["left"] <= 0:
-        return {"ok": False, "error": "本月次数用完"}
+        return {"ok": False, "error": "本月次数用完", "quota": q}
     u["quota"] = {"month": q["month"], "used": q["used"] + 1}
     _save(db)
     return {"ok": True, "quota": _quota(u)}
 
 
-def plugin_token(email: str) -> str:
-    """短时采集令牌，只给插件拉队列 / 回传，不含任何引擎密钥。"""
+def refund(email: str) -> dict:
+    """启动检测失败时把刚扣的一次加回去。"""
     db = _load()
+    u = db["users"].get(email)
+    if not u:
+        return {"ok": False}
+    q = _quota(u)
+    u["quota"] = {"month": q["month"], "used": max(0, q["used"] - 1)}
+    _save(db)
+    return {"ok": True, "quota": _quota(u)}
+
+
+def plugin_token(email: str) -> str:
+    """短时采集令牌，只给插件拉队列 / 回传，不含任何引擎密钥。未过期则复用。"""
+    db = _load()
+    now = time.time()
+    plug = db.setdefault("plugin", {})
+    db["plugin"] = {k: v for k, v in plug.items() if v.get("exp", 0) > now}
+    for tok, rec in db["plugin"].items():
+        if rec.get("email") == email and rec.get("exp", 0) > now + 60:
+            return tok
     tok = secrets.token_urlsafe(16)
-    db.setdefault("plugin", {})[tok] = {
-        "email": email, "at": time.time(), "exp": time.time() + 3600 * 8}
-    db["plugin"] = {k: v for k, v in db["plugin"].items()
-                    if v.get("exp", 0) > time.time()}
+    db["plugin"][tok] = {"email": email, "at": now, "exp": now + 3600 * 8}
     _save(db)
     return tok
 

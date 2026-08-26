@@ -150,20 +150,40 @@ def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> 
     score = health.get("score")
     plan = action_plan(slug)
     next3 = next_three(slug)
-    plugin = _plugin_pending(slug, engines)
+    sampled = _has_samples(an)
+    # 插件提示只在已经出过第一份结果之后出现，空状态用总览那句人话即可
+    plugin = (_plugin_pending(slug, engines)
+              if sampled or detecting else {"count": 0, "engines": []})
 
     engine_rows = []
-    for e in engines:
-        engine_rows.append({
-            "platform": e.get("platform"),
-            "name": e.get("label") or S.label_of(e.get("platform") or ""),
-            "mention": _metric(e.get("mention")),
-            "top3": ("有进前三" if (e.get("pos_median") and e["pos_median"] <= 3)
-                     else ("还没进前三" if e.get("mention") else "还没测")),
-            "cites_you": bool(e.get("cite_counts") and e["cite_counts"][0]),
-            "excerpt": (e.get("example") or {}).get("excerpt") or "",
-            "question": (e.get("example") or {}).get("question") or "",
-        })
+    if sampled:
+        for e in engines:
+            engine_rows.append({
+                "platform": e.get("platform"),
+                "name": e.get("label") or S.label_of(e.get("platform") or ""),
+                "mention": _metric(e.get("mention")),
+                "top3": ("有进前三" if (e.get("pos_median") and e["pos_median"] <= 3)
+                         else ("还没进前三" if e.get("mention") else "还没测")),
+                "cites_you": bool(e.get("cite_counts") and e["cite_counts"][0]),
+                "excerpt": (e.get("example") or {}).get("excerpt") or "",
+                "question": (e.get("example") or {}).get("question") or "",
+            })
+
+    # 没有样本时不把阵地覆盖率当成「整体表现」，也不画空引擎/空竞品
+    if not sampled or score is None:
+        health_out = {"state": "unmeasured", "label": "还没测", "value": None}
+        mention_out = _metric(None)
+        cite_out = _metric(None, cite_na=not bool(site))
+        trend_out = []
+        comps_out = []
+    else:
+        health_out = {"state": "ok", "label": str(score), "value": score}
+        mention_out = _metric(mention)
+        cite_out = _metric(cite, cite_na=not bool(site))
+        trend_out = trend if len(trend) >= 2 else []
+        comps_out = [{"name": c.get("name"), "presence": c.get("presence"),
+                      "label": f"同样的问题，AI 更常提到 {c.get('name')}"}
+                     for c in comps[:6]]
 
     return {
         "slug": slug,
@@ -171,19 +191,16 @@ def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> 
         "site": site,
         "market": cfg.get("market", "cn"),
         "detecting": detecting,
+        "sampled": sampled,
         "job": {"id": (job or {}).get("id"), "status": (job or {}).get("status"),
                 "label": (job or {}).get("label")} if job else None,
         "conclusion": _conclusion(an, detecting),
-        "health": ({"state": "unmeasured", "label": "还没测", "value": None}
-                   if score is None else
-                   {"state": "ok", "label": str(score), "value": score}),
-        "mention": _metric(mention),
-        "cite": _metric(cite, cite_na=not bool(site)),
-        "trend": trend if len(trend) >= 2 else [],
+        "health": health_out,
+        "mention": mention_out,
+        "cite": cite_out,
+        "trend": trend_out,
         "engines": engine_rows,
-        "competitors": [{"name": c.get("name"), "presence": c.get("presence"),
-                         "label": f"同样的问题，AI 更常提到 {c.get('name')}"}
-                        for c in comps[:6]],
+        "competitors": comps_out,
         "next3": next3,
         "plan_open": sum(1 for t in plan if t["status"] != "done"),
         "plugin": plugin if plugin["count"] else None,
@@ -197,6 +214,9 @@ def effect(slug: str) -> dict:
     import verify as VER
     vdir = pdir / "verify"
     files = sorted(vdir.glob("*.json"), key=VER.report_key) if vdir.exists() else []
+    # 生成待办时会顺手跑一次验收，那是基线，不是「改完重测」
+    if len(files) < 2:
+        return {"date": None, "items": [], "empty": True}
     latest = G.read_json(files[-1], {}) if files else {}
     results = []
     for r in latest.get("results") or []:
