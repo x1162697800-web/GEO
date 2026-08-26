@@ -73,3 +73,23 @@ class TaskShapeCase(unittest.TestCase):
              "acceptance": {"type": "auto", "desc": "达标"},
              "evidence": [{"result": "fail"}]}
         self.assertEqual(P.customer_task(t)["status_label"], "退步了")
+
+
+@unittest.skipUnless(
+    (HERE.parent / "geolook" / "work" / "wagnab" / "tasks.json").exists(),
+    "no wagnab project")
+class WagnabPresentCase(unittest.TestCase):
+    def test_every_plan_item_has_done_when(self):
+        items = P.action_plan("wagnab")
+        self.assertTrue(items)
+        for t in items:
+            self.assertTrue(t["done_when"], t["id"])
+            self.assertNotIn("SSR", t["do"] + t["why"])
+
+    def test_overview_does_not_fake_zero_health_without_samples(self):
+        ov = P.overview("wagnab")
+        if ov["mention"]["state"] == "unmeasured":
+            self.assertNotEqual(ov["mention"]["label"], "0%")
+        if ov["health"]["state"] == "unmeasured":
+            self.assertEqual(ov["health"]["label"], "还没测")
+
