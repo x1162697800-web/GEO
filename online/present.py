@@ -16,7 +16,7 @@ if str(SCRIPTS) not in sys.path:
 import analytics as A  # noqa: E402
 import geolib as G  # noqa: E402
 import sample as S  # noqa: E402
-import copy as C  # noqa: E402
+import voice as V  # noqa: E402
 
 
 def _cfg(slug: str) -> dict:
