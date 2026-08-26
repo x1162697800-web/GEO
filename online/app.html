@@ -60,7 +60,22 @@ h2{font-family:var(--serif);font-size:22px;font-weight:500;margin:28px 0 10px}
 .muted{color:var(--muted)}
 .draw{position:fixed;inset:0;background:rgba(28,25,21,.35);display:grid;place-items:end}
 .draw .box{background:var(--card);width:min(520px,100%);height:100%;padding:28px;overflow:auto;border-left:1px solid var(--line)}
-@media(max-width:800px){.shell{grid-template-columns:1fr}#side{display:none}.kpis{grid-template-columns:1fr}#view{padding:24px 18px}}
+@media(max-width:800px){
+  .shell{grid-template-columns:1fr}
+  #side{display:flex;flex-direction:row;flex-wrap:wrap;gap:10px;border-right:0;border-bottom:1px solid var(--line);padding:14px 16px}
+  .nav{display:flex;flex-wrap:wrap;gap:4px}
+  .nav button{width:auto}
+  .side-foot{margin:0 0 0 auto}
+  .brand small{display:none}
+  .kpis{grid-template-columns:1fr}
+  #view{padding:24px 18px}
+}
+@media print{
+  #side,.btn,.side-foot,.nav{display:none!important}
+  .shell{display:block}
+  #view{padding:0;max-width:none}
+  .card,.kpi{break-inside:avoid}
+}
 </style>
 </head>
 <body>

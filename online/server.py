@@ -435,6 +435,7 @@ def _port_taken(host: str, port: int) -> bool:
 def run(port: int = PORT_DEFAULT, host: str | None = None, open_browser: bool = True):
     G.load_env()
     ACC.ensure_demo()
+    J.reap_orphans()
     host = host or os.environ.get("GROUNDED_ONLINE_HOST") or "127.0.0.1"
     if _port_taken(host, port):
         G.die(f"端口 {port} 已被占用。换一个：py online/server.py --port {port + 1}")
