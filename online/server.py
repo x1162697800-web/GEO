@@ -270,7 +270,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {"slug": slug, "queue": P.plugin_queue(slug)})
         return self._json(404, {"error": "没有这个页面"})
 
-    def do_POST(self):
+    def _dispatch_post(self):
         path = urlparse(self.path).path.rstrip("/") or "/"
         body = self._read_json()
 
@@ -463,15 +463,18 @@ def _port_taken(host: str, port: int) -> bool:
 
 def run(port: int = PORT_DEFAULT, host: str | None = None, open_browser: bool = True):
     G.load_env()
-    ACC.ensure_demo()
-    J.reap_orphans()
     host = host or os.environ.get("GROUNDED_ONLINE_HOST") or "127.0.0.1"
+    ACC.ensure_demo(host)
+    J.reap_orphans()
     if _port_taken(host, port):
         G.die(f"端口 {port} 已被占用。换一个：py online/server.py --port {port + 1}")
-    httpd = ThreadingHTTPServer((host, port), Handler)
+    httpd = Server((host, port), Handler)
     url = f"http://{'127.0.0.1' if host == '0.0.0.0' else host}:{port}/"
     G.info(f"客户网站已启动：{url}")
-    G.info("演示账号 demo@wagnab.com / wagnab（项目 wagnab.com）")
+    if ACC.demo_allowed(host):
+        G.info("演示账号 demo@wagnab.com / wagnab（项目 wagnab.com）")
+    elif not is_loopback(host):
+        G.info("非本机绑定：未创建演示账号。客户用自己注册的邮箱登录。")
     if open_browser:
         threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:

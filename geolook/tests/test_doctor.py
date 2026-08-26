@@ -109,5 +109,18 @@ class TestReportSemantics(unittest.TestCase):
         self.assertEqual([lvl for lvl, *_ in r.rows], [D.OK] * 3)
 
 
+class TestOnlineSurface(unittest.TestCase):
+    def test_customer_app_exists_in_this_repo(self):
+        r = D.Report()
+        D._check_online(r)
+        self.assertEqual(_levels(r.rows, "客户网站界面"), [D.OK])
+        self.assertEqual(_levels(r.rows, "online/data"), [D.OK])
+
+    def test_port_helper_labels_customer_site(self):
+        r = D.Report()
+        D._check_port(r, 9, "客户网站", "x")
+        self.assertTrue(any("客户网站端口 9" in item for _, item, _, _ in r.rows))
+
+
 if __name__ == "__main__":
     unittest.main()
