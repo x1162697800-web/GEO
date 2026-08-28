@@ -39,17 +39,17 @@ def _tasks(slug: str) -> list[dict]:
 
 def _customer_status(t: dict) -> str:
     st = t.get("status") or "todo"
-    if st == "done":
-        return "done"
     if st == "doing":
         return "doing"
-    if st == "blocked":
-        return "confirm"
     ev = t.get("evidence") or []
     last = ev[-1] if ev else {}
     # 曾经完成、重测未达标：回到待办并标退步
-    if t.get("closed_at") and last.get("result") == "fail":
+    if (t.get("regressed_at") or t.get("closed_at")) and last.get("result") == "fail":
         return "regressed"
+    if st == "done":
+        return "done"
+    if st == "blocked":
+        return "confirm"
     return "todo"
 
 

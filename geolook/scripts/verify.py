@@ -246,20 +246,23 @@ def run(slug: str, recrawl: bool = True) -> dict:
         for t in data["tasks"]:
             ok, note, prog = check(t, audit, metrics)
             prev = t["status"]
+            checked_at = G.now_iso()
             if prog:
-                prog["at"] = G.now_iso()
+                prog["at"] = checked_at
                 t.setdefault("progress_first", dict(prog))  # 首次验收快照 = before
                 t["progress"] = prog                        # 最近一次 = after
             if ok is True and t["status"] != "done":
                 t["status"] = "done"
-                t["closed_at"] = G.now_iso()
+                t["closed_at"] = checked_at
+                t["regressed_at"] = None
                 changed += 1
             elif ok is False and t["status"] == "done":
                 # 回归了：之前验收通过，现在又不达标
                 t["status"] = "todo"
                 t["closed_at"] = None
+                t["regressed_at"] = checked_at
                 changed += 1
-            t["evidence"].append({"at": G.now_iso(), "check": t["acceptance"].get("check"),
+            t["evidence"].append({"at": checked_at, "check": t["acceptance"].get("check"),
                                   "result": {True: "pass", False: "fail", None: "manual"}[ok], "note": note})
             t["evidence"] = t["evidence"][-6:]  # 只留最近 6 条，别把文件撑爆
             results.append({"id": t["id"], "title": t["title"], "priority": t["priority"],
