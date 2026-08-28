@@ -460,6 +460,7 @@ def set_status(slug: str, task_id: str, status: str, note: str = "") -> dict:
                     t["evidence"].append({"at": G.now_iso(), "note": note})
                 if status == "done":
                     t["closed_at"] = G.now_iso()
+                    t["regressed_at"] = None
                 save(slug, data)
                 G.info(f"{task_id} → {status}")
                 return t
