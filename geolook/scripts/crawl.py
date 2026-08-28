@@ -98,11 +98,17 @@ def stratify(urls: list[str]) -> list[str]:
     for u in urls:
         seg = [x for x in (urlparse(u).path or "/").split("/") if x]
         fams.setdefault(seg[0].lower() if seg else "/", []).append(u)
+    sizes = {k: len(v) for k, v in fams.items()}
+    emitted = {k: 0 for k in fams}
+    order = {k: i for i, k in enumerate(fams)}
     out: list[str] = []
     while any(fams.values()):
-        for q in fams.values():
-            if q:
-                out.append(q.pop(0))
+        active = [k for k, q in fams.items() if q]
+        # 每个家族先出一页；之后优先把小家族覆盖完，再回到海量 SKU 家族。
+        # score 越小越先取，既保留首次出现顺序，也避免大目录在第二轮马上抢额度。
+        key = min(active, key=lambda k: (emitted[k] * sizes[k], order[k]))
+        out.append(fams[key].pop(0))
+        emitted[key] += 1
     return out
 
 
