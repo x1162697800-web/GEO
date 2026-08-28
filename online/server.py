@@ -486,7 +486,8 @@ class Handler(BaseHTTPRequestHandler):
             est = ACC.estimate(user)
             if est["blocked"]:
                 return self._json(402, {"error": "本月次数用完", "quota": est["quota"]})
-            if not any(S.available(p) for p in S.PROVIDERS):
+            cfg = G.load_config(slug)
+            if not any(S.available(p) for p in (cfg.get("platforms") or [])):
                 return self._json(
                     503, {"error": "检测服务还在准备中，请联系管理员后再试"})
             paid = ACC.consume(user["email"])
