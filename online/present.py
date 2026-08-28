@@ -312,12 +312,30 @@ def report(slug: str) -> dict:
     done = [t for t in plan if t["status"] == "done"]
     open_ = [t for t in plan if t["status"] != "done"]
     rival = (ov["competitors"][0]["name"] if ov["competitors"] else None)
+    trend = ov.get("trend") or []
+    health_change = mention_change = None
+    if len(trend) >= 2:
+        before, after = trend[-2], trend[-1]
+        if before.get("health") is not None and after.get("health") is not None:
+            delta = round(after["health"] - before["health"], 1)
+            health_change = {
+                "value": delta,
+                "label": "和上期持平" if delta == 0 else
+                         f"较上期 {'+' if delta > 0 else ''}{delta} 分"}
+        if before.get("mention") is not None and after.get("mention") is not None:
+            delta = round((after["mention"] - before["mention"]) * 100)
+            mention_change = {
+                "value": delta,
+                "label": "和上期持平" if delta == 0 else
+                         f"较上期 {'+' if delta > 0 else ''}{delta} 个百分点"}
     return {
         "brand": ov["brand"],
         "site": ov["site"],
         "conclusion": ov["conclusion"]["text"],
         "health": ov["health"],
         "mention": ov["mention"],
+        "health_change": health_change,
+        "mention_change": mention_change,
         "engines": [{"name": e["name"], "mention": e["mention"]["label"],
                      "top3": e["top3"]} for e in ov["engines"]],
         "competitor_line": (f"同样的问题，AI 现在更常推 {rival}。"
