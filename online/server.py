@@ -8,6 +8,7 @@ import re
 import socket
 import sys
 import threading
+import time
 import webbrowser
 from html import escape
 from http.cookies import SimpleCookie
@@ -127,12 +128,13 @@ def _job_progress(job: dict | None) -> dict | None:
     status = job.get("status") or "running"
     action = job.get("action")
     log, _ = J.tail(job.get("id"), 0) if job.get("id") else ("", 0)
-    if action == "detect":
+    if action in ("detect", "recheck"):
         marks = [
             ("═══ 1/4", 12, "正在读取网站"),
             ("═══ 2/4", 38, "正在检查页面"),
             ("═══ 3/4", 62, "正在询问 AI 引擎"),
-            ("═══ 4/4", 88, "正在生成当前 3 条行动"),
+            ("═══ 4/4", 88, "正在生成当前 3 条行动"
+             if action == "detect" else "正在对照行动完成标准"),
         ]
     elif action == "verify":
         marks = [
@@ -156,6 +158,23 @@ def _job_progress(job: dict | None) -> dict | None:
         "label": label,
         "failed": status in ("failed", "interrupted", "stopped"),
     }
+
+
+def _refund_if_job_fails(email: str, job_id: str) -> None:
+    """任务启动成功后异步结算；中途失败/中断时把预扣额度退回。"""
+    def watch():
+        while True:
+            job = J.get(job_id)
+            if not job:
+                return
+            status = job.get("status")
+            if status != "running":
+                if status in ("failed", "interrupted", "stopped"):
+                    ACC.refund(email)
+                return
+            time.sleep(0.5)
+
+    threading.Thread(target=watch, daemon=True).start()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -485,6 +504,7 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:
                 ACC.refund(user["email"])
                 return self._json(500, {"error": "启动检测失败，请稍后重试"})
+            _refund_if_job_fails(user["email"], job["id"])
             return self._json(200, {"ok": True, "job": job,
                                     "quota": paid.get("quota"),
                                     "estimate": est["text"]})
@@ -514,10 +534,26 @@ class Handler(BaseHTTPRequestHandler):
             slug = self._need_slug(user)
             if not slug:
                 return
+            est = ACC.estimate(user)
+            if est["blocked"]:
+                return self._json(402, {"error": "本月次数用完", "quota": est["quota"]})
+            cfg = G.load_config(slug)
+            if not any(S.available(p) for p in (cfg.get("platforms") or [])):
+                return self._json(
+                    503, {"error": "检测服务还在准备中，请联系管理员后再试"})
+            paid = ACC.consume(user["email"])
+            if not paid.get("ok"):
+                return self._json(402, {"error": paid.get("error") or "本月次数用完",
+                                        "quota": paid.get("quota")})
             try:
-                job = J.start(slug, "verify", {})
+                job = J.start(slug, "recheck", {"--max-pages": 60})
             except RuntimeError:
+                ACC.refund(user["email"])
                 return self._json(409, {"error": "已经在检测中，请稍等"})
+            except Exception:
+                ACC.refund(user["email"])
+                return self._json(500, {"error": "启动重测失败，请稍后重试"})
+            _refund_if_job_fails(user["email"], job["id"])
             return self._json(200, {"ok": True, "job": job})
 
         if path == "/api/settings/brand":
@@ -575,9 +611,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(400, {"error": "一次最多回传 200 条"})
             jid = J.running_for(slug)
             job = J.get(jid) if jid else None
-            if job and job.get("action") in ("sample", "detect", "serve"):
+            if job and job.get("action") in ("sample", "detect", "recheck", "verify", "serve"):
                 return self._json(409, {"error": "正在检测，等它结束再回传网页里采的答案"})
-            r = S.collect_import(slug, records)
+            with G.project_lock(slug):
+                r = S.collect_import(slug, records)
             if not r.get("ok"):
                 return self._json(400, {"error": r.get("error") or "回传没有成功"})
             return self._json(200, r)
@@ -589,7 +626,12 @@ class Handler(BaseHTTPRequestHandler):
             slug = (pu.get("projects") or [None])[0]
             if not slug:
                 return self._json(400, {"error": "还没有项目"})
-            r = S.collect_import(slug, [body])
+            jid = J.running_for(slug)
+            job = J.get(jid) if jid else None
+            if job and job.get("action") in ("sample", "detect", "recheck", "verify", "serve"):
+                return self._json(409, {"error": "正在检测，等它结束再回传网页里采的答案"})
+            with G.project_lock(slug):
+                r = S.collect_import(slug, [body])
             if not r.get("ok"):
                 return self._json(400, {"error": r.get("error") or "回传没有成功"})
             return self._json(200, r)
