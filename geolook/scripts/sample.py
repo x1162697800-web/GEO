@@ -546,6 +546,15 @@ def confirm_competitors(slug: str, rows: list[dict]):
 # ------------------------------------------------------------ 命令
 
 
+def _health_snapshot(slug: str, rows: list[dict]) -> dict:
+    """固化本期分数；以后改内容/蓝图不能重写过去的趋势。"""
+    import analytics as A
+    pdir = G.project_dir(slug)
+    bp = G.read_json(pdir / "blueprint.json", None)
+    factcheck = G.read_json(pdir / "factcheck.json", []) or []
+    return A.health(slug, bp, factcheck, rows)
+
+
 def run(slug: str, platforms: list[str] | None = None, repeat: int = 1, limit: int | None = None) -> dict:
     cfg = G.load_config(slug)
     if not cfg.get("questions"):

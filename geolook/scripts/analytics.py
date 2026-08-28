@@ -412,7 +412,9 @@ def trend(slug: str) -> list[dict]:
         rows = _rows(f)
         if not rows:
             continue
-        h = health(slug, bp, fc, rows)   # 阵地/内容用当前值近似——历史蓝图未存档
+        metrics = G.read_json(pdir / "metrics" / f"{f.stem}.json", {}) or {}
+        # 新期使用采样结束时固化的快照；旧期没有快照才退回当前数据近似。
+        h = metrics.get("health_snapshot") or health(slug, bp, fc, rows)
         up = _unprompted(rows)
         mention = _mention(up)
         share = _cite_share(up, own)[0]
