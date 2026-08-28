@@ -266,6 +266,33 @@ def plugin_user(token: str | None) -> dict | None:
     return (db.get("users") or {}).get(rec["email"])
 
 
+@_locked
+def report_token(email: str, slug: str) -> str | None:
+    """生成 7 天有效的只读报告链接，不包含账号会话或插件权限。"""
+    db = _load()
+    u = (db.get("users") or {}).get(email)
+    if not u or slug not in (u.get("projects") or []):
+        return None
+    now = time.time()
+    links = db.setdefault("report_links", {})
+    db["report_links"] = {k: v for k, v in links.items() if v.get("exp", 0) > now}
+    token = secrets.token_urlsafe(20)
+    db["report_links"][token] = {
+        "email": email, "slug": slug, "at": now, "exp": now + 86400 * 7}
+    _save(db)
+    return token
+
+
+@_locked
+def report_access(token: str | None) -> dict | None:
+    if not token:
+        return None
+    rec = (_load().get("report_links") or {}).get(token)
+    if not rec or rec.get("exp", 0) < time.time():
+        return None
+    return rec
+
+
 KEY_ENV_NAMES = (
     "ZHIPUAI_API_KEY", "ARK_API_KEY", "DEEPSEEK_API_KEY", "MOONSHOT_API_KEY",
     "MINIMAX_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
