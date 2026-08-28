@@ -9,6 +9,7 @@ import socket
 import sys
 import threading
 import webbrowser
+from html import escape
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -72,6 +73,43 @@ def _save_definition(slug: str, brand: dict, definition: str) -> None:
             f"> {definition}\n"
         )
     p.write_text(text.rstrip() + "\n", "utf-8")
+
+
+def _shared_report_html(report: dict) -> bytes:
+    engines = "".join(
+        f"<tr><td>{escape(str(e.get('name') or ''))}</td>"
+        f"<td>{escape(str(e.get('mention') or '还没测'))}</td>"
+        f"<td>{escape(str(e.get('top3') or '还没测'))}</td></tr>"
+        for e in report.get("engines") or [])
+    engines = engines or "<tr><td colspan='3'>还没测</td></tr>"
+    done = "".join(
+        f"<li>✓ {escape(str(t.get('do') or ''))}</li>"
+        for t in report.get("done") or []) or "<li>还没有完成项</li>"
+    open_ = "".join(
+        f"<li><b>{escape(str(t.get('band') or ''))}</b> "
+        f"{escape(str(t.get('do') or ''))}</li>"
+        for t in (report.get("open") or [])[:5]) or "<li>本期行动已完成</li>"
+    brand = escape(str(report.get("brand") or "品牌"))
+    conclusion = escape(str(report.get("conclusion") or "还没测"))
+    health = escape(str((report.get("health") or {}).get("label") or "还没测"))
+    mention = escape(str((report.get("mention") or {}).get("label") or "还没测"))
+    competitor = escape(str(report.get("competitor_line") or ""))
+    return f"""<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{brand} · AI 认知报告</title><style>
+body{{margin:0;background:#f3f4f8;color:#181920;font:15px/1.65 "Segoe UI","PingFang SC",sans-serif}}
+main{{width:min(920px,calc(100% - 32px));margin:36px auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 18px 55px #17182718}}
+header{{padding:36px;background:#171822;color:#fff}}header small{{color:#9d94ff}}h1{{margin:7px 0 8px}}header p{{color:#b8bac6}}
+.body{{padding:30px}}.kpis{{display:grid;grid-template-columns:1fr 1fr;gap:12px}}.kpi{{padding:18px;background:#f6f6fa;border-radius:14px}}
+.kpi span{{display:block;color:#747782;font-size:12px}}.kpi b{{font-size:28px}}h2{{font-size:17px;margin-top:28px}}
+table{{width:100%;border-collapse:collapse}}th,td{{padding:10px;border-bottom:1px solid #ececf1;text-align:left}}th{{font-size:11px;color:#747782}}
+li{{margin:8px 0}}@media(max-width:600px){{.kpis{{grid-template-columns:1fr}}.body{{padding:20px}}}}
+@media print{{body{{background:#fff}}main{{width:100%;margin:0;box-shadow:none}}}}</style></head>
+<body><main><header><small>GROUNDED · AI BRAND REPORT</small><h1>{brand} · AI 认知报告</h1><p>{conclusion}</p></header>
+<div class="body"><div class="kpis"><div class="kpi"><span>整体表现</span><b>{health}</b></div>
+<div class="kpi"><span>AI 会不会主动说到你</span><b>{mention}</b></div></div>
+<h2>引擎表现</h2><table><thead><tr><th>引擎</th><th>主动提及</th><th>出现顺序</th></tr></thead><tbody>{engines}</tbody></table>
+<h2>竞品观察</h2><p>{competitor}</p><h2>本月完成</h2><ul>{done}</ul><h2>下一步</h2><ul>{open_}</ul></div></main></body></html>""".encode("utf-8")
 
 
 def _strip_secrets(obj):
@@ -165,6 +203,15 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _html_bytes(self, code: int, body: bytes):
+        self.send_response(code)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "private, no-store")
+        self.send_header("X-Robots-Tag", "noindex, nofollow")
+        self.end_headers()
+        self.wfile.write(body)
+
     def _read_json(self) -> dict:
         n = int(self.headers.get("Content-Length") or 0)
         if n <= 0:
@@ -231,6 +278,13 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path.rstrip("/") or "/"
         if path in ("/", "/app", "/app.html"):
             return self._html()
+        if path == "/shared-report":
+            token = (parse_qs(urlparse(self.path).query).get("token") or [None])[0]
+            rec = ACC.report_access(token)
+            if not rec:
+                return self._html_bytes(
+                    404, "<h1>报告链接无效或已过期</h1>".encode("utf-8"))
+            return self._html_bytes(200, _shared_report_html(P.report(rec["slug"])))
         if path == "/api/me":
             user = ACC.user_of(self._token())
             return self._json(200, {"user": ACC.public_user(user) if user else None})
@@ -495,6 +549,20 @@ class Handler(BaseHTTPRequestHandler):
             tok = ACC.plugin_token(user["email"])
             return self._json(
                 200, {"ok": True, "token": tok, "expires_in_hours": 8})
+
+        if path == "/api/report/share":
+            user = self._need_user()
+            if not user:
+                return
+            slug = self._need_slug(user)
+            if not slug:
+                return
+            tok = ACC.report_token(user["email"], slug)
+            if not tok:
+                return self._json(403, {"error": "无法分享这个项目的报告"})
+            return self._json(
+                200, {"ok": True, "url": f"/shared-report?token={tok}",
+                      "expires_in_days": 7})
 
         if path.startswith("/api/collect/") and not path.startswith("/api/collect/queue"):
             slug = path.split("/")[-1]
