@@ -50,6 +50,19 @@ def _infer_slug(url: str, name: str, explicit: str | None = None) -> str:
     return G.slugify(name)
 
 
+def _detection_profile(user: dict, cfg: dict, body: dict) -> dict:
+    """套餐只决定采样范围/重复次数；客户不接触具体模型。"""
+    plan = user.get("plan") or "saver"
+    platforms = [p for p in (cfg.get("platforms") or []) if p in S.PROVIDERS]
+    if plan == "saver":
+        platforms = [p for p in platforms if S.PROVIDERS[p].get("market") == "cn"]
+    return {
+        "--platforms": ",".join(platforms),
+        "--repeat": 3 if plan == "deep" else 1,
+        "--limit": body.get("limit"),
+    }
+
+
 def _save_definition(slug: str, brand: dict, definition: str) -> None:
     """只维护客户填写的一句话定义；已有事实卡的其它内容原样保留。"""
     definition = (definition or "").strip()
@@ -465,7 +478,7 @@ class Handler(BaseHTTPRequestHandler):
             a.url = url
             a.name = name or None
             a.slug = slug
-            a.market = body.get("market") or ("global" if no_site else "both")
+            a.market = body.get("market") or "both"
             a.max_pages = int(body.get("max_pages") or 60)
             a.force = False
             a.no_site = no_site
@@ -489,7 +502,9 @@ class Handler(BaseHTTPRequestHandler):
             if est["blocked"]:
                 return self._json(402, {"error": "本月次数用完", "quota": est["quota"]})
             cfg = G.load_config(slug)
-            if not any(S.available(p) for p in (cfg.get("platforms") or [])):
+            profile = _detection_profile(user, cfg, body)
+            selected = [p for p in profile["--platforms"].split(",") if p]
+            if not any(S.available(p) for p in selected):
                 return self._json(
                     503, {"error": "检测服务还在准备中，请联系管理员后再试"})
             paid = ACC.consume(user["email"])
@@ -499,7 +514,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 job = J.start(slug, "detect", {
                     "--max-pages": body.get("max_pages") or 60,
-                    "--limit": body.get("limit"),
+                    **profile,
                 })
             except RuntimeError:
                 ACC.refund(user["email"])
@@ -541,7 +556,9 @@ class Handler(BaseHTTPRequestHandler):
             if est["blocked"]:
                 return self._json(402, {"error": "本月次数用完", "quota": est["quota"]})
             cfg = G.load_config(slug)
-            if not any(S.available(p) for p in (cfg.get("platforms") or [])):
+            profile = _detection_profile(user, cfg, body)
+            selected = [p for p in profile["--platforms"].split(",") if p]
+            if not any(S.available(p) for p in selected):
                 return self._json(
                     503, {"error": "检测服务还在准备中，请联系管理员后再试"})
             paid = ACC.consume(user["email"])
@@ -549,7 +566,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(402, {"error": paid.get("error") or "本月次数用完",
                                         "quota": paid.get("quota")})
             try:
-                job = J.start(slug, "recheck", {"--max-pages": 60})
+                job = J.start(slug, "recheck", {"--max-pages": 60, **profile})
             except RuntimeError:
                 ACC.refund(user["email"])
                 return self._json(409, {"error": "已经在检测中，请稍等"})
