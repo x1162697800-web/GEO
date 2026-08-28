@@ -642,6 +642,7 @@ def run(slug: str, platforms: list[str] | None = None, repeat: int = 1, limit: i
         "slug": slug, "date": G.today(), "generated_at": G.now_iso(),
         "question_count": len(cfg.get("questions", [])), "sample_count": len(all_rows),
         "platforms": aggregate(ok_rows, cfg),
+        "health_snapshot": _health_snapshot(slug, ok_rows),
     }
     G.write_json(pdir / "metrics" / f"{G.today()}.json", metrics)
     confirm_competitors(slug, ok_rows)
@@ -860,6 +861,7 @@ def store_manual_rows(slug: str, cfg: dict, rows: list[dict]) -> dict:
         "slug": slug, "date": G.today(), "generated_at": G.now_iso(),
         "question_count": len(cfg.get("questions", [])), "sample_count": len(all_rows),
         "platforms": aggregate(all_rows, cfg),
+        "health_snapshot": _health_snapshot(slug, all_rows),
     }
     G.write_json(pdir / "metrics" / f"{G.today()}.json", metrics)
     confirm_competitors(slug, all_rows)

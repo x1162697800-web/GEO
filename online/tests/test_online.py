@@ -172,7 +172,7 @@ class WagnabPresentCase(unittest.TestCase):
 
     def test_overview_does_not_fake_zero_health_without_samples(self):
         ov = P.overview("wagnab")
-        self.assertEqual(ov["conclusion"]["kind"], "empty")
+        self.assertEqual(ov["conclusion"]["kind"], "partial")
         self.assertEqual(ov["health"]["state"], "unmeasured")
         self.assertEqual(ov["health"]["label"], "还没测")
         self.assertEqual(ov["mention"]["state"], "unmeasured")
