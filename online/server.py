@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import socket
 import sys
 import threading
@@ -45,6 +46,32 @@ def _infer_slug(url: str, name: str, explicit: str | None = None) -> str:
         host = up(url if url.startswith("http") else "https://" + url).netloc
         return G.slugify(host.removeprefix("www.").split(".")[0])
     return G.slugify(name)
+
+
+def _save_definition(slug: str, brand: dict, definition: str) -> None:
+    """只维护客户填写的一句话定义；已有事实卡的其它内容原样保留。"""
+    definition = (definition or "").strip()
+    if not definition:
+        return
+    p = G.project_dir(slug) / "content" / "facts.md"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    if p.exists():
+        text = p.read_text("utf-8")
+        block = f"## 一句话定义\n\n> {definition}\n"
+        pattern = r"##\s*一句话定义.*?(?=\n##|\Z)"
+        text = re.sub(pattern, block.rstrip(), text, count=1, flags=re.S) if re.search(
+            pattern, text, re.S) else text.rstrip() + "\n\n" + block
+    else:
+        aliases = "、".join(brand.get("aliases") or []) or "无"
+        text = (
+            "## 实体\n"
+            f"- 规范名：{brand.get('name') or slug}\n"
+            f"- 别名/简称：{aliases}\n"
+            f"- 官网：{brand.get('site') or '无'}\n\n"
+            "## 一句话定义\n\n"
+            f"> {definition}\n"
+        )
+    p.write_text(text.rstrip() + "\n", "utf-8")
 
 
 def _strip_secrets(obj):
@@ -446,17 +473,19 @@ class Handler(BaseHTTPRequestHandler):
             slug = self._need_slug(user)
             if not slug:
                 return
-            cfg = G.load_config(slug)
-            b = cfg.setdefault("brand", {})
-            for k in ("name", "industry", "target_users", "site"):
-                if k in body and body[k] is not None:
-                    b[k] = str(body[k]).strip()
-            if "aliases" in body:
-                raw = body["aliases"]
-                if isinstance(raw, str):
-                    raw = raw.replace("，", ",").split(",")
-                b["aliases"] = [str(x).strip() for x in raw if str(x).strip()]
-            G.write_json(G.project_dir(slug) / "geo.json", cfg)
+            with G.project_lock(slug):
+                cfg = G.load_config(slug)
+                b = cfg.setdefault("brand", {})
+                for k in ("name", "industry", "target_users", "site"):
+                    if k in body and body[k] is not None:
+                        b[k] = str(body[k]).strip()
+                if "aliases" in body:
+                    raw = body["aliases"]
+                    if isinstance(raw, str):
+                        raw = raw.replace("，", ",").split(",")
+                    b["aliases"] = [str(x).strip() for x in raw if str(x).strip()]
+                G.write_json(G.project_dir(slug) / "geo.json", cfg)
+                _save_definition(slug, b, str(body.get("definition") or ""))
             return self._json(200, {"ok": True, "brand": b})
 
         if path == "/api/plugin/token":
