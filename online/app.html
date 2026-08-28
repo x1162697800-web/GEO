@@ -288,7 +288,7 @@ const ICONS={
 function ico(n,s=19){return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||ICONS.spark}</svg>`}
 const NAVICON={overview:"home",plan:"list",effect:"pulse",report:"report"};
 const NAVSUB={overview:"先看检测结论",plan:"只做当前行动",effect:"改完回来验收",report:"最后对外汇报"};
-let R="overview",D=null,U=null,DRAW=null,SLUG=null,FLASH="",POLL=null,BUSY="",TOAST="",PFILTER="all",ONSITE=true;
+let R="overview",D=null,U=null,DRAW=null,SLUG=null,FLASH="",POLL=null,BUSY="",TOAST="",PFILTER="focus",ONSITE=true;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 async function api(path,opt){
@@ -442,12 +442,12 @@ function vOverview(){
 }
 function setFilter(f){PFILTER=f;render()}
 function vPlan(){
-  const items=window.PLAN||[],open=items.filter(t=>t.status!=="done"),done=items.filter(t=>t.status==="done"),doing=items.filter(t=>t.status==="doing");
-  let html=pageHead("ACTION PLAN","把建议变成进度","每条只有一个动作、一句原因和一个清楚的完成标准。",`<button class="btn" onclick="go('effect')">${ico("pulse")}去验证效果</button>`);
+  const items=window.PLAN||[],open=items.filter(t=>t.status!=="done"),done=items.filter(t=>t.status==="done"),doing=items.filter(t=>t.status==="doing"),focus=open.slice(0,3);
+  let html=pageHead("ACTION PLAN","一次只处理 3 条","不用面对一整墙建议。当前三条完成后，再继续下一组。",`<button class="btn" onclick="go('effect')">${ico("pulse")}改完后去验收</button>`);
   if(!items.length)return html+`<div class="card empty-state"><div class="empty-visual">${ico("list",30)}</div><h2>还没有行动计划</h2><p>先完成一轮检测，我们会把最值得做的事按顺序排好。</p><button class="btn" onclick="go('overview')">返回总览</button></div>`;
-  html+=`<div class="plan-summary"><div class="card summary-main"><div class="eyebrow" style="color:#d4d0ff">本期行动</div><h2>${open.length?`还有 ${open.length} 条待完成`:"本期行动已全部完成"}</h2><p>${open.length?"优先处理标为「先做」的条目；完成后用效果页自动验收。":"可以开始下一轮检测，确认结果是否稳定。"}</p></div><div class="card summary-stat"><strong>${open.length}</strong><span>待完成</span></div><div class="card summary-stat"><strong>${doing.length}</strong><span>进行中</span></div><div class="card summary-stat"><strong>${done.length}</strong><span>已完成</span></div></div>`;
-  html+=`<div class="filterbar">${[["all","全部"],["open","待完成"],["doing","进行中"],["done","已完成"]].map(([k,t])=>`<button class="filter ${PFILTER===k?"on":""}" onclick="setFilter('${k}')">${t}</button>`).join("")}</div><div class="task-list">`;
-  const filtered=items.filter(t=>PFILTER==="all"||(PFILTER==="open"&&t.status!=="done")||t.status===PFILTER);
+  html+=`<div class="plan-summary"><div class="card summary-main"><div class="eyebrow" style="color:#d4d0ff">当前这一组</div><h2>${open.length?`先完成眼前 ${Math.min(3,open.length)} 条`:"本期行动已全部完成"}</h2><p>${open.length?`其余 ${Math.max(0,open.length-focus.length)} 条先收起来，避免分散注意力。完成后去效果页验收。`:"可以开始下一轮检测，确认结果是否稳定。"}</p></div><div class="card summary-stat"><strong>${open.length}</strong><span>全部待办</span></div><div class="card summary-stat"><strong>${doing.length}</strong><span>进行中</span></div><div class="card summary-stat"><strong>${done.length}</strong><span>已完成</span></div></div>`;
+  html+=`<div class="filterbar">${[["focus","当前 3 条"],["all","查看全部"],["doing","进行中"],["done","已完成"]].map(([k,t])=>`<button class="filter ${PFILTER===k?"on":""}" onclick="setFilter('${k}')">${t}</button>`).join("")}</div><div class="task-list">`;
+  const filtered=PFILTER==="focus"?focus:items.filter(t=>PFILTER==="all"||t.status===PFILTER);
   filtered.forEach((t,i)=>html+=`<article class="card task-row" id="${esc(t.id)}"><div class="task-index">${String(i+1).padStart(2,"0")}</div><div><div style="display:flex;gap:7px;flex-wrap:wrap"><span class="chip ${t.priority==="P0"?"p0":t.priority==="P1"?"p1":"p2"}">${esc(t.band)}</span><span class="chip st-${esc(t.status)}">${esc(t.status_label)}</span></div><h3>${esc(t.do)}</h3><p class="why">${esc(t.why)}</p><div class="done-when"><strong>完成标准</strong>${esc(t.done_when)}</div></div><div class="task-actions">${t.auto?`<span class="muted" style="font-size:10px;text-align:center">系统自动验收</span>`:`<button class="btn subtle" onclick="markDone('${t.id}')">我已上线</button>`}${t.status!=="done"&&t.status!=="doing"?`<button class="btn ghost" onclick="markDoing('${t.id}')">开始做</button>`:""}${t.status==="doing"?`<button class="btn ghost" onclick="go('effect')">去重测</button>`:""}</div></article>`);
   html+=`</div>`;return html;
 }
@@ -477,7 +477,7 @@ function openComp(i){
   DRAW=`<div class="drawer" onclick="if(event.target===this)closeDraw()"><aside class="drawer-box" role="dialog" aria-modal="true"><div class="drawer-head"><div><div class="eyebrow">竞品观察</div><h2>${esc(c.name)}</h2></div><button class="icon-btn" onclick="closeDraw()" aria-label="关闭">${ico("close")}</button></div><div class="card panel"><p>${esc(c.label||"")}</p><p class="muted">样本积累后，这里会继续拆解它在哪类问题上更常出现。</p></div></aside></div>`;render();
 }
 function closeDraw(){DRAW=null;render()}
-function goTask(id){R="plan";PFILTER="all";history.replaceState({},"","#plan");render();setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"center"}),20)}
+function goTask(id){R="plan";PFILTER="focus";if(!(window.PLAN||[]).filter(t=>t.status!=="done").slice(0,3).some(t=>t.id===id))PFILTER="all";history.replaceState({},"","#plan");render();setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"center"}),20)}
 async function detect(){
   FLASH="";
   try{busy("检测任务正在启动");await api("/api/detect?slug="+encodeURIComponent(SLUG),{method:"POST",body:"{}"});BUSY="";await load();flash("检测已开始，完成后会自动更新")}
