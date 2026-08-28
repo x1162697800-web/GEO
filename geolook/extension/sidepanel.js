@@ -26,9 +26,11 @@ const store = {
 
 function serverUrl() { return $("#server").value.trim().replace(/\/$/, "") || "http://127.0.0.1:8787"; }
 function slug() { return $("#slug").value; }
+function token() { return $("#token").value.trim(); }
 
 async function apiGet(path) {
-  const r = await fetch(serverUrl() + path);
+  const headers = token() ? { "X-Plugin-Token": token() } : {};
+  const r = await fetch(serverUrl() + path, { headers });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }
@@ -310,7 +312,10 @@ $("#upload").onclick = async () => {
   if (!SAMPLES.length) { $("#upmsg").textContent = "还没有已采集的样本"; return; }
   try {
     const r = await fetch(`${serverUrl()}/api/collect/${slug()}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", headers: {
+        "Content-Type": "application/json",
+        ...(token() ? { "X-Plugin-Token": token() } : {}),
+      },
       body: JSON.stringify({ records: SAMPLES }),
     });
     const j = await r.json();
@@ -344,8 +349,12 @@ $("#session").onchange = async () => {
   await store.set("session", sessionMode());
   refreshDiscipline();
 };
+$("#server").onchange = async () => { await store.set("server", serverUrl()); loadProjects(); };
+$("#token").onchange = async () => { await store.set("token", token()); loadProjects(); };
 
 (async () => {
+  $("#server").value = await store.get("server", "http://127.0.0.1:8787");
+  $("#token").value = await store.get("token", "");
   await loadProjects();
   $("#session").value = await store.get("session", "sandbox");
   GROUPS = await store.get("groups", []);
