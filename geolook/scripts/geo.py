@@ -717,6 +717,8 @@ def main():
     s.add_argument("--slug", required=True)
     s.add_argument("--max-pages", type=int, default=None, dest="max_pages")
     s.add_argument("--limit", type=int, default=None)
+    s.add_argument("--repeat", type=int, default=1)
+    s.add_argument("--platforms", default="")
     s.add_argument("--no-sample", action="store_true", dest="no_sample")
     s.set_defaults(func=cmd_detect)
 
@@ -724,6 +726,8 @@ def main():
     s.add_argument("--slug", required=True)
     s.add_argument("--max-pages", type=int, default=None, dest="max_pages")
     s.add_argument("--limit", type=int, default=None)
+    s.add_argument("--repeat", type=int, default=1)
+    s.add_argument("--platforms", default="")
     s.set_defaults(func=cmd_recheck)
 
     s = sub.add_parser("online", help="启动客户自助网站（总览 / 该做什么 / 效果 / 报告）")
