@@ -427,7 +427,7 @@ function vOverview(){
     ${process()}
   </div></section>`;
   if(FLASH)html+=`<div class="banner" role="alert"><div class="banner-icon">${ico("info")}</div><div class="banner-copy"><strong>${esc(FLASH)}</strong><p>检查后可以再次尝试。</p></div></div>`;
-  else if(D.job_progress&&D.job_progress.failed)html+=`<div class="banner" role="alert"><div class="banner-icon">${ico("info")}</div><div class="banner-copy"><strong>上次任务没有完成</strong><p>${esc(D.job_progress.label)}。不会把失败结果当成 0，可以重新发起。</p></div><button class="btn ghost" onclick="retryJob()">重新尝试</button></div>`;
+  else if(D.job_progress&&D.job_progress.failed)html+=`<div class="banner" role="alert"><div class="banner-icon">${ico("info")}</div><div class="banner-copy"><strong>上次任务没有完成</strong><p>${esc(D.job_progress.label)}。不会把失败结果当成 0，预扣额度会自动退回。</p></div><button class="btn ghost" onclick="retryJob()">重新尝试</button></div>`;
   if(D.plugin&&D.plugin.count)html+=`<div class="banner"><div class="banner-icon">${ico("globe")}</div><div class="banner-copy"><strong>还差 ${D.plugin.count} 个网页端引擎</strong><p>${D.plugin.engines.map(e=>esc(e.name)).join("、")} 需要用采样助手补一次，补完总览会自动更新。</p></div><button class="btn ghost" onclick="go('settings')">查看说明</button></div>`;
   if(c.kind!=="empty"&&!detecting)html+=`<section class="section"><div class="section-head"><div><h2>本期三个关键数字</h2><p>只有真实采样后才出数，没有样本不会显示成 0。</p></div></div><div class="bento">
     <div class="card metric-card"><div class="metric-icon">${ico("gauge")}</div><div class="metric-label">整体表现</div><div class="metric-value">${esc(h.v)}</div><div class="metric-help">${esc(h.h)||"综合已测指标"}</div></div>
@@ -464,7 +464,7 @@ function vPlan(){
 function vEffect(){
   const E=window.EFF||{items:[],empty:true};
   let html=pageHead("PROOF OF PROGRESS","验证改动有没有用","这里只回答一件事：上次让你改的，哪些真的变好了。");
-  if(D&&D.detecting&&D.job&&D.job.action==="verify"){
+  if(D&&D.detecting&&D.job&&["verify","recheck"].includes(D.job.action)){
     const p=D.job_progress||{percent:5,label:"正在准备重测"};
     return html+`<div class="card empty-state"><div class="empty-visual"><span class="spinner" style="border-color:rgba(101,88,232,.2);border-top-color:var(--primary)"></span></div><h2>${esc(p.label)}</h2><p>系统正在按每条行动的完成标准重新检查。页面可以离开，完成后会自动更新。</p><div class="quota-bar" style="max-width:460px;margin:24px auto 8px"><i style="width:${p.percent}%"></i></div><span class="muted">${p.percent}%</span></div>`;
   }
@@ -498,7 +498,7 @@ async function detect(){
   try{busy("检测任务正在启动");await api("/api/detect?slug="+encodeURIComponent(SLUG),{method:"POST",body:"{}"});BUSY="";await load();flash("检测已开始，完成后会自动更新")}
   catch(e){BUSY="";FLASH=e.message;render()}
 }
-function retryJob(){return D&&D.job&&D.job.action==="verify"?recheck():detect()}
+function retryJob(){return D&&D.job&&["verify","recheck"].includes(D.job.action)?recheck():detect()}
 async function recheck(){
   try{busy("正在启动重测");await api("/api/effect/recheck?slug="+encodeURIComponent(SLUG),{method:"POST",body:"{}"});BUSY="";await load();flash("重测已开始")}
   catch(e){BUSY="";flash(e.message)}
