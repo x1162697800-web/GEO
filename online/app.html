@@ -304,8 +304,12 @@ function metric(m){
   return{v:m.label,h:""};
 }
 function go(k){
-  R=k;history.replaceState({},"","#"+k);window.scrollTo({top:0,behavior:"smooth"});render();
+  R=k;if(location.hash!=="#"+k)history.pushState({route:k},"","#"+k);window.scrollTo({top:0,behavior:"smooth"});render();
   setTimeout(()=>{const m=document.querySelector("main");if(m)m.focus({preventScroll:true})},20);
+}
+function syncRoute(){
+  const k=(location.hash||"#overview").slice(1);
+  if(["overview","plan","effect","report","settings"].includes(k)&&k!==R){R=k;render();window.scrollTo({top:0})}
 }
 function flash(msg){TOAST=msg;render();setTimeout(()=>{TOAST="";render()},3200)}
 function busy(label){BUSY=label;render()}
@@ -525,6 +529,8 @@ async function boot(){
   catch(e){U=null;document.querySelector("#app").innerHTML=authView(e.message)}
 }
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&DRAW)closeDraw()});
+window.addEventListener("hashchange",syncRoute);
+window.addEventListener("popstate",syncRoute);
 boot();
 </script>
 </body>
