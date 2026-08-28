@@ -419,23 +419,23 @@ function vOverview(){
   const c=D.conclusion||{},h=metric(D.health),m=metric(D.mention),ci=metric(D.cite),detecting=D.detecting;
   let html=pageHead("AI BRAND PULSE","今天先看这一件事","先看结论，再决定下一步。不需要理解 GEO 术语。");
   html+=`<section class="card hero"><div class="hero-content">
-    <div class="hero-label"><span class="dot"></span>${detecting?"正在获取真实回答":c.kind==="empty"?"等待第一次检测":"本期检测结论"}</div>
+    <div class="hero-label"><span class="dot"></span>${detecting?"正在获取真实回答":!D.sampled?"等待 AI 实测结果":"本期检测结论"}</div>
     <h1>${esc(c.text||"还没测")}</h1>
-    <p class="hero-copy">${detecting?esc(c.detail||"大约 10–20 分钟，页面可以离开，完成后会自动更新。"):c.kind==="empty"?"检测完成后，这里会直接告诉你有几家 AI 会主动提到你。":"数字只是证据；下面三条行动才是本期最值得做的事。"}</p>
+    <p class="hero-copy">${detecting?esc(c.detail||"大约 10–20 分钟，页面可以离开，完成后会自动更新。"):!D.sampled?esc(c.detail||"完成检测后，这里会直接告诉你有几家 AI 会主动提到你。"):"数字只是证据；下面三条行动才是本期最值得做的事。"}</p>
     ${detecting&&D.job_progress?`<div class="job-progress"><div class="job-progress-top"><span>${esc(D.job_progress.label)}</span><span>${D.job_progress.percent}%</span></div><div class="job-progress-track"><i style="width:${D.job_progress.percent}%"></i></div></div>`:""}
-    <div class="hero-actions">${detecting?`<button class="btn light" disabled><span class="spinner"></span>检测进行中</button>`:`<button class="btn light" onclick="detect()">${ico(c.kind==="empty"?"spark":"refresh")}${c.kind==="empty"?"开始第一次检测":"再测一轮"}</button>`}<span class="hero-note">${esc((D.estimate&&D.estimate.text)||"")} · ${esc((U&&U.quota&&U.quota.label)||"")}</span></div>
+    <div class="hero-actions">${detecting?`<button class="btn light" disabled><span class="spinner"></span>检测进行中</button>`:`<button class="btn light" onclick="detect()">${ico(!D.sampled?"spark":"refresh")}${!D.sampled?"继续完成检测":"再测一轮"}</button>`}<span class="hero-note">${esc((D.estimate&&D.estimate.text)||"")} · ${esc((U&&U.quota&&U.quota.label)||"")}</span></div>
     ${process()}
   </div></section>`;
   if(FLASH)html+=`<div class="banner" role="alert"><div class="banner-icon">${ico("info")}</div><div class="banner-copy"><strong>${esc(FLASH)}</strong><p>检查后可以再次尝试。</p></div></div>`;
   else if(D.job_progress&&D.job_progress.failed)html+=`<div class="banner" role="alert"><div class="banner-icon">${ico("info")}</div><div class="banner-copy"><strong>上次任务没有完成</strong><p>${esc(D.job_progress.label)}。不会把失败结果当成 0，预扣额度会自动退回。</p></div><button class="btn ghost" onclick="retryJob()">重新尝试</button></div>`;
   if(D.plugin&&D.plugin.count)html+=`<div class="banner"><div class="banner-icon">${ico("globe")}</div><div class="banner-copy"><strong>还差 ${D.plugin.count} 个网页端引擎</strong><p>${D.plugin.engines.map(e=>esc(e.name)).join("、")} 需要用采样助手补一次，补完总览会自动更新。</p></div><button class="btn ghost" onclick="go('settings')">查看说明</button></div>`;
-  if(c.kind!=="empty"&&!detecting)html+=`<section class="section"><div class="section-head"><div><h2>本期三个关键数字</h2><p>只有真实采样后才出数，没有样本不会显示成 0。</p></div></div><div class="bento">
+  if(D.sampled&&!detecting)html+=`<section class="section"><div class="section-head"><div><h2>本期三个关键数字</h2><p>只有真实采样后才出数，没有样本不会显示成 0。</p></div></div><div class="bento">
     <div class="card metric-card"><div class="metric-icon">${ico("gauge")}</div><div class="metric-label">整体表现</div><div class="metric-value">${esc(h.v)}</div><div class="metric-help">${esc(h.h)||"综合已测指标"}</div></div>
     <div class="card metric-card"><div class="metric-icon">${ico("eye")}</div><div class="metric-label">AI 会不会主动说到你</div><div class="metric-value">${esc(m.v)}</div><div class="metric-help">点名问品牌是谁的题不算</div></div>
     <div class="card metric-card"><div class="metric-icon">${ico("quote")}</div><div class="metric-label">答案有没有指向你的来源</div><div class="metric-value">${esc(ci.v)}</div><div class="metric-help">${esc(ci.h)||"来自你官网的引用占比"}</div></div>
   </div></section>`;
   if(D.next3&&D.next3.length){
-    html+=`<section class="section"><div class="section-head"><div><div class="eyebrow">NEXT BEST ACTIONS</div><h2>现在，先做这 3 条</h2><p>按影响排序，做完一条就去效果页验证。</p></div><button class="btn ghost" onclick="go('plan')">查看完整计划 ${ico("arrow",15)}</button></div><div class="task-stack">`;
+    html+=`<section class="section"><div class="section-head"><div><div class="eyebrow">NEXT BEST ACTIONS</div><h2>现在，先做这 3 条</h2><p>${D.sampled?"按影响排序，做完一条就去效果页验证。":"这些来自网站检查，AI 提及率仍在等待有效实测。"}</p></div><button class="btn ghost" onclick="go('plan')">查看完整计划 ${ico("arrow",15)}</button></div><div class="task-stack">`;
     D.next3.forEach((t,i)=>html+=`<article class="card action-card"><div class="action-top"><span class="chip ${t.priority==="P0"?"p0":t.priority==="P1"?"p1":"p2"}">${esc(t.band)}</span><span class="action-number">0${i+1}</span></div><h3>${esc(t.do)}</h3><p class="why">${esc(t.why)}</p><div class="done-when"><strong>做到什么算完成</strong>${esc(t.done_when)}</div><button class="text-link" onclick="goTask('${t.id}')">打开这条 ${ico("arrow",15)}</button></article>`);
     html+=`</div></section>`;
   }
