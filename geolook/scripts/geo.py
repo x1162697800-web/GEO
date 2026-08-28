@@ -502,6 +502,25 @@ def cmd_detect(a):
         G.info(f"验收跳过：{type(e).__name__}: {e}")
 
 
+def cmd_recheck(a):
+    """客户改完后的完整重测：更新网站判据和 AI 样本，但不重建工单。"""
+    import audit as A
+    import crawl as C
+    import sample as S
+    import verify as V
+
+    G.info("═══ 1/4 重新读取网站 ═══")
+    C.run(a.slug, max_pages=a.max_pages)
+    G.info("═══ 2/4 重新检查页面 ═══")
+    A.run(a.slug)
+    G.info("═══ 3/4 重新询问 AI 引擎 ═══")
+    metrics = S.run(a.slug, limit=a.limit)
+    if not metrics or not (metrics.get("platforms") or {}):
+        G.die("没有取得有效 AI 回答，本次重测未完成")
+    G.info("═══ 4/4 对照行动完成标准 ═══")
+    V.run(a.slug, recrawl=False)
+
+
 def cmd_online(a):
     online_dir = Path(__file__).resolve().parent.parent.parent / "online"
     sys.path.insert(0, str(online_dir))
@@ -688,6 +707,12 @@ def main():
     s.add_argument("--limit", type=int, default=None)
     s.add_argument("--no-sample", action="store_true", dest="no_sample")
     s.set_defaults(func=cmd_detect)
+
+    s = sub.add_parser("recheck", help="线上版重测：重抓→体检→重新采样→验收")
+    s.add_argument("--slug", required=True)
+    s.add_argument("--max-pages", type=int, default=None, dest="max_pages")
+    s.add_argument("--limit", type=int, default=None)
+    s.set_defaults(func=cmd_recheck)
 
     s = sub.add_parser("online", help="启动客户自助网站（总览 / 该做什么 / 效果 / 报告）")
     s.add_argument("--port", type=int, default=8787)
