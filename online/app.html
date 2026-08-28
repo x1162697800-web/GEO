@@ -399,7 +399,7 @@ function topbar(){
   const primary=D&&D.journey&&D.journey.primary;
   const next=primary?[primary.label,primary.route]:["返回总览","overview"];
   return `<header class="topbar"><div class="crumb"><span>${esc((D&&D.brand)||"Grounded")}</span><span>/</span><strong>${names[R]||"总览"}</strong></div>
-    <div class="top-actions"><div class="status-pill"><span class="dot"></span>${D&&D.detecting?"检测进行中":"系统在线"}</div><div class="quota-pill">${ico("target",15)}${esc((U&&U.quota&&U.quota.label)||"")}</div>${R!=="settings"&&!D?.detecting?`<button class="btn next-cta" onclick="go('${next[1]}')">${next[0]} ${ico("arrow",14)}</button>`:""}<button class="icon-btn" onclick="go('settings')" aria-label="打开设置">${ico("gear")}</button></div></header>`;
+    <div class="top-actions"><div class="status-pill"><span class="dot"></span>${D&&D.detecting?"检测进行中":"系统在线"}</div><div class="quota-pill">${ico("target",15)}${esc((U&&U.quota&&U.quota.label)||"")}</div>${R!=="settings"&&!D?.detecting&&R!==next[1]?`<button class="btn next-cta" onclick="go('${next[1]}')">${next[0]} ${ico("arrow",14)}</button>`:""}<button class="icon-btn" onclick="go('settings')" aria-label="打开设置">${ico("gear")}</button></div></header>`;
 }
 function mobileNav(){
   return `<nav class="mobile-nav" aria-label="移动端导航">${NAV.map(([k,t])=>`<button class="${R===k?"on":""}" onclick="go('${k}')">${ico(NAVICON[k],18)}<span>${t}</span></button>`).join("")}</nav>`;
