@@ -8,11 +8,14 @@ import hashlib
 import json
 import os
 import secrets
+import threading
 import time
+from functools import wraps
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent / "data"
 ACCOUNTS = DATA / "accounts.json"
+_LOCK = threading.RLock()
 
 # 省钱：注册免费 1 次；标准：付费默认每月 2 次；加密：加购（第一期只记账）
 PLANS = {
@@ -20,6 +23,14 @@ PLANS = {
     "standard": {"label": "标准", "monthly": 2, "blurb": "国内 + 海外，够写月报"},
     "deep": {"label": "加密", "monthly": 8, "blurb": "同一题多问几次，看稳不稳"},
 }
+
+
+def _locked(fn):
+    @wraps(fn)
+    def wrapped(*args, **kwargs):
+        with _LOCK:
+            return fn(*args, **kwargs)
+    return wrapped
 
 
 def _now_month() -> str:
@@ -57,6 +68,7 @@ def demo_allowed(host: str | None = None) -> bool:
     return True
 
 
+@_locked
 def ensure_demo(host: str | None = None) -> None:
     """本地演示账号绑到已有的 wagnab 项目，方便按执行文档走主路径。"""
     if not demo_allowed(host):
@@ -79,6 +91,7 @@ def ensure_demo(host: str | None = None) -> None:
     _save(db)
 
 
+@_locked
 def register(email: str, password: str, name: str = "") -> dict:
     email = (email or "").strip().lower()
     if not email or "@" not in email:
@@ -101,6 +114,7 @@ def register(email: str, password: str, name: str = "") -> dict:
     return {"ok": True, "token": _session(email)}
 
 
+@_locked
 def login(email: str, password: str) -> dict:
     email = (email or "").strip().lower()
     db = _load()
@@ -112,6 +126,7 @@ def login(email: str, password: str) -> dict:
     return {"ok": True, "token": _session(email)}
 
 
+@_locked
 def _session(email: str) -> str:
     db = _load()
     token = secrets.token_urlsafe(24)
@@ -122,6 +137,7 @@ def _session(email: str) -> str:
     return token
 
 
+@_locked
 def user_of(token: str | None) -> dict | None:
     if not token:
         return None
@@ -132,6 +148,7 @@ def user_of(token: str | None) -> dict | None:
     return (db.get("users") or {}).get(s["email"])
 
 
+@_locked
 def logout(token: str | None) -> None:
     if not token:
         return
@@ -165,6 +182,7 @@ def _quota(u: dict) -> dict:
             "label": f"本月还剩 {left} 次{plan['label']}检测"}
 
 
+@_locked
 def attach_project(email: str, slug: str) -> None:
     db = _load()
     u = db["users"].get(email)
@@ -191,6 +209,7 @@ def estimate(u: dict) -> dict:
     }
 
 
+@_locked
 def consume(email: str) -> dict:
     """跑检测前扣一次。超限不扣，返回人话。"""
     db = _load()
@@ -207,6 +226,7 @@ def consume(email: str) -> dict:
     return {"ok": True, "quota": _quota(u)}
 
 
+@_locked
 def refund(email: str) -> dict:
     """启动检测失败时把刚扣的一次加回去。"""
     db = _load()
@@ -219,6 +239,7 @@ def refund(email: str) -> dict:
     return {"ok": True, "quota": _quota(u)}
 
 
+@_locked
 def plugin_token(email: str) -> str:
     """短时采集令牌，只给插件拉队列 / 回传，不含任何引擎密钥。未过期则复用。"""
     db = _load()
@@ -234,6 +255,7 @@ def plugin_token(email: str) -> str:
     return tok
 
 
+@_locked
 def plugin_user(token: str | None) -> dict | None:
     if not token:
         return None
