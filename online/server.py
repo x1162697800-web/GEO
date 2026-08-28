@@ -240,7 +240,12 @@ class Handler(BaseHTTPRequestHandler):
                 return
             jid = J.running_for(slug)
             job = J.get(jid) if jid else None
-            ov = P.overview(slug, detecting=bool(job), job=job)
+            if not job:
+                recent = J.recent(slug, limit=1)
+                job = recent[0] if recent else None
+            running = bool(job and job.get("status") == "running")
+            ov = P.overview(slug, detecting=running, job=job)
+            ov["job_progress"] = _job_progress(job)
             ov["user"] = ACC.public_user(user)
             ov["estimate"] = ACC.estimate(user)
             if ov.get("plugin"):
