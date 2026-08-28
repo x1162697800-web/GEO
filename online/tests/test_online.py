@@ -133,6 +133,20 @@ class JourneyCase(unittest.TestCase):
         self.assertEqual(p["percent"], 52)
         self.assertNotIn("体检", p["label"])
 
+    def test_failed_paid_job_refunds_quota(self):
+        with mock.patch.object(
+                SV.J, "get", side_effect=[
+                    {"status": "running"}, {"status": "failed"}]), \
+             mock.patch.object(SV.time, "sleep"), \
+             mock.patch.object(SV.ACC, "refund") as refund:
+            thread = SV._refund_if_job_fails("a@x.com", "job")
+            thread.join(timeout=1)
+        refund.assert_called_once_with("a@x.com")
+
+    def test_recheck_is_a_supported_background_action(self):
+        self.assertIn("recheck", SV.J.ACTIONS)
+        self.assertIn("--max-pages", SV.J.ACTIONS["recheck"]["args"])
+
 
 class BrandFactsCase(unittest.TestCase):
     def test_definition_save_creates_customer_fact_source(self):

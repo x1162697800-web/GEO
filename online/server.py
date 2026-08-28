@@ -160,7 +160,7 @@ def _job_progress(job: dict | None) -> dict | None:
     }
 
 
-def _refund_if_job_fails(email: str, job_id: str) -> None:
+def _refund_if_job_fails(email: str, job_id: str) -> threading.Thread:
     """任务启动成功后异步结算；中途失败/中断时把预扣额度退回。"""
     def watch():
         while True:
@@ -174,7 +174,9 @@ def _refund_if_job_fails(email: str, job_id: str) -> None:
                 return
             time.sleep(0.5)
 
-    threading.Thread(target=watch, daemon=True).start()
+    thread = threading.Thread(target=watch, daemon=True)
+    thread.start()
+    return thread
 
 
 class Handler(BaseHTTPRequestHandler):

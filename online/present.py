@@ -103,7 +103,7 @@ def _plugin_pending(slug: str, engines: list[dict]) -> dict:
     return {"count": len(want), "engines": want}
 
 
-def _conclusion(an: dict, detecting: bool) -> dict:
+def _conclusion(an: dict, detecting: bool, *, has_audit: bool = False) -> dict:
     if detecting:
         return {
             "kind": "detecting",
@@ -115,6 +115,12 @@ def _conclusion(an: dict, detecting: bool) -> dict:
     mentioned = [e for e in engines
                  if e.get("mention") is not None and e["mention"] > 0]
     if not _has_samples(an):
+        if has_audit:
+            return {
+                "kind": "partial",
+                "text": "网站检查已完成，但还没拿到有效的 AI 回答",
+                "detail": "先保留网站行动建议；AI 提及率仍然是「还没测」，不会写成 0。",
+            }
         return {
             "kind": "empty",
             "text": "还没测过 AI 认不认识你。点「开始检测」，我们用自己的引擎跑一轮。",
@@ -198,6 +204,7 @@ def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> 
     comps = [c for c in comps if (c.get("presence") or 0) > 0 or c.get("confirmed")]
     trend = an.get("trend") or []
     site = (cfg.get("brand") or {}).get("site") or ""
+    has_audit = (G.project_dir(slug) / "audit.json").exists()
     mention = (health.get("subs") or {}).get("mention")
     cite = (health.get("subs") or {}).get("cite")
     score = health.get("score")
@@ -250,7 +257,7 @@ def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> 
                 "label": (job or {}).get("label"),
                 "action": (job or {}).get("action")} if job else None,
         "journey": journey_out,
-        "conclusion": _conclusion(an, detecting),
+        "conclusion": _conclusion(an, detecting, has_audit=has_audit),
         "health": health_out,
         "mention": mention_out,
         "cite": cite_out,
@@ -260,7 +267,7 @@ def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> 
         "next3": next3,
         "plan_open": sum(1 for t in plan if t["status"] != "done"),
         "plugin": plugin if plugin["count"] else None,
-        "has_audit": (G.project_dir(slug) / "audit.json").exists(),
+        "has_audit": has_audit,
     }
 
 
