@@ -56,6 +56,43 @@ def _strip_secrets(obj):
     return json.loads(blob)
 
 
+def _job_progress(job: dict | None) -> dict | None:
+    if not job:
+        return None
+    status = job.get("status") or "running"
+    action = job.get("action")
+    log, _ = J.tail(job.get("id"), 0) if job.get("id") else ("", 0)
+    if action == "detect":
+        marks = [
+            ("═══ 1/4", 12, "正在读取网站"),
+            ("═══ 2/4", 38, "正在检查页面"),
+            ("═══ 3/4", 62, "正在询问 AI 引擎"),
+            ("═══ 4/4", 88, "正在生成当前 3 条行动"),
+        ]
+    elif action == "verify":
+        marks = [
+            ("=== 重抓站点 ===", 20, "正在读取改动后的页面"),
+            ("=== 重跑体检 ===", 52, "正在对照完成标准"),
+            ("验收：", 90, "正在整理验收结果"),
+        ]
+    else:
+        marks = []
+    percent, label = 5, "正在准备任务"
+    for marker, value, text in marks:
+        if marker in log:
+            percent, label = value, text
+    if status == "done":
+        percent, label = 100, "已完成"
+    elif status in ("failed", "interrupted", "stopped"):
+        label = "没有完成，可以重新尝试"
+    return {
+        "status": status,
+        "percent": percent,
+        "label": label,
+        "failed": status in ("failed", "interrupted", "stopped"),
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "grounded-online/0.1"
 
