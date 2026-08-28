@@ -476,6 +476,7 @@ def cmd_detect(a):
     A.run(a.slug)
     G.info("═══ 3/4 AI 会不会提到你 ═══")
     cfg = G.load_config(a.slug)
+    sample_ok = False
     if not cfg.get("questions"):
         try:
             import bootstrap
@@ -490,7 +491,8 @@ def cmd_detect(a):
         G.info("跳过采样：--no-sample")
     else:
         try:
-            S.run(a.slug, limit=a.limit)
+            metrics = S.run(a.slug, limit=a.limit)
+            sample_ok = bool((metrics or {}).get("platforms"))
         except Exception as e:  # noqa: BLE001
             G.info(f"采样未全部完成，先出待办：{type(e).__name__}: {e}")
     G.info("═══ 4/4 生成待办 ═══")
@@ -500,6 +502,8 @@ def cmd_detect(a):
         V.run(a.slug, recrawl=False)
     except Exception as e:  # noqa: BLE001
         G.info(f"验收跳过：{type(e).__name__}: {e}")
+    if not getattr(a, "no_sample", False) and not sample_ok:
+        G.die("没有取得有效 AI 回答，网站待办已保留，但本次检测未完成")
 
 
 def cmd_recheck(a):
