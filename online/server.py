@@ -382,15 +382,16 @@ class Handler(BaseHTTPRequestHandler):
             est = ACC.estimate(user)
             if est["blocked"]:
                 return self._json(402, {"error": "本月次数用完", "quota": est["quota"]})
+            if not any(S.available(p) for p in S.PROVIDERS):
+                return self._json(
+                    503, {"error": "检测服务还在准备中，请联系管理员后再试"})
             paid = ACC.consume(user["email"])
             if not paid.get("ok"):
                 return self._json(402, {"error": paid.get("error") or "本月次数用完",
                                         "quota": paid.get("quota")})
-            no_sample = not any(S.available(p) for p in S.PROVIDERS)
             try:
                 job = J.start(slug, "detect", {
                     "--max-pages": body.get("max_pages") or 60,
-                    "--no-sample": no_sample,
                     "--limit": body.get("limit"),
                 })
             except RuntimeError:
@@ -428,9 +429,6 @@ class Handler(BaseHTTPRequestHandler):
             slug = self._need_slug(user)
             if not slug:
                 return
-            est = ACC.estimate(user)
-            if est["blocked"]:
-                return self._json(402, {"error": "本月次数用完", "quota": est["quota"]})
             try:
                 job = J.start(slug, "verify", {})
             except RuntimeError:
