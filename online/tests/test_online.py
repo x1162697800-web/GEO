@@ -10,6 +10,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent / "geolook" / "scripts"))
 
 import account as ACC  # noqa: E402
+import geolib as G  # noqa: E402
 import present as P  # noqa: E402
 import server as SV  # noqa: E402
 import voice as V  # noqa: E402
