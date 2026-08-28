@@ -596,8 +596,6 @@ def main():
     s = sub.add_parser("autopilot", help="对已有项目跑完整引导流程")
     s.add_argument("--slug", required=True)
     s.add_argument("--limit", type=int, default=None)
-    s.add_argument("--repeat", type=int, default=1)
-    s.add_argument("--platforms", default="")
     s.add_argument("--no-sample", action="store_true", dest="no_sample")
     s.add_argument("--skip-llm", action="store_true", dest="skip_llm")
     s.set_defaults(func=cmd_autopilot)
@@ -647,8 +645,6 @@ def main():
     s.add_argument("--slug", required=True)
     s.add_argument("--max-pages", type=int, default=None, dest="max_pages")
     s.add_argument("--limit", type=int, default=None)
-    s.add_argument("--repeat", type=int, default=1)
-    s.add_argument("--platforms", default="")
     s.set_defaults(func=cmd_cycle)
 
     s = sub.add_parser("expand", help="拓词：百度下拉/Google suggest 扩出真实需求候选题")
