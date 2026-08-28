@@ -43,3 +43,10 @@ class SpecNavCase(unittest.TestCase):
         self.assertIn("D.detecting", self.html)
         self.assertIn("goTask", self.html)
         self.assertIn("本月次数用完", SERVER.read_text("utf-8"))
+
+    def test_one_customer_journey_and_three_task_focus(self):
+        self.assertIn("D.journey", self.html)
+        self.assertIn("当前 3 条", self.html)
+        self.assertIn("一次只处理 3 条", self.html)
+        self.assertIn("重测验收", self.html)
+        self.assertIn("生成报告", self.html)

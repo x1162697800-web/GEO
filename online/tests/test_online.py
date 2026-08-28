@@ -11,6 +11,7 @@ sys.path.insert(0, str(HERE.parent / "geolook" / "scripts"))
 
 import account as ACC  # noqa: E402
 import present as P  # noqa: E402
+import server as SV  # noqa: E402
 import voice as V  # noqa: E402
 
 
@@ -92,6 +93,37 @@ class TaskShapeCase(unittest.TestCase):
              "acceptance": {"type": "auto", "desc": "达标"},
              "evidence": [{"result": "fail"}]}
         self.assertEqual(P.customer_task(t)["status_label"], "退步了")
+
+    def test_regressed_marker_survives_closed_at_clear(self):
+        t = {"id": "T-1", "priority": "P1", "status": "todo",
+             "action": "改", "why": "因为", "closed_at": None,
+             "regressed_at": "2026-08-28",
+             "acceptance": {"type": "auto", "desc": "达标"},
+             "evidence": [{"result": "fail"}]}
+        self.assertEqual(P.customer_task(t)["status_label"], "退步了")
+
+
+class JourneyCase(unittest.TestCase):
+    def test_journey_stays_on_detection_without_samples(self):
+        with mock.patch.object(P, "action_plan", return_value=[]):
+            j = P.journey("x", sampled=False)
+        self.assertEqual(j["current"], "detect")
+        self.assertEqual(j["primary"]["action"], "detect")
+
+    def test_journey_focuses_only_three_open_tasks(self):
+        items = [{"id": str(i), "status": "todo"} for i in range(6)]
+        with mock.patch.object(P, "action_plan", return_value=items):
+            j = P.journey("x", sampled=True)
+        self.assertEqual(j["current"], "act")
+        self.assertEqual(len(j["focus"]), 3)
+
+    def test_verify_job_progress_uses_human_copy(self):
+        job = {"id": "j", "action": "verify", "status": "running"}
+        with mock.patch.object(SV.J, "tail",
+                               return_value=("=== 重抓站点 ===\n=== 重跑体检 ===", 20)):
+            p = SV._job_progress(job)
+        self.assertEqual(p["percent"], 52)
+        self.assertNotIn("体检", p["label"])
 
 
 @unittest.skipUnless(
