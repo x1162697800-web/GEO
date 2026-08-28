@@ -135,6 +135,59 @@ def _metric(value, *, cite_na=False):
     return {"state": "ok", "label": V.pct_or_unmeasured(value), "value": value}
 
 
+def _has_recheck(slug: str) -> bool:
+    import verify as VER
+    vdir = G.project_dir(slug) / "verify"
+    files = sorted(vdir.glob("*.json"), key=VER.report_key) if vdir.exists() else []
+    return len(files) >= 2
+
+
+def journey(slug: str, *, sampled: bool, detecting: bool = False,
+            job: dict | None = None) -> dict:
+    """客户只认这一条主线；页面和按钮都从同一状态推导，避免各说各话。"""
+    plan = action_plan(slug)
+    open_items = [t for t in plan if t["status"] != "done"]
+    action = (job or {}).get("action")
+    if detecting:
+        current = "verify" if action == "verify" else "detect"
+    elif not sampled:
+        current = "detect"
+    elif open_items:
+        current = "act"
+    elif not _has_recheck(slug):
+        current = "verify"
+    else:
+        current = "report"
+
+    order = ["detect", "act", "verify", "report"]
+    labels = {
+        "detect": ("检测现状", "先确认 AI 有没有主动提到你"),
+        "act": ("完成当前 3 条", "一次只处理影响最大的三件事"),
+        "verify": ("重测验收", "达标打勾，退步重新进入计划"),
+        "report": ("生成报告", "把本期结论和进展发给同事"),
+    }
+    primary = {
+        "detect": {"label": "开始检测", "route": "overview", "action": "detect"},
+        "act": {"label": "继续当前 3 条", "route": "plan", "action": "route"},
+        "verify": {"label": "重测这些改动", "route": "effect", "action": "route"},
+        "report": {"label": "查看本期报告", "route": "report", "action": "route"},
+    }[current]
+    cur = order.index(current)
+    return {
+        "current": current,
+        "step": cur + 1,
+        "total": len(order),
+        "primary": primary,
+        "steps": [
+            {"id": key, "label": labels[key][0], "detail": labels[key][1],
+             "state": "done" if i < cur else ("active" if i == cur else "pending")}
+            for i, key in enumerate(order)
+        ],
+        "open_count": len(open_items),
+        "focus": open_items[:3],
+    }
+
+
 def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> dict:
     cfg = _cfg(slug)
     an = _analytics(slug)
@@ -151,6 +204,7 @@ def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> 
     plan = action_plan(slug)
     next3 = next_three(slug)
     sampled = _has_samples(an)
+    journey_out = journey(slug, sampled=sampled, detecting=detecting, job=job)
     # 插件提示只在已经出过第一份结果之后出现，空状态用总览那句人话即可
     plugin = (_plugin_pending(slug, engines)
               if sampled or detecting else {"count": 0, "engines": []})
@@ -193,7 +247,9 @@ def overview(slug: str, *, detecting: bool = False, job: dict | None = None) -> 
         "detecting": detecting,
         "sampled": sampled,
         "job": {"id": (job or {}).get("id"), "status": (job or {}).get("status"),
-                "label": (job or {}).get("label")} if job else None,
+                "label": (job or {}).get("label"),
+                "action": (job or {}).get("action")} if job else None,
+        "journey": journey_out,
         "conclusion": _conclusion(an, detecting),
         "health": health_out,
         "mention": mention_out,
