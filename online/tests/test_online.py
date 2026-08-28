@@ -56,6 +56,13 @@ class QuotaCase(unittest.TestCase):
         for k in ACC.KEY_ENV_NAMES:
             self.assertNotIn(k, blob)
 
+    def test_report_link_is_read_only_and_expires_separately(self):
+        ACC.register("share@x.com", "secret1")
+        ACC.attach_project("share@x.com", "demo")
+        token = ACC.report_token("share@x.com", "demo")
+        self.assertTrue(token)
+        self.assertEqual(ACC.report_access(token)["slug"], "demo")
+
 
 class DemoGateCase(unittest.TestCase):
     def test_public_host_does_not_seed_demo(self):
@@ -124,6 +131,17 @@ class JourneyCase(unittest.TestCase):
             p = SV._job_progress(job)
         self.assertEqual(p["percent"], 52)
         self.assertNotIn("体检", p["label"])
+
+
+class BrandFactsCase(unittest.TestCase):
+    def test_definition_save_creates_customer_fact_source(self):
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(G, "WORK", Path(td)):
+            SV._save_definition(
+                "brand", {"name": "Brand", "site": "https://brand.test",
+                          "aliases": ["B"]}, "Brand 是一款测试产品。")
+            text = (Path(td) / "brand" / "content" / "facts.md").read_text("utf-8")
+        self.assertIn("## 一句话定义", text)
+        self.assertIn("Brand 是一款测试产品。", text)
 
 
 @unittest.skipUnless(
