@@ -293,7 +293,7 @@ const ICONS={
 function ico(n,s=19){return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||ICONS.spark}</svg>`}
 const NAVICON={overview:"home",plan:"list",effect:"pulse",report:"report"};
 const NAVSUB={overview:"先看检测结论",plan:"只做当前行动",effect:"改完回来验收",report:"最后对外汇报"};
-let R="overview",D=null,U=null,DRAW=null,SLUG=null,FLASH="",POLL=null,BUSY="",TOAST="",PFILTER="focus",ONSITE=true;
+let R="overview",D=null,U=null,DRAW=null,SLUG=null,FLASH="",POLL=null,BUSY="",TOAST="",PFILTER="focus",ONSITE=true,PLUGIN_CODE="";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 async function api(path,opt){
@@ -478,7 +478,8 @@ function vReport(){
 }
 function vSettings(){
   const s=window.SET||{brand:{},user:{},questions:[]},b=s.brand||{},q=s.user.quota||{},pct=q.cap?Math.round((q.used/q.cap)*100):0;
-  return `${pageHead("PROJECT SETTINGS","设置","管理品牌口径和检测范围。引擎密钥由服务端管理，客户不需要配置。")}<div class="settings-grid"><div class="card settings-card"><h2>我们是谁 ${s.facts_missing?'<span class="chip p0">待补全</span>':""}</h2><p class="muted">这几项会影响 AI 如何识别你的品牌，请用真实、统一的说法。</p><div class="form-grid"><div class="field"><label for="bn">品牌名</label><input class="input" id="bn" value="${esc(b.name)}"></div><div class="field"><label for="bs">网站</label><input class="input" id="bs" value="${esc(b.site)}"></div><div class="field"><label for="bi">一句话行业</label><input class="input" id="bi" value="${esc(b.industry)}"></div><div class="field"><label for="bu">主要服务谁</label><input class="input" id="bu" value="${esc(b.target_users)}"></div></div><div style="display:flex;justify-content:flex-end;margin-top:18px"><button class="btn" onclick="saveBrand()">保存品牌信息</button></div></div><div class="card plan-card"><span class="plan-badge">${esc(s.user.plan_label||"省钱")}方案</span><h2>${q.left??0}<small style="font-size:12px;color:var(--muted);font-weight:500"> / ${q.cap??0} 次剩余</small></h2><p>${esc(s.user.plan_blurb||"")}</p><div class="quota-bar"><i style="width:${Math.min(100,pct)}%"></i></div><p>${esc(q.label||"")}</p></div></div><section class="section"><div class="card settings-card"><div class="section-head"><div><h2>检测用的问题</h2><p>系统自动生成，一般不用改。需要查看时再展开。</p></div><button class="btn ghost" aria-expanded="${window.qopen}" onclick="qopen=!qopen;render()">${window.qopen?"收起":"展开"} ${ico("arrow",14)}</button></div>${window.qopen?`<ul class="question-list">${(s.questions||[]).map(q=>`<li>${esc(q.text)}</li>`).join("")||"<li class=muted>还没有问题，第一次检测时会自动生成。</li>"}</ul>`:""}</div></section>${s.plugin_needed?`<div class="banner"><div class="banner-icon">${ico("globe")}</div><div class="banner-copy"><strong>网页采样助手</strong><p>还有几家引擎需要在网页里采一次。助手不保存 API Key。</p></div></div>`:""}`;
+  const plugin=s.plugin_needed?`<div class="banner"><div class="banner-icon">${ico("globe")}</div><div class="banner-copy"><strong>连接网页采样助手</strong><p>还有几家引擎需要在网页里采一次。连接码 8 小时有效，不是 API Key。</p>${PLUGIN_CODE?`<input class="input" readonly value="${esc(PLUGIN_CODE)}" aria-label="采样助手连接码" style="margin-top:9px;max-width:360px">`:""}</div><button class="btn ghost" onclick="connectPlugin()">${PLUGIN_CODE?"重新复制":"生成连接码"}</button></div>`:"";
+  return `${pageHead("PROJECT SETTINGS","设置","管理品牌口径和检测范围。引擎密钥由服务端管理，客户不需要配置。")}<div class="settings-grid"><div class="card settings-card"><h2>我们是谁 ${s.facts_missing?'<span class="chip p0">待补全</span>':""}</h2><p class="muted">这几项会影响 AI 如何识别你的品牌，请用真实、统一的说法。</p><div class="form-grid"><div class="field"><label for="bn">品牌名</label><input class="input" id="bn" value="${esc(b.name)}"></div><div class="field"><label for="bs">网站</label><input class="input" id="bs" value="${esc(b.site)}"></div><div class="field"><label for="bi">一句话行业</label><input class="input" id="bi" value="${esc(b.industry)}"></div><div class="field"><label for="bu">主要服务谁</label><input class="input" id="bu" value="${esc(b.target_users)}"></div></div><div style="display:flex;justify-content:flex-end;margin-top:18px"><button class="btn" onclick="saveBrand()">保存品牌信息</button></div></div><div class="card plan-card"><span class="plan-badge">${esc(s.user.plan_label||"省钱")}方案</span><h2>${q.left??0}<small style="font-size:12px;color:var(--muted);font-weight:500"> / ${q.cap??0} 次剩余</small></h2><p>${esc(s.user.plan_blurb||"")}</p><div class="quota-bar"><i style="width:${Math.min(100,pct)}%"></i></div><p>${esc(q.label||"")}</p></div></div><section class="section"><div class="card settings-card"><div class="section-head"><div><h2>检测用的问题</h2><p>系统自动生成，一般不用改。需要查看时再展开。</p></div><button class="btn ghost" aria-expanded="${window.qopen}" onclick="qopen=!qopen;render()">${window.qopen?"收起":"展开"} ${ico("arrow",14)}</button></div>${window.qopen?`<ul class="question-list">${(s.questions||[]).map(q=>`<li>${esc(q.text)}</li>`).join("")||"<li class=muted>还没有问题，第一次检测时会自动生成。</li>"}</ul>`:""}</div></section>${plugin}`;
 }
 window.qopen=false;
 function openEngine(i){
@@ -511,6 +512,15 @@ async function markDoing(id){
 async function saveBrand(){
   try{busy("正在保存");await api("/api/settings/brand?slug="+encodeURIComponent(SLUG),{method:"POST",body:JSON.stringify({name:$("#bn").value,site:$("#bs").value,industry:$("#bi").value,target_users:$("#bu").value})});BUSY="";await load();flash("品牌信息已保存")}
   catch(e){BUSY="";flash(e.message)}
+}
+async function connectPlugin(){
+  try{
+    busy("正在生成连接码");
+    const r=await api("/api/plugin/token",{method:"POST",body:"{}"});
+    PLUGIN_CODE=r.token;BUSY="";render();
+    if(navigator.clipboard)await navigator.clipboard.writeText(PLUGIN_CODE);
+    flash("连接码已复制，粘贴到采样助手即可");
+  }catch(e){BUSY="";flash(e.message)}
 }
 async function logout(){await api("/api/logout",{method:"POST",body:"{}"});U=null;D=null;SLUG=null;render()}
 async function load(){
