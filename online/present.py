@@ -325,6 +325,9 @@ def settings(slug: str) -> dict:
     cfg = _cfg(slug)
     b = cfg.get("brand") or {}
     questions = cfg.get("questions") or []
+    import generate as GEN
+    facts = GEN.parse_facts(slug, "zh")
+    definition = facts.get("definition") or ""
     return {
         "brand": {
             "name": b.get("name") or "",
@@ -332,12 +335,12 @@ def settings(slug: str) -> dict:
             "industry": b.get("industry") or "",
             "target_users": b.get("target_users") or "",
             "aliases": b.get("aliases") or [],
+            "definition": definition,
         },
         "questions": [{"id": q.get("id"), "text": q.get("text"),
                        "group": q.get("group")} for q in questions],
         "question_count": len(questions),
-        "facts_missing": not (G.project_dir(slug) / "content" / "facts.md").exists()
-                         and not (G.project_dir(slug) / "content" / "facts.en.md").exists(),
+        "facts_missing": not bool(definition),
     }
 
 
