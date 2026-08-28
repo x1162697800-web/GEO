@@ -147,6 +147,23 @@ class JourneyCase(unittest.TestCase):
         self.assertIn("recheck", SV.J.ACTIONS)
         self.assertIn("--max-pages", SV.J.ACTIONS["recheck"]["args"])
 
+    def test_report_compares_with_previous_period(self):
+        ov = {
+            "brand": "B", "site": "", "conclusion": {"text": "结论"},
+            "health": {"label": "60"}, "mention": {"label": "40%"},
+            "engines": [], "competitors": [],
+            "trend": [
+                {"health": 50, "mention": .2},
+                {"health": 60, "mention": .4},
+            ],
+            "job": None,
+        }
+        with mock.patch.object(P, "overview", return_value=ov), \
+             mock.patch.object(P, "action_plan", return_value=[]):
+            report = P.report("x")
+        self.assertEqual(report["health_change"]["label"], "较上期 +10 分")
+        self.assertEqual(report["mention_change"]["label"], "较上期 +20 个百分点")
+
 
 class BrandFactsCase(unittest.TestCase):
     def test_definition_save_creates_customer_fact_source(self):
