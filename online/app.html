@@ -35,12 +35,14 @@ button:disabled{cursor:not-allowed;opacity:.55}
 .project-site{font-size:11px;color:#898b96;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nav-label{padding:0 12px 8px;color:#626571;font-size:10px;letter-spacing:.13em;text-transform:uppercase}
 .nav{display:grid;gap:5px}
-.nav button{min-height:46px;border:0;border-radius:12px;background:transparent;color:#9b9daa;padding:0 12px;display:flex;align-items:center;gap:12px;text-align:left;transition:background .2s,color .2s,transform .2s}
+.nav button{min-height:54px;border:0;border-radius:12px;background:transparent;color:#9b9daa;padding:7px 12px;display:flex;align-items:center;gap:12px;text-align:left;transition:background .2s,color .2s,transform .2s}
 .nav button:hover{background:#1b1c24;color:#fff}
 .nav button:active{transform:scale(.985)}
 .nav button.on{background:#24232f;color:#fff;box-shadow:inset 3px 0 0 var(--primary-2)}
 .nav button svg{flex:0 0 auto}
-.nav-text{flex:1}
+.nav-text{flex:1;display:flex;flex-direction:column;line-height:1.25;font-size:13px}
+.nav-text small{font-size:9px;color:#666975;font-weight:500;margin-top:3px}
+.nav button.on .nav-text small,.nav button:hover .nav-text small{color:#9395a2}
 .nav-count{min-width:23px;height:21px;border-radius:99px;background:#32313d;color:#c7c8cf;display:grid;place-items:center;font-size:10px;font-variant-numeric:tabular-nums}
 .side-settings{margin-top:18px;padding-top:18px;border-top:1px solid #272832}
 .side-foot{margin-top:auto;padding:16px 10px 0}
@@ -59,6 +61,7 @@ button:disabled{cursor:not-allowed;opacity:.55}
 .crumb{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px}
 .crumb strong{color:var(--ink);font-weight:650}
 .top-actions{display:flex;align-items:center;gap:10px}
+.next-cta{height:36px;min-height:36px;padding:0 13px;font-size:11px;border-radius:10px}
 .status-pill,.quota-pill{height:34px;padding:0 12px;border:1px solid var(--line);background:var(--surface);border-radius:99px;display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-2);box-shadow:var(--shadow-sm)}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 4px rgba(50,201,182,.12)}
 .content{max-width:1260px;margin:0 auto;padding:38px 42px 88px}
@@ -284,6 +287,7 @@ const ICONS={
 };
 function ico(n,s=19){return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||ICONS.spark}</svg>`}
 const NAVICON={overview:"home",plan:"list",effect:"pulse",report:"report"};
+const NAVSUB={overview:"先看检测结论",plan:"只做当前行动",effect:"改完回来验收",report:"最后对外汇报"};
 let R="overview",D=null,U=null,DRAW=null,SLUG=null,FLASH="",POLL=null,BUSY="",TOAST="",PFILTER="all",ONSITE=true;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
@@ -376,15 +380,17 @@ function side(){
   return `<aside class="sidebar">${logo()}
     <div class="project-card"><div class="project-kicker">Current project</div><div class="project-name">${esc(b)}</div><div class="project-site">${esc(site)}</div></div>
     <div class="nav-label">工作台</div>
-    <nav class="nav" aria-label="主导航">${NAV.map(([k,t])=>`<button class="${R===k?"on":""}" onclick="go('${k}')" ${R===k?'aria-current="page"':""}>${ico(NAVICON[k])}<span class="nav-text">${t}</span>${k==="plan"&&D&&D.plan_open?`<span class="nav-count">${D.plan_open}</span>`:""}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="主导航">${NAV.map(([k,t])=>`<button class="${R===k?"on":""}" onclick="go('${k}')" ${R===k?'aria-current="page"':""}>${ico(NAVICON[k])}<span class="nav-text">${t}<small>${NAVSUB[k]}</small></span>${k==="plan"&&D&&D.plan_open?`<span class="nav-count">${D.plan_open}</span>`:""}</button>`).join("")}</nav>
     <div class="side-settings"><nav class="nav"><button class="${R==="settings"?"on":""}" onclick="go('settings')">${ico("gear")}<span class="nav-text">设置</span></button></nav></div>
     <div class="side-foot"><div class="quota-mini">${esc((U&&U.quota&&U.quota.label)||"")}</div><div class="user-row"><div class="avatar">${esc(((U&&U.name)||"U").slice(0,1).toUpperCase())}</div><div class="user-meta"><strong>${esc((U&&U.name)||"用户")}</strong><span>${esc((U&&U.plan_label)||"") }方案</span></div><button class="icon-btn" onclick="logout()" aria-label="退出登录">${ico("logout",16)}</button></div></div>
   </aside>`;
 }
 function topbar(){
   const names={overview:"总览",plan:"该做什么",effect:"效果",report:"报告",settings:"设置"};
+  const empty=D&&D.conclusion&&D.conclusion.kind==="empty",open=D&&D.plan_open>0;
+  const next=empty?["去开始检测","overview"]:open?["继续行动计划","plan"]:["去验证效果","effect"];
   return `<header class="topbar"><div class="crumb"><span>${esc((D&&D.brand)||"Grounded")}</span><span>/</span><strong>${names[R]||"总览"}</strong></div>
-    <div class="top-actions"><div class="status-pill"><span class="dot"></span>${D&&D.detecting?"检测进行中":"系统在线"}</div><div class="quota-pill">${ico("target",15)}${esc((U&&U.quota&&U.quota.label)||"")}</div><button class="icon-btn" onclick="go('settings')" aria-label="打开设置">${ico("gear")}</button></div></header>`;
+    <div class="top-actions"><div class="status-pill"><span class="dot"></span>${D&&D.detecting?"检测进行中":"系统在线"}</div><div class="quota-pill">${ico("target",15)}${esc((U&&U.quota&&U.quota.label)||"")}</div>${R!=="settings"&&!D?.detecting?`<button class="btn next-cta" onclick="go('${next[1]}')">${next[0]} ${ico("arrow",14)}</button>`:""}<button class="icon-btn" onclick="go('settings')" aria-label="打开设置">${ico("gear")}</button></div></header>`;
 }
 function mobileNav(){
   return `<nav class="mobile-nav" aria-label="移动端导航">${NAV.map(([k,t])=>`<button class="${R===k?"on":""}" onclick="go('${k}')">${ico(NAVICON[k],18)}<span>${t}</span></button>`).join("")}</nav>`;
