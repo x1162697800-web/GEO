@@ -149,7 +149,7 @@ def journey(slug: str, *, sampled: bool, detecting: bool = False,
     open_items = [t for t in plan if t["status"] != "done"]
     action = (job or {}).get("action")
     if detecting:
-        current = "verify" if action == "verify" else "detect"
+        current = "verify" if action in ("verify", "recheck") else "detect"
     elif not sampled:
         current = "detect"
     elif open_items:
