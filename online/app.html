@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Grounded · AI 品牌认知</title>
+<style>
+:root{
+  --bg:#f5f6fa;--surface:#fff;--surface-2:#f8f8fb;--ink:#17181c;--ink-2:#383a43;
+  --muted:#747782;--line:#e7e8ee;--line-2:#d9dbe4;--primary:#6558e8;--primary-2:#867cf3;
+  --primary-soft:#eeecff;--cyan:#32c9b6;--cyan-soft:#e6f8f5;--orange:#f47b45;
+  --orange-soft:#fff0e9;--red:#d84a5d;--red-soft:#fdecef;--nav:#111218;--nav-2:#1b1c24;
+  --shadow-sm:0 1px 2px rgba(18,20,30,.04),0 8px 24px rgba(18,20,30,.04);
+  --shadow-md:0 18px 50px rgba(18,20,30,.10);--radius:18px;--radius-sm:12px;
+  --font:"Inter","SF Pro Display","Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 var(--font);-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid rgba(101,88,232,.28);outline-offset:2px}
+button:disabled{cursor:not-allowed;opacity:.55}
+#app{min-height:100dvh}
+.shell{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100dvh}
+.sidebar{position:sticky;top:0;height:100dvh;background:var(--nav);color:#fff;padding:24px 16px 18px;display:flex;flex-direction:column;z-index:20}
+.logo{display:flex;align-items:center;gap:11px;padding:0 10px 28px}
+.logo-mark{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(145deg,#8b80ff,#5847db);box-shadow:0 8px 20px rgba(101,88,232,.35)}
+.logo-copy{font-size:17px;font-weight:720;letter-spacing:-.02em}
+.logo-copy small{display:block;color:#898b96;font-size:10px;letter-spacing:.13em;text-transform:uppercase;margin-top:-2px;font-weight:600}
+.project-card{margin:0 4px 24px;padding:13px;border:1px solid #292a34;background:#181920;border-radius:14px}
+.project-kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#777a88}
+.project-name{font-size:14px;font-weight:650;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.project-site{font-size:11px;color:#898b96;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-label{padding:0 12px 8px;color:#626571;font-size:10px;letter-spacing:.13em;text-transform:uppercase}
+.nav{display:grid;gap:5px}
+.nav button{min-height:46px;border:0;border-radius:12px;background:transparent;color:#9b9daa;padding:0 12px;display:flex;align-items:center;gap:12px;text-align:left;transition:background .2s,color .2s,transform .2s}
+.nav button:hover{background:#1b1c24;color:#fff}
+.nav button:active{transform:scale(.985)}
+.nav button.on{background:#24232f;color:#fff;box-shadow:inset 3px 0 0 var(--primary-2)}
+.nav button svg{flex:0 0 auto}
+.nav-text{flex:1}
+.nav-count{min-width:23px;height:21px;border-radius:99px;background:#32313d;color:#c7c8cf;display:grid;place-items:center;font-size:10px;font-variant-numeric:tabular-nums}
+.side-settings{margin-top:18px;padding-top:18px;border-top:1px solid #272832}
+.side-foot{margin-top:auto;padding:16px 10px 0}
+.quota-mini{font-size:11px;color:#80828e;margin-bottom:10px}
+.user-row{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#292a34;color:#c9c7ff;font-weight:700;font-size:12px}
+.user-meta{min-width:0;flex:1}
+.user-meta strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-meta span{font-size:10px;color:#777a88}
+.icon-btn{width:44px;height:44px;border:0;border-radius:12px;display:grid;place-items:center;background:transparent;color:var(--muted)}
+.icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+.sidebar .icon-btn{width:34px;height:34px;color:#757783}
+.sidebar .icon-btn:hover{background:#292a34;color:#fff}
+.workspace{min-width:0}
+.topbar{height:72px;padding:0 40px;border-bottom:1px solid var(--line);background:rgba(245,246,250,.88);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:15}
+.crumb{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px}
+.crumb strong{color:var(--ink);font-weight:650}
+.top-actions{display:flex;align-items:center;gap:10px}
+.status-pill,.quota-pill{height:34px;padding:0 12px;border:1px solid var(--line);background:var(--surface);border-radius:99px;display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-2);box-shadow:var(--shadow-sm)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 4px rgba(50,201,182,.12)}
+.content{max-width:1260px;margin:0 auto;padding:38px 42px 88px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:26px}
+.eyebrow{font-size:11px;color:var(--primary);font-weight:750;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+h1,h2,h3,p{margin-top:0}
+h1{font-size:32px;line-height:1.2;letter-spacing:-.04em;margin-bottom:8px;font-weight:730}
+h2{font-size:21px;line-height:1.35;letter-spacing:-.025em;margin-bottom:5px}
+h3{font-size:17px;line-height:1.45;letter-spacing:-.015em}
+.lede{color:var(--muted);font-size:15px;margin:0;max-width:680px}
+.muted{color:var(--muted)}
+.section{margin-top:30px}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:14px}
+.section-head p{margin:0;color:var(--muted);font-size:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+.hero{position:relative;overflow:hidden;min-height:278px;padding:34px 36px;color:#fff;background:
+  radial-gradient(circle at 86% 20%,rgba(139,128,255,.42),transparent 31%),
+  radial-gradient(circle at 68% 105%,rgba(50,201,182,.18),transparent 34%),
+  linear-gradient(135deg,#151622 0%,#1d1c31 60%,#28234c 100%);border:0}
+.hero:after{content:"";position:absolute;width:310px;height:310px;border:1px solid rgba(255,255,255,.07);border-radius:50%;right:-80px;top:-140px;box-shadow:0 0 0 42px rgba(255,255,255,.025),0 0 0 90px rgba(255,255,255,.018)}
+.hero-content{position:relative;z-index:2;max-width:740px}
+.hero-label{display:inline-flex;align-items:center;gap:8px;color:#b9b9c7;font-size:11px;font-weight:650;letter-spacing:.08em;text-transform:uppercase}
+.hero-label .dot{box-shadow:0 0 0 4px rgba(50,201,182,.1)}
+.hero h1{font-size:38px;max-width:720px;margin:22px 0 13px;color:#fff}
+.hero-copy{color:#aeb0bd;max-width:600px;margin-bottom:25px}
+.hero-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hero-note{font-size:11px;color:#9294a4}
+.btn{min-height:44px;border:1px solid transparent;border-radius:12px;padding:0 17px;background:var(--primary);color:#fff;font-weight:680;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .18s,box-shadow .18s,background .18s,border-color .18s}
+.btn:hover{background:#594bda;box-shadow:0 8px 20px rgba(101,88,232,.24)}
+.btn:active{transform:scale(.97)}
+.btn.light{background:#fff;color:#1b1c22}
+.btn.light:hover{background:#f4f2ff;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.btn.ghost{background:var(--surface);border-color:var(--line-2);color:var(--ink-2)}
+.btn.ghost:hover{background:var(--surface-2);border-color:#c9cbd5;box-shadow:none}
+.btn.subtle{background:var(--primary-soft);color:var(--primary);border-color:transparent}
+.btn.subtle:hover{background:#e4e1ff;box-shadow:none}
+.btn.danger{background:var(--red-soft);color:var(--red)}
+.process{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:28px;border-top:1px solid rgba(255,255,255,.09);padding-top:19px;max-width:720px}
+.process-step{display:flex;align-items:center;gap:10px;color:#797b89;font-size:11px;position:relative}
+.process-step:not(:last-child):after{content:"";height:1px;background:rgba(255,255,255,.12);position:absolute;left:36px;right:14px;top:11px}
+.step-num{width:23px;height:23px;flex:0 0 auto;border:1px solid #464754;border-radius:50%;display:grid;place-items:center;background:#23242d;position:relative;z-index:1;font-size:10px}
+.process-step.on{color:#fff}.process-step.on .step-num{background:var(--primary);border-color:var(--primary)}
+.process-step.done{color:#bfc0ca}.process-step.done .step-num{background:var(--cyan);border-color:var(--cyan);color:#0e2522}
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.metric-card{grid-column:span 4;padding:20px;min-height:148px;position:relative;overflow:hidden}
+.metric-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--primary)}
+.metric-card:nth-child(2):before{background:var(--cyan)}
+.metric-card:nth-child(3):before{background:var(--orange)}
+.metric-icon{width:36px;height:36px;border-radius:11px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;margin-bottom:16px}
+.metric-card:nth-child(2) .metric-icon{background:var(--cyan-soft);color:#188777}
+.metric-card:nth-child(3) .metric-icon{background:var(--orange-soft);color:var(--orange)}
+.metric-label{color:var(--muted);font-size:11px;margin-bottom:2px}
+.metric-value{font-size:27px;line-height:1.2;font-weight:740;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.metric-help{font-size:10px;color:#989aa4;margin-top:7px}
+.task-stack{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.action-card{padding:20px;min-height:256px;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s,border-color .2s}
+.action-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:#d7d2ff}
+.action-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.action-number{font-size:28px;color:#dcdee6;font-weight:750;letter-spacing:-.06em}
+.chip{display:inline-flex;align-items:center;min-height:26px;padding:0 9px;border-radius:99px;background:#f0f1f5;color:#656873;font-size:10px;font-weight:700;white-space:nowrap}
+.chip.p0{background:var(--orange-soft);color:#bd5427}
+.chip.p1{background:var(--primary-soft);color:var(--primary)}
+.chip.p2{background:#eff0f4;color:#6f7280}
+.chip.st-done{background:var(--cyan-soft);color:#147c6f}
+.chip.st-doing{background:#eaf2ff;color:#3473c9}
+.chip.st-regressed{background:var(--red-soft);color:var(--red)}
+.chip.st-confirm{background:#fff4d9;color:#94691c}
+.action-card h3{margin-bottom:10px}
+.action-card .why{color:var(--muted);font-size:12px;margin-bottom:16px}
+.done-when{margin-top:auto;padding:12px 13px;border-radius:11px;background:var(--surface-2);color:var(--ink-2);font-size:11px;border:1px solid #f0f1f4}
+.done-when strong{display:block;color:var(--muted);font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.text-link{min-height:44px;border:0;background:transparent;color:var(--primary);font-size:12px;font-weight:700;padding:8px 0;display:inline-flex;align-items:center;gap:6px;align-self:flex-start}
+.text-link:hover{color:#4f40ce}
+.banner{padding:16px 18px;display:flex;align-items:center;gap:14px;border:1px solid #f2d7c7;background:#fff8f3;border-radius:15px;margin-top:16px}
+.banner-icon{width:38px;height:38px;flex:0 0 auto;border-radius:11px;display:grid;place-items:center;background:var(--orange-soft);color:var(--orange)}
+.banner-copy{flex:1}.banner-copy strong{font-size:13px}.banner-copy p{font-size:11px;color:var(--muted);margin:1px 0 0}
+.panel{padding:22px}
+.data-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,.8fr);gap:14px}
+.table-wrap{overflow:auto}
+.table{width:100%;border-collapse:collapse;font-size:12px}
+.table th{text-align:left;padding:10px 12px;color:#989aa4;font-size:9px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--line)}
+.table td{padding:14px 12px;border-bottom:1px solid #eff0f4;vertical-align:middle}
+.table tbody tr{transition:background .18s}.table tbody tr:hover{background:#fafaff}
+.table tbody tr:last-child td{border-bottom:0}
+.engine-name{display:flex;align-items:center;gap:9px;font-weight:650}
+.engine-logo{width:28px;height:28px;border-radius:8px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;font-size:10px;font-weight:800}
+.trend-row{display:flex;align-items:end;gap:8px;min-height:150px;padding-top:20px}
+.trend-bar{flex:1;min-width:38px;text-align:center;font-size:9px;color:var(--muted)}
+.trend-bar i{display:block;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,var(--primary-2),var(--primary));height:var(--h,30px);margin-bottom:7px}
+.plan-summary{display:grid;grid-template-columns:1.2fr repeat(3,.55fr);gap:14px;margin-bottom:22px}
+.summary-main{padding:22px;background:linear-gradient(135deg,#6d5fea,#5747d8);color:#fff;border:0}
+.summary-main h2{font-size:20px;margin-top:16px}.summary-main p{font-size:12px;color:#d7d3ff;margin:0}
+.summary-stat{padding:20px}.summary-stat strong{font-size:25px;display:block}.summary-stat span{font-size:11px;color:var(--muted)}
+.filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filter{height:36px;padding:0 13px;border:1px solid var(--line);border-radius:99px;background:var(--surface);color:var(--muted);font-size:11px}
+.filter.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.task-list{display:grid;gap:11px}
+.task-row{padding:21px;display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:17px;align-items:start;scroll-margin-top:94px}
+.task-row .task-index{width:44px;height:44px;border-radius:13px;background:var(--surface-2);display:grid;place-items:center;color:var(--muted);font-size:11px;font-weight:750}
+.task-row h3{margin:6px 0 5px}.task-row .why{font-size:12px;color:var(--muted);margin:0 0 13px;max-width:760px}
+.task-row .done-when{max-width:760px;margin:0}
+.task-actions{display:flex;flex-direction:column;gap:8px;align-items:stretch;min-width:120px}
+.empty-state{padding:58px 30px;text-align:center}
+.empty-visual{width:76px;height:76px;border-radius:24px;margin:0 auto 20px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);box-shadow:0 16px 35px rgba(101,88,232,.14)}
+.empty-state h2{font-size:24px}.empty-state p{color:var(--muted);max-width:520px;margin:6px auto 23px}
+.flow-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:720px;margin:30px auto 0;text-align:left}
+.flow-step{padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.flow-step span{display:block;color:var(--primary);font-size:10px;font-weight:750;margin-bottom:5px}.flow-step strong{font-size:12px}
+.effect-list{display:grid;gap:10px}.effect-item{padding:18px;display:flex;align-items:start;gap:13px}
+.effect-mark{width:36px;height:36px;border-radius:11px;background:var(--cyan-soft);color:#168477;display:grid;place-items:center;flex:0 0 auto}
+.effect-item strong{font-size:13px}.effect-item p{font-size:11px;color:var(--muted);margin:3px 0 0}
+.report-toolbar{display:flex;justify-content:flex-end;margin-bottom:14px}
+.report-paper{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-md);overflow:hidden}
+.report-cover{padding:34px;background:#171822;color:#fff;display:flex;justify-content:space-between;gap:28px}
+.report-cover h1{font-size:30px}.report-cover p{color:#a8aab6;margin:0;max-width:650px}
+.report-date{font-size:10px;color:#777986;text-transform:uppercase;letter-spacing:.1em;white-space:nowrap}
+.report-body{padding:30px}
+.report-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:28px}
+.report-kpi{padding:18px;border-radius:14px;background:var(--surface-2)}
+.report-kpi span{font-size:10px;color:var(--muted)}.report-kpi strong{display:block;font-size:26px}
+.report-columns{display:grid;grid-template-columns:1.25fr .75fr;gap:24px}
+.report-block{margin-bottom:25px}.report-block h2{font-size:15px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.report-line{padding:9px 0;border-bottom:1px solid #f0f1f4;font-size:12px}
+.settings-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:14px}
+.settings-card{padding:23px}.settings-card h2{font-size:17px;margin-bottom:3px}.settings-card>.muted{font-size:11px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
+.field{display:grid;gap:6px}.field.full{grid-column:1/-1}
+.field label{font-size:10px;font-weight:700;color:var(--ink-2)}
+.input{width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--line-2);border-radius:11px;background:#fff;color:var(--ink);transition:border-color .18s,box-shadow .18s}
+.input:hover{border-color:#c4c6d0}.input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(101,88,232,.11);outline:0}
+textarea.input{resize:vertical}
+.plan-card{padding:23px;background:linear-gradient(145deg,#f0eeff,#fff);border-color:#ddd9ff}
+.plan-badge{display:inline-flex;padding:5px 9px;border-radius:99px;background:var(--primary);color:#fff;font-size:9px;font-weight:750;letter-spacing:.08em}
+.plan-card h2{font-size:27px;margin:15px 0 2px}.plan-card p{font-size:12px;color:var(--muted)}
+.quota-bar{height:8px;background:#e3e1f5;border-radius:99px;overflow:hidden;margin:18px 0 8px}.quota-bar i{display:block;height:100%;background:var(--primary);border-radius:inherit}
+.accordion{margin-top:14px}.question-list{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:7px}
+.question-list li{padding:10px 12px;border-radius:10px;background:var(--surface-2);font-size:11px}
+.auth-shell{min-height:100dvh;display:grid;grid-template-columns:minmax(420px,1.05fr) minmax(440px,.95fr);background:#fff}
+.auth-art{position:relative;overflow:hidden;padding:48px;color:#fff;background:
+ radial-gradient(circle at 20% 10%,rgba(133,121,255,.45),transparent 30%),
+ radial-gradient(circle at 86% 80%,rgba(50,201,182,.20),transparent 28%),#14151e;display:flex;flex-direction:column;justify-content:space-between}
+.auth-art:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,black,transparent 78%)}
+.auth-brand,.auth-promise{position:relative;z-index:1}
+.auth-brand{display:flex;align-items:center;gap:11px;font-weight:720;font-size:17px}
+.auth-promise{max-width:630px}.auth-promise .eyebrow{color:#9d94ff}.auth-promise h1{font-size:49px;line-height:1.12;color:#fff;margin-bottom:18px}
+.auth-promise p{color:#a7a9b6;font-size:16px;max-width:510px}
+.promise-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:32px}
+.promise{padding:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);border-radius:13px;backdrop-filter:blur(8px)}
+.promise strong{display:block;font-size:12px}.promise span{font-size:10px;color:#898b99}
+.auth-form-wrap{display:grid;place-items:center;padding:40px}
+.auth-form{width:min(410px,100%)}
+.auth-form h2{font-size:28px;margin-bottom:7px}.auth-form>.muted{margin-bottom:28px}
+.auth-form .field{margin-bottom:14px}.auth-form .btn{width:100%;margin-top:6px}
+.auth-alt{text-align:center;font-size:11px;color:var(--muted);margin-top:16px}.auth-alt button{border:0;background:none;color:var(--primary);font-weight:700}
+.demo-note{display:flex;gap:10px;padding:12px;margin-top:24px;border-radius:12px;background:var(--surface-2);font-size:10px;color:var(--muted)}
+.onboard-wrap{max-width:840px;margin:30px auto}
+.onboard-progress{display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:11px;color:var(--muted)}
+.onboard-progress strong{color:var(--primary)}
+.onboard-card{padding:30px}.mode-picker{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0}
+.mode{padding:18px;border:1px solid var(--line);border-radius:14px;background:#fff;text-align:left;display:flex;gap:12px;align-items:start}
+.mode.on{border-color:var(--primary);box-shadow:0 0 0 3px rgba(101,88,232,.09);background:#fbfaff}
+.mode-icon{width:38px;height:38px;border-radius:11px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;flex:0 0 auto}
+.mode strong{display:block;font-size:13px}.mode span{font-size:10px;color:var(--muted)}
+.toast{position:fixed;right:24px;bottom:24px;z-index:100;padding:13px 16px;background:#17181e;color:#fff;border-radius:12px;box-shadow:var(--shadow-md);font-size:12px;animation:toast-in .25s ease-out}
+.busy{position:fixed;inset:0;z-index:90;background:rgba(245,246,250,.58);backdrop-filter:blur(3px);display:grid;place-items:center}
+.busy-card{padding:17px 20px;background:#17181e;color:#fff;border-radius:14px;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:12px;font-size:12px}
+.spinner{width:19px;height:19px;border:2px solid rgba(255,255,255,.24);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite}
+.drawer{position:fixed;inset:0;z-index:80;background:rgba(17,18,24,.52);backdrop-filter:blur(4px);display:flex;justify-content:flex-end;animation:fade-in .18s ease-out}
+.drawer-box{height:100%;width:min(520px,100%);background:#fff;padding:30px;overflow:auto;box-shadow:-20px 0 55px rgba(12,13,18,.16);animation:slide-in .24s ease-out}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.mobile-nav{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes toast-in{from{opacity:0;transform:translateY(8px)}}@keyframes fade-in{from{opacity:0}}@keyframes slide-in{from{transform:translateX(24px);opacity:.4}}
+@media(max-width:1080px){
+  .shell{grid-template-columns:216px 1fr}.content{padding:32px 28px 84px}.topbar{padding:0 28px}
+  .task-stack{grid-template-columns:1fr}.action-card{min-height:0}.plan-summary{grid-template-columns:1fr 1fr}.summary-main{grid-column:1/-1}
+  .data-grid,.settings-grid,.report-columns{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .shell{display:block}.sidebar{display:none}.topbar{height:62px;padding:0 16px}.top-actions .status-pill{display:none}
+  .content{padding:24px 16px 92px}.page-head{align-items:start;flex-direction:column;margin-bottom:20px}h1{font-size:27px}
+  .hero{padding:25px 22px;min-height:300px}.hero h1{font-size:30px}.process{grid-template-columns:1fr;gap:10px}.process-step:after{display:none}
+  .bento{grid-template-columns:1fr}.metric-card{grid-column:auto}.task-stack{grid-template-columns:1fr}
+  .plan-summary{grid-template-columns:1fr 1fr}.summary-stat{padding:16px}.task-row{grid-template-columns:44px minmax(0,1fr)}.task-actions{grid-column:2;flex-direction:row;flex-wrap:wrap}
+  .form-grid,.report-kpis,.flow-strip{grid-template-columns:1fr}.report-cover{flex-direction:column}.report-body{padding:20px}
+  .auth-shell{grid-template-columns:1fr}.auth-art{min-height:310px;padding:28px 24px}.auth-promise h1{font-size:36px}.promise-row{display:none}.auth-form-wrap{padding:32px 22px}
+  .mode-picker{grid-template-columns:1fr}.onboard-card{padding:22px}
+  .mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(4,1fr);left:12px;right:12px;bottom:10px;z-index:50;background:rgba(17,18,24,.94);backdrop-filter:blur(16px);border:1px solid #2b2c35;border-radius:16px;padding:5px;box-shadow:0 18px 40px rgba(0,0,0,.28)}
+  .mobile-nav button{height:52px;border:0;background:transparent;color:#7f818d;border-radius:11px;display:grid;place-items:center;font-size:9px;gap:0}.mobile-nav button.on{background:#282733;color:#fff}
+  .quota-pill{display:none}.toast{left:16px;right:16px;bottom:78px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+@media print{
+  .sidebar,.topbar,.mobile-nav,.report-toolbar,.btn,.toast,.busy{display:none!important}
+  .shell{display:block}.content{padding:0;max-width:none}.report-paper{box-shadow:none;border:0}.report-cover{print-color-adjust:exact}
+  .card,.task-row,.report-block{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const NAV=[["overview","总览"],["plan","该做什么"],["effect","效果"],["report","报告"]];
+const ICONS={
+  spark:'<path d="M12 2l1.7 5.3L19 9l-5.3 1.7L12 16l-1.7-5.3L5 9l5.3-1.7L12 2Z"/><path d="M5 15l.9 2.1L8 18l-2.1.9L5 21l-.9-2.1L2 18l2.1-.9L5 15Z"/>',
+  home:'<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/>',
+  list:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+  pulse:'<path d="M3 12h4l2-6 4 12 2-6h6"/>',
+  report:'<path d="M5 3h14v18H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/>',
+  logout:'<path d="M10 17l5-5-5-5M15 12H3"/><path d="M13 3h7v18h-7"/>',
+  arrow:'<path d="M5 12h14M14 7l5 5-5 5"/>',check:'<path d="m5 12 4 4L19 6"/>',
+  eye:'<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/>',
+  quote:'<path d="M7 17H3v-4c0-4 2-6 5-7M17 17h-4v-4c0-4 2-6 5-7"/>',
+  gauge:'<path d="M4.9 19a9 9 0 1 1 14.2 0"/><path d="m12 13 4-4"/><path d="M12 21v-1"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  print:'<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>',
+  close:'<path d="M6 6l12 12M18 6 6 18"/>',web:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  file:'<path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5M9 12h6M9 16h6"/>',
+  refresh:'<path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M6.1 9a7 7 0 0 1 11.3-2L20 12M4 12l2.6 5a7 7 0 0 0 11.3-2"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'
+};
+function ico(n,s=19){return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||ICONS.spark}</svg>`}
+const NAVICON={overview:"home",plan:"list",effect:"pulse",report:"report"};
+let R="overview",D=null,U=null,DRAW=null,SLUG=null,FLASH="",POLL=null,BUSY="",TOAST="",PFILTER="all",ONSITE=true;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+async function api(path,opt){
+  const r=await fetch(path,Object.assign({credentials:"same-origin",headers:{"Content-Type":"application/json"}},opt||{}));
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||"请求失败");
+  return j;
+}
+function metric(m){
+  if(!m||m.state==="unmeasured")return{v:"还没测",h:"没有样本时不写成 0"};
+  if(m.state==="na")return{v:"不适用",h:"没有自己的网站"};
+  return{v:m.label,h:""};
+}
+function go(k){
+  R=k;history.replaceState({},"","#"+k);window.scrollTo({top:0,behavior:"smooth"});render();
+  setTimeout(()=>{const m=document.querySelector("main");if(m)m.focus({preventScroll:true})},20);
+}
+function flash(msg){TOAST=msg;render();setTimeout(()=>{TOAST="";render()},3200)}
+function busy(label){BUSY=label;render()}
+function logo(){
+  return `<div class="logo"><div class="logo-mark">${ico("spark",19)}</div><div class="logo-copy">Grounded<small>AI Visibility</small></div></div>`;
+}
+function authView(err){
+  return `<div class="auth-shell">
+    <section class="auth-art">
+      <div class="auth-brand"><div class="logo-mark">${ico("spark",18)}</div>Grounded</div>
+      <div class="auth-promise">
+        <div class="eyebrow">AI Brand Visibility</div>
+        <h1>看清 AI<br>如何理解你的品牌</h1>
+        <p>把复杂的 GEO 检测，变成一句结论、三条行动和一次可以验证的提升。</p>
+        <div class="promise-row">
+          <div class="promise"><strong>先看结论</strong><span>AI 有没有主动提到你</span></div>
+          <div class="promise"><strong>只做三件事</strong><span>按影响优先，不堆术语</span></div>
+          <div class="promise"><strong>改完能验证</strong><span>达标打勾，退步召回</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="auth-form-wrap">
+      <div class="auth-form">
+        <div class="eyebrow">欢迎回来</div><h2>登录你的项目</h2>
+        <p class="muted">继续查看 AI 品牌认知和下一步行动。</p>
+        <div class="field"><label for="em">邮箱</label><input class="input" id="em" type="email" autocomplete="email" value="demo@wagnab.com"></div>
+        <div class="field"><label for="pw">密码</label><input class="input" id="pw" type="password" autocomplete="current-password" value="wagnab"></div>
+        ${err?`<div class="banner" role="alert"><div class="banner-icon">${ico("info")}</div><div class="banner-copy"><strong>${esc(err)}</strong><p>请检查后重试。</p></div></div>`:""}
+        <button class="btn" onclick="doLogin()">${ico("arrow")}登录并查看结果</button>
+        <div class="auth-alt">第一次使用？<button onclick="doReg()">创建账号</button></div>
+        <div class="demo-note">${ico("info",17)}<span>演示账号已经填好，对应 wagnab.com。客户全程不需要填写任何 API Key。</span></div>
+      </div>
+    </section>
+  </div>`;
+}
+async function doLogin(){
+  try{busy("正在进入项目");await api("/api/login",{method:"POST",body:JSON.stringify({email:$("#em").value,password:$("#pw").value})});BUSY="";await boot()}
+  catch(e){BUSY="";document.querySelector("#app").innerHTML=authView(e.message)}
+}
+async function doReg(){
+  try{busy("正在创建账号");await api("/api/register",{method:"POST",body:JSON.stringify({email:$("#em").value,password:$("#pw").value})});BUSY="";await boot()}
+  catch(e){BUSY="";document.querySelector("#app").innerHTML=authView(e.message)}
+}
+function onboard(){
+  return `<div class="onboard-wrap">
+    <div class="onboard-progress"><strong>01 建立项目</strong><span>→</span><span>02 自动检测</span><span>→</span><span>03 得到行动计划</span></div>
+    <div class="card onboard-card">
+      <div class="eyebrow">只需一分钟</div><h1>从你的品牌开始</h1>
+      <p class="lede">有网站就贴网址；没有网站，就用品牌介绍作为检测起点。</p>
+      <div class="mode-picker">
+        <button class="mode ${ONSITE?"on":""}" onclick="ONSITE=true;render()"><span class="mode-icon">${ico("web")}</span><span><strong>我有网站</strong><span>系统会读取公开页面并给出行动计划</span></span></button>
+        <button class="mode ${!ONSITE?"on":""}" onclick="ONSITE=false;render()"><span class="mode-icon">${ico("file")}</span><span><strong>我还没有网站</strong><span>粘贴品牌或产品介绍也可以开始</span></span></button>
+      </div>
+      ${ONSITE?`
+        <div class="field"><label for="url">网站地址</label><input class="input" id="url" type="url" autocomplete="url" placeholder="https://yourbrand.com"></div>
+      `:`
+        <div class="form-grid">
+          <div class="field full"><label for="nm">品牌或产品名</label><input class="input" id="nm" placeholder="例如：WagNab"></div>
+          <div class="field full"><label for="mat">品牌介绍</label><textarea class="input" id="mat" rows="7" placeholder="它是什么、服务谁、解决什么问题、有哪些可核实的特点……"></textarea></div>
+        </div>`}
+      <div style="display:flex;justify-content:flex-end;margin-top:22px"><button class="btn" onclick="createP()">建立项目 ${ico("arrow")}</button></div>
+      <p id="cerr" class="muted" role="alert" style="margin:10px 0 0"></p>
+    </div>
+  </div>`;
+}
+async function createP(){
+  const url=ONSITE&&$("#url")?$("#url").value:"",name=!ONSITE&&$("#nm")?$("#nm").value:"",materials=!ONSITE&&$("#mat")?$("#mat").value:"";
+  try{busy("正在建立项目");const r=await api("/api/projects",{method:"POST",body:JSON.stringify({url,name,materials,no_site:!ONSITE})});SLUG=r.slug;R="overview";BUSY="";await load();flash("项目已建立，可以开始检测")}
+  catch(e){BUSY="";render();const el=$("#cerr");if(el)el.textContent=e.message}
+}
+function side(){
+  const b=(D&&D.brand)||"新项目",site=(D&&D.site)||"等待接入";
+  return `<aside class="sidebar">${logo()}
+    <div class="project-card"><div class="project-kicker">Current project</div><div class="project-name">${esc(b)}</div><div class="project-site">${esc(site)}</div></div>
+    <div class="nav-label">工作台</div>
+    <nav class="nav" aria-label="主导航">${NAV.map(([k,t])=>`<button class="${R===k?"on":""}" onclick="go('${k}')" ${R===k?'aria-current="page"':""}>${ico(NAVICON[k])}<span class="nav-text">${t}</span>${k==="plan"&&D&&D.plan_open?`<span class="nav-count">${D.plan_open}</span>`:""}</button>`).join("")}</nav>
+    <div class="side-settings"><nav class="nav"><button class="${R==="settings"?"on":""}" onclick="go('settings')">${ico("gear")}<span class="nav-text">设置</span></button></nav></div>
+    <div class="side-foot"><div class="quota-mini">${esc((U&&U.quota&&U.quota.label)||"")}</div><div class="user-row"><div class="avatar">${esc(((U&&U.name)||"U").slice(0,1).toUpperCase())}</div><div class="user-meta"><strong>${esc((U&&U.name)||"用户")}</strong><span>${esc((U&&U.plan_label)||"") }方案</span></div><button class="icon-btn" onclick="logout()" aria-label="退出登录">${ico("logout",16)}</button></div></div>
+  </aside>`;
+}
+function topbar(){
+  const names={overview:"总览",plan:"该做什么",effect:"效果",report:"报告",settings:"设置"};
+  return `<header class="topbar"><div class="crumb"><span>${esc((D&&D.brand)||"Grounded")}</span><span>/</span><strong>${names[R]||"总览"}</strong></div>
+    <div class="top-actions"><div class="status-pill"><span class="dot"></span>${D&&D.detecting?"检测进行中":"系统在线"}</div><div class="quota-pill">${ico("target",15)}${esc((U&&U.quota&&U.quota.label)||"")}</div><button class="icon-btn" onclick="go('settings')" aria-label="打开设置">${ico("gear")}</button></div></header>`;
+}
+function mobileNav(){
+  return `<nav class="mobile-nav" aria-label="移动端导航">${NAV.map(([k,t])=>`<button class="${R===k?"on":""}" onclick="go('${k}')">${ico(NAVICON[k],18)}<span>${t}</span></button>`).join("")}</nav>`;
+}
+function process(kind){
+  const step=kind==="empty"?1:kind==="detecting"?2:3;
+  return `<div class="process">
+    <div class="process-step ${step>1?"done":"on"}"><span class="step-num">${step>1?ico("check",12):"1"}</span><span>读取品牌信息</span></div>
+    <div class="process-step ${step>2?"done":step===2?"on":""}"><span class="step-num">${step>2?ico("check",12):"2"}</span><span>检测 AI 回答</span></div>
+    <div class="process-step ${step===3?"on":""}"><span class="step-num">3</span><span>生成行动计划</span></div>
+  </div>`;
+}
+function pageHead(kicker,title,copy,action=""){
+  return `<div class="page-head"><div><div class="eyebrow">${kicker}</div><h1>${title}</h1><p class="lede">${copy}</p></div>${action}</div>`;
+}
+function vOverview(){
+  if(!D)return"";
+  const c=D.conclusion||{},h=metric(D.health),m=metric(D.mention),ci=metric(D.cite),detecting=D.detecting;
+  let html=pageHead("AI BRAND PULSE","今天先看这一件事","先看结论，再决定下一步。不需要理解 GEO 术语。");
+  html+=`<section class="card hero"><div class="hero-content">
+    <div class="hero-label"><span class="dot"></span>${detecting?"正在获取真实回答":c.kind==="empty"?"等待第一次检测":"本期检测结论"}</div>
+    <h1>${esc(c.text||"还没测")}</h1>
+    <p class="hero-copy">${detecting?esc(c.detail||"大约 10–20 分钟，页面可以离开，完成后会自动更新。"):c.kind==="empty"?"检测完成后，这里会直接告诉你有几家 AI 会主动提到你。":"数字只是证据；下面三条行动才是本期最值得做的事。"}</p>
+    <div class="hero-actions">${detecting?`<button class="btn light" disabled><span class="spinner"></span>检测进行中</button>`:`<button class="btn light" onclick="detect()">${ico(c.kind==="empty"?"spark":"refresh")}${c.kind==="empty"?"开始第一次检测":"再测一轮"}</button>`}<span class="hero-note">${esc((D.estimate&&D.estimate.text)||"")} · ${esc((U&&U.quota&&U.quota.label)||"")}</span></div>
+    ${process(c.kind)}
+  </div></section>`;
+  if(FLASH)html+=`<div class="banner" role="alert"><div class="banner-icon">${ico("info")}</div><div class="banner-copy"><strong>${esc(FLASH)}</strong><p>检查后可以再次尝试。</p></div></div>`;
+  if(D.plugin&&D.plugin.count)html+=`<div class="banner"><div class="banner-icon">${ico("globe")}</div><div class="banner-copy"><strong>还差 ${D.plugin.count} 个网页端引擎</strong><p>${D.plugin.engines.map(e=>esc(e.name)).join("、")} 需要用采样助手补一次，补完总览会自动更新。</p></div><button class="btn ghost" onclick="go('settings')">查看说明</button></div>`;
+  if(c.kind!=="empty"&&!detecting)html+=`<section class="section"><div class="section-head"><div><h2>本期三个关键数字</h2><p>只有真实采样后才出数，没有样本不会显示成 0。</p></div></div><div class="bento">
+    <div class="card metric-card"><div class="metric-icon">${ico("gauge")}</div><div class="metric-label">整体表现</div><div class="metric-value">${esc(h.v)}</div><div class="metric-help">${esc(h.h)||"综合已测指标"}</div></div>
+    <div class="card metric-card"><div class="metric-icon">${ico("eye")}</div><div class="metric-label">AI 会不会主动说到你</div><div class="metric-value">${esc(m.v)}</div><div class="metric-help">点名问品牌是谁的题不算</div></div>
+    <div class="card metric-card"><div class="metric-icon">${ico("quote")}</div><div class="metric-label">答案有没有指向你的来源</div><div class="metric-value">${esc(ci.v)}</div><div class="metric-help">${esc(ci.h)||"来自你官网的引用占比"}</div></div>
+  </div></section>`;
+  if(D.next3&&D.next3.length){
+    html+=`<section class="section"><div class="section-head"><div><div class="eyebrow">NEXT BEST ACTIONS</div><h2>现在，先做这 3 条</h2><p>按影响排序，做完一条就去效果页验证。</p></div><button class="btn ghost" onclick="go('plan')">查看完整计划 ${ico("arrow",15)}</button></div><div class="task-stack">`;
+    D.next3.forEach((t,i)=>html+=`<article class="card action-card"><div class="action-top"><span class="chip ${t.priority==="P0"?"p0":t.priority==="P1"?"p1":"p2"}">${esc(t.band)}</span><span class="action-number">0${i+1}</span></div><h3>${esc(t.do)}</h3><p class="why">${esc(t.why)}</p><div class="done-when"><strong>做到什么算完成</strong>${esc(t.done_when)}</div><button class="text-link" onclick="goTask('${t.id}')">打开这条 ${ico("arrow",15)}</button></article>`);
+    html+=`</div></section>`;
+  }
+  if(D.engines&&D.engines.length){
+    html+=`<section class="section"><div class="section-head"><div><h2>AI 引擎认知</h2><p>点开一行查看真实回答摘录。</p></div></div><div class="data-grid"><div class="card panel table-wrap"><table class="table"><thead><tr><th>引擎</th><th>主动提及</th><th>前三出现</th><th>指向官网</th></tr></thead><tbody>`;
+    D.engines.forEach((e,i)=>html+=`<tr onclick="openEngine(${i})" tabindex="0"><td><span class="engine-name"><span class="engine-logo">${esc((e.name||"AI").slice(0,2))}</span>${esc(e.name)}</span></td><td>${esc(e.mention.label)}</td><td>${esc(e.top3)}</td><td>${e.cites_you?"有":"没有"}</td></tr>`);
+    html+=`</tbody></table></div>`;
+    if(D.trend&&D.trend.length>=2)html+=`<div class="card panel"><h3>最近几次</h3><p class="muted" style="font-size:11px">历史分数在每期结束时固化。</p><div class="trend-row">${D.trend.map(p=>`<div class="trend-bar"><i style="--h:${Math.max(20,Number(p.health||0)*1.1)}px"></i><b>${p.health??"—"}</b><br>${esc(p.date)}</div>`).join("")}</div></div>`;
+    else html+=`<div class="card empty-state" style="padding:35px 24px"><div class="empty-visual" style="width:54px;height:54px;border-radius:16px">${ico("pulse")}</div><h3>再测一次后看趋势</h3><p style="font-size:11px;margin-bottom:0">至少两期数据才判断是否变好。</p></div>`;
+    html+=`</div></section>`;
+  }
+  if(D.competitors&&D.competitors.length)html+=`<section class="section"><div class="section-head"><div><h2>同样的问题，AI 在推谁</h2><p>只展示真实回答中出现过的竞品。</p></div></div><div class="task-stack">${D.competitors.map((c,i)=>`<button class="card panel" onclick="openComp(${i})" style="text-align:left;border:1px solid var(--line)"><strong>${esc(c.name)}</strong><p class="muted" style="margin:3px 0 0">${esc(c.label)}</p></button>`).join("")}</div></section>`;
+  return html;
+}
+function setFilter(f){PFILTER=f;render()}
+function vPlan(){
+  const items=window.PLAN||[],open=items.filter(t=>t.status!=="done"),done=items.filter(t=>t.status==="done"),doing=items.filter(t=>t.status==="doing");
+  let html=pageHead("ACTION PLAN","把建议变成进度","每条只有一个动作、一句原因和一个清楚的完成标准。",`<button class="btn" onclick="go('effect')">${ico("pulse")}去验证效果</button>`);
+  if(!items.length)return html+`<div class="card empty-state"><div class="empty-visual">${ico("list",30)}</div><h2>还没有行动计划</h2><p>先完成一轮检测，我们会把最值得做的事按顺序排好。</p><button class="btn" onclick="go('overview')">返回总览</button></div>`;
+  html+=`<div class="plan-summary"><div class="card summary-main"><div class="eyebrow" style="color:#d4d0ff">本期行动</div><h2>${open.length?`还有 ${open.length} 条待完成`:"本期行动已全部完成"}</h2><p>${open.length?"优先处理标为「先做」的条目；完成后用效果页自动验收。":"可以开始下一轮检测，确认结果是否稳定。"}</p></div><div class="card summary-stat"><strong>${open.length}</strong><span>待完成</span></div><div class="card summary-stat"><strong>${doing.length}</strong><span>进行中</span></div><div class="card summary-stat"><strong>${done.length}</strong><span>已完成</span></div></div>`;
+  html+=`<div class="filterbar">${[["all","全部"],["open","待完成"],["doing","进行中"],["done","已完成"]].map(([k,t])=>`<button class="filter ${PFILTER===k?"on":""}" onclick="setFilter('${k}')">${t}</button>`).join("")}</div><div class="task-list">`;
+  const filtered=items.filter(t=>PFILTER==="all"||(PFILTER==="open"&&t.status!=="done")||t.status===PFILTER);
+  filtered.forEach((t,i)=>html+=`<article class="card task-row" id="${esc(t.id)}"><div class="task-index">${String(i+1).padStart(2,"0")}</div><div><div style="display:flex;gap:7px;flex-wrap:wrap"><span class="chip ${t.priority==="P0"?"p0":t.priority==="P1"?"p1":"p2"}">${esc(t.band)}</span><span class="chip st-${esc(t.status)}">${esc(t.status_label)}</span></div><h3>${esc(t.do)}</h3><p class="why">${esc(t.why)}</p><div class="done-when"><strong>完成标准</strong>${esc(t.done_when)}</div></div><div class="task-actions">${t.auto?`<span class="muted" style="font-size:10px;text-align:center">系统自动验收</span>`:`<button class="btn subtle" onclick="markDone('${t.id}')">我已上线</button>`}${t.status!=="done"&&t.status!=="doing"?`<button class="btn ghost" onclick="markDoing('${t.id}')">开始做</button>`:""}${t.status==="doing"?`<button class="btn ghost" onclick="go('effect')">去重测</button>`:""}</div></article>`);
+  html+=`</div>`;return html;
+}
+function vEffect(){
+  const E=window.EFF||{items:[],empty:true};
+  let html=pageHead("PROOF OF PROGRESS","验证改动有没有用","这里只回答一件事：上次让你改的，哪些真的变好了。");
+  if(E.empty)return html+`<div class="card empty-state"><div class="empty-visual">${ico("pulse",30)}</div><h2>改完以后，再来重测</h2><p>系统会按每条行动的完成标准重新检查：达标自动打勾，退步重新放回计划。</p><button class="btn" onclick="recheck()">${ico("refresh")}重测上次的改动</button><div class="flow-strip"><div class="flow-step"><span>01</span><strong>完成行动计划</strong></div><div class="flow-step"><span>02</span><strong>重新抓取和检测</strong></div><div class="flow-step"><span>03</span><strong>自动判断达标或退步</strong></div></div></div>`;
+  html+=`<div class="section-head"><div><h2>${esc(E.date||"最近一次")} 验收结果</h2><p>只展示和行动计划直接相关的变化。</p></div><button class="btn ghost" onclick="recheck()">${ico("refresh")}再测一次</button></div><div class="effect-list">`;
+  E.items.forEach(t=>html+=`<div class="card effect-item"><div class="effect-mark">${ico(t.effect==="退步了"?"info":"check")}</div><div><span class="chip ${t.effect==="退步了"?"st-regressed":"st-done"}">${esc(t.effect)}</span><strong style="display:block;margin-top:6px">${esc(t.do)}</strong><p>${esc(t.note)}</p></div></div>`);
+  return html+`</div>`;
+}
+function vReport(){
+  const rp=window.REP||{};
+  return `${pageHead("SHAREABLE REPORT","一页说清本期结果","给老板或同事看的版本，只保留结论、结果和行动。")}<div class="report-toolbar"><button class="btn ghost" onclick="window.print()">${ico("print")}打印 / 存 PDF</button></div><article class="report-paper"><header class="report-cover"><div><div class="eyebrow" style="color:#9e95ff">AI BRAND REPORT</div><h1>${esc(rp.brand||"品牌")} · AI 认知报告</h1><p>${esc(rp.conclusion||"还没有完成第一次检测。")}</p></div><div class="report-date">Generated by Grounded</div></header><div class="report-body"><div class="report-kpis"><div class="report-kpi"><span>整体表现</span><strong>${esc((rp.health&&rp.health.label)||"还没测")}</strong></div><div class="report-kpi"><span>AI 会不会主动说到你</span><strong>${esc((rp.mention&&rp.mention.label)||"还没测")}</strong></div></div><div class="report-columns"><div><div class="report-block"><h2>引擎表现</h2><div class="table-wrap"><table class="table"><thead><tr><th>引擎</th><th>主动提及</th><th>出现顺序</th></tr></thead><tbody>${(rp.engines||[]).map(e=>`<tr><td>${esc(e.name)}</td><td>${esc(e.mention)}</td><td>${esc(e.top3)}</td></tr>`).join("")||"<tr><td colspan=3 class=muted>还没测</td></tr>"}</tbody></table></div></div><div class="report-block"><h2>竞品观察</h2><p class="muted">${esc(rp.competitor_line||"还没有在真实答案中看到明确竞品。")}</p></div></div><div><div class="report-block"><h2>本月完成</h2>${(rp.done||[]).map(t=>`<div class="report-line">${ico("check",14)} ${esc(t.do)}</div>`).join("")||"<p class=muted>还没有完成项</p>"}</div><div class="report-block"><h2>下一步</h2>${(rp.open||[]).slice(0,5).map(t=>`<div class="report-line"><span class="chip ${t.band==="先做"?"p0":"p1"}">${esc(t.band)}</span> ${esc(t.do)}</div>`).join("")||"<p class=muted>本期行动已完成</p>"}</div></div></div></div></article>`;
+}
+function vSettings(){
+  const s=window.SET||{brand:{},user:{},questions:[]},b=s.brand||{},q=s.user.quota||{},pct=q.cap?Math.round((q.used/q.cap)*100):0;
+  return `${pageHead("PROJECT SETTINGS","设置","管理品牌口径和检测范围。引擎密钥由服务端管理，客户不需要配置。")}<div class="settings-grid"><div class="card settings-card"><h2>我们是谁 ${s.facts_missing?'<span class="chip p0">待补全</span>':""}</h2><p class="muted">这几项会影响 AI 如何识别你的品牌，请用真实、统一的说法。</p><div class="form-grid"><div class="field"><label for="bn">品牌名</label><input class="input" id="bn" value="${esc(b.name)}"></div><div class="field"><label for="bs">网站</label><input class="input" id="bs" value="${esc(b.site)}"></div><div class="field"><label for="bi">一句话行业</label><input class="input" id="bi" value="${esc(b.industry)}"></div><div class="field"><label for="bu">主要服务谁</label><input class="input" id="bu" value="${esc(b.target_users)}"></div></div><div style="display:flex;justify-content:flex-end;margin-top:18px"><button class="btn" onclick="saveBrand()">保存品牌信息</button></div></div><div class="card plan-card"><span class="plan-badge">${esc(s.user.plan_label||"省钱")}方案</span><h2>${q.left??0}<small style="font-size:12px;color:var(--muted);font-weight:500"> / ${q.cap??0} 次剩余</small></h2><p>${esc(s.user.plan_blurb||"")}</p><div class="quota-bar"><i style="width:${Math.min(100,pct)}%"></i></div><p>${esc(q.label||"")}</p></div></div><section class="section"><div class="card settings-card"><div class="section-head"><div><h2>检测用的问题</h2><p>系统自动生成，一般不用改。需要查看时再展开。</p></div><button class="btn ghost" aria-expanded="${window.qopen}" onclick="qopen=!qopen;render()">${window.qopen?"收起":"展开"} ${ico("arrow",14)}</button></div>${window.qopen?`<ul class="question-list">${(s.questions||[]).map(q=>`<li>${esc(q.text)}</li>`).join("")||"<li class=muted>还没有问题，第一次检测时会自动生成。</li>"}</ul>`:""}</div></section>${s.plugin_needed?`<div class="banner"><div class="banner-icon">${ico("globe")}</div><div class="banner-copy"><strong>网页采样助手</strong><p>还有几家引擎需要在网页里采一次。助手不保存 API Key。</p></div></div>`:""}`;
+}
+window.qopen=false;
+function openEngine(i){
+  const e=D.engines[i];if(!e)return;
+  DRAW=`<div class="drawer" onclick="if(event.target===this)closeDraw()"><aside class="drawer-box" role="dialog" aria-modal="true" aria-label="${esc(e.name)}回答摘录"><div class="drawer-head"><div><div class="eyebrow">真实回答摘录</div><h2>${esc(e.name)}</h2></div><button class="icon-btn" onclick="closeDraw()" aria-label="关闭">${ico("close")}</button></div><div class="card panel"><strong>${esc(e.question||"还没有问题摘录")}</strong><p class="muted" style="margin:12px 0 0">${esc(e.excerpt||"还没有真实回答摘录，接口引擎跑完后会出现。")}</p></div></aside></div>`;render();
+}
+function openComp(i){
+  const c=D.competitors[i];if(!c)return;
+  DRAW=`<div class="drawer" onclick="if(event.target===this)closeDraw()"><aside class="drawer-box" role="dialog" aria-modal="true"><div class="drawer-head"><div><div class="eyebrow">竞品观察</div><h2>${esc(c.name)}</h2></div><button class="icon-btn" onclick="closeDraw()" aria-label="关闭">${ico("close")}</button></div><div class="card panel"><p>${esc(c.label||"")}</p><p class="muted">样本积累后，这里会继续拆解它在哪类问题上更常出现。</p></div></aside></div>`;render();
+}
+function closeDraw(){DRAW=null;render()}
+function goTask(id){R="plan";PFILTER="all";history.replaceState({},"","#plan");render();setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"center"}),20)}
+async function detect(){
+  FLASH="";
+  try{busy("检测任务正在启动");await api("/api/detect?slug="+encodeURIComponent(SLUG),{method:"POST",body:"{}"});BUSY="";await load();flash("检测已开始，完成后会自动更新")}
+  catch(e){BUSY="";FLASH=e.message;render()}
+}
+async function recheck(){
+  try{busy("正在启动重测");await api("/api/effect/recheck?slug="+encodeURIComponent(SLUG),{method:"POST",body:"{}"});BUSY="";await load();flash("重测已开始")}
+  catch(e){BUSY="";flash(e.message)}
+}
+async function markDone(id){
+  try{busy("正在更新状态");await api("/api/plan/"+id+"/status?slug="+encodeURIComponent(SLUG),{method:"POST",body:JSON.stringify({status:"done"})});BUSY="";await load();flash("已提交人工确认")}
+  catch(e){BUSY="";flash(e.message)}
+}
+async function markDoing(id){
+  try{busy("正在更新状态");await api("/api/plan/"+id+"/status?slug="+encodeURIComponent(SLUG),{method:"POST",body:JSON.stringify({status:"doing"})});BUSY="";await load();flash("已标记为进行中")}
+  catch(e){BUSY="";flash(e.message)}
+}
+async function saveBrand(){
+  try{busy("正在保存");await api("/api/settings/brand?slug="+encodeURIComponent(SLUG),{method:"POST",body:JSON.stringify({name:$("#bn").value,site:$("#bs").value,industry:$("#bi").value,target_users:$("#bu").value})});BUSY="";await load();flash("品牌信息已保存")}
+  catch(e){BUSY="";flash(e.message)}
+}
+async function logout(){await api("/api/logout",{method:"POST",body:"{}"});U=null;D=null;SLUG=null;render()}
+async function load(){
+  D=await api("/api/overview?slug="+encodeURIComponent(SLUG));U=D.user;
+  [window.PLAN,window.EFF,window.REP,window.SET]=await Promise.all([
+    api("/api/plan?slug="+encodeURIComponent(SLUG)).then(x=>x.items),
+    api("/api/effect?slug="+encodeURIComponent(SLUG)),
+    api("/api/report?slug="+encodeURIComponent(SLUG)),
+    api("/api/settings?slug="+encodeURIComponent(SLUG))
+  ]);
+  render();if(POLL)clearTimeout(POLL);POLL=null;if(D&&D.detecting)POLL=setTimeout(()=>load().catch(()=>{}),2500);
+}
+function render(){
+  const app=$("#app");
+  if(!U){app.innerHTML=authView();return}
+  if(!(U.projects||[]).length&&!SLUG){app.innerHTML=`<div class="shell">${side()}<div class="workspace">${topbar()}<main class="content" tabindex="-1">${onboard()}</main></div>${mobileNav()}</div>${BUSY?busyView():""}${TOAST?toastView():""}`;return}
+  const fn={overview:vOverview,plan:vPlan,effect:vEffect,report:vReport,settings:vSettings}[R]||vOverview;
+  app.innerHTML=`<div class="shell">${side()}<div class="workspace">${topbar()}<main class="content" tabindex="-1">${fn()}</main></div>${mobileNav()}</div>${DRAW||""}${BUSY?busyView():""}${TOAST?toastView():""}`;
+}
+function busyView(){return `<div class="busy" role="status"><div class="busy-card"><span class="spinner"></span>${esc(BUSY)}</div></div>`}
+function toastView(){return `<div class="toast" role="status" aria-live="polite">${esc(TOAST)}</div>`}
+async function boot(){
+  try{const me=await api("/api/me");U=me.user;if(!U){render();return}SLUG=(U.projects||[])[0]||null;const h=(location.hash||"").replace("#","");if(["overview","plan","effect","report","settings"].includes(h))R=h;if(SLUG)await load();else render()}
+  catch(e){U=null;document.querySelector("#app").innerHTML=authView(e.message)}
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&DRAW)closeDraw()});
+boot();
+</script>
+</body>
+</html>
