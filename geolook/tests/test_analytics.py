@@ -179,6 +179,14 @@ class TestTrend(Base):
         tr = A.trend("demo")
         self.assertEqual(tr[0]["mention"], 0.5)
 
+    def test_health_uses_period_snapshot(self):
+        pdir = self.make_project(samples={
+            "2026-07-27.jsonl": [row(mentioned=True)],
+        })
+        G.write_json(pdir / "metrics" / "2026-07-27.json",
+                     {"health_snapshot": {"score": 37.5}})
+        self.assertEqual(A.trend("demo")[0]["health"], 37.5)
+
 
 class TestQuestionDelta(Base):
     def test_untested_sorted_last(self):
