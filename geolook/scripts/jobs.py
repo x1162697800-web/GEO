@@ -50,9 +50,11 @@ ACTIONS: dict[str, dict] = {
     "serve":    {"label": "跑完整周期", "args": ["--max-pages", "--limit", "--no-sample",
                                                  "--draft", "--draft-limit"],
                  "desc": "抓取→体检→采样→工单→资产→报告→验收→交付", "slow": True},
-    "detect":   {"label": "开始检测", "args": ["--max-pages", "--limit", "--no-sample"],
+    "detect":   {"label": "开始检测", "args": ["--max-pages", "--limit", "--repeat",
+                                                 "--platforms", "--no-sample"],
                  "desc": "抓站→体检→采样→工单（线上版客户主路径）", "slow": True},
-    "recheck":  {"label": "重测改动", "args": ["--max-pages", "--limit"],
+    "recheck":  {"label": "重测改动", "args": ["--max-pages", "--limit", "--repeat",
+                                                 "--platforms"],
                  "desc": "重抓→体检→重新采样→验收（保留原行动状态）", "slow": True},
 }
 
