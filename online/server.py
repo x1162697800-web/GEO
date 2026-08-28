@@ -211,6 +211,10 @@ class Handler(BaseHTTPRequestHandler):
             user = ACC.user_of(self._token())
             if user:
                 return self._json(200, [P.project_card(s) for s in (user.get("projects") or [])])
+            plugin_user = ACC.plugin_user(self._plugin_tok())
+            if plugin_user:
+                return self._json(
+                    200, [P.project_card(s) for s in (plugin_user.get("projects") or [])])
             if self._local():
                 slugs = []
                 if G.WORK.exists():
@@ -460,7 +464,8 @@ class Handler(BaseHTTPRequestHandler):
             if not user:
                 return
             tok = ACC.plugin_token(user["email"])
-            return self._json(200, {"ok": True, "issued": True, "len": len(tok)})
+            return self._json(
+                200, {"ok": True, "token": tok, "expires_in_hours": 8})
 
         if path.startswith("/api/collect/") and not path.startswith("/api/collect/queue"):
             slug = path.split("/")[-1]
